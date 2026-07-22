@@ -27,6 +27,7 @@ const DB = {
       this._set('userRoles', []);
       this._set('phoneVerification', []);
       this._set('emailVerification', []);
+      this._set('emailVerificationTokens', []);
       this._set('passwordReset', []);
       this._set('sessions', []);
       this._set('devices', []);
@@ -282,14 +283,47 @@ const DB = {
   verifyEmailOtp(email, otp) {
     const codes = this._get('emailVerification') || [];
     const code = codes.find(c => c.email === email && !c.verified && new Date(c.expiresAt) > new Date());
-    if (!code) return { success: false, message: 'Verification link has expired.' };
+    if (!code) return { success: false, message: 'Verification code has expired.' };
     if (code.attempts >= code.maxAttempts) return { success: false, message: 'Too many failed attempts.' };
     code.attempts++;
     if (code.otp !== otp) { this._set('emailVerification', codes); return { success: false, message: 'Incorrect code.' }; }
     code.verified = true;
     this._set('emailVerification', codes);
     if (code.userId) this.updateUser(code.userId, { emailVerified: true });
-    return { success: true };
+    return { success: true, userId: code.userId };
+  },
+
+  // ── Email Verification Link Tokens ───────────────────
+  createEmailVerificationLink(userId, email) {
+    const token = 'EVT' + Date.now() + Math.random().toString(36).substr(2, 16);
+    const tokens = this._get('emailVerificationTokens') || [];
+    tokens.push({
+      id: 'EVT' + Date.now(),
+      userId,
+      email,
+      token,
+      attempts: 0,
+      maxAttempts: 5,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      used: false
+    });
+    this._set('emailVerificationTokens', tokens);
+    return { id: tokens[tokens.length - 1].id, token };
+  },
+  verifyEmailLinkToken(token) {
+    const tokens = this._get('emailVerificationTokens') || [];
+    const entry = tokens.find(t => t.token === token && !t.used && new Date(t.expiresAt) > new Date());
+    if (!entry) return { success: false, message: 'Verification link is invalid or has expired.' };
+    if (entry.attempts >= entry.maxAttempts) return { success: false, message: 'Too many failed attempts.' };
+    entry.attempts++;
+    entry.used = true;
+    this._set('emailVerificationTokens', tokens);
+    if (entry.userId) {
+      this.updateUser(entry.userId, { emailVerified: true });
+      DB.addAuditLog({ action: 'email_verified', userId: entry.userId, details: `Email verified via link: ${entry.email}` });
+    }
+    return { success: true, userId: entry.userId };
   },
 
   // ── Password Reset ───────────────────────────────────
@@ -465,16 +499,16 @@ const SAMPLE_LOCATIONS = {
 };
 
 const SAMPLE_USERS = [
-  { id: 'USR1', name: 'Ram Prasad Sharma', email: 'ram@farm.com', phone: '9841234567', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Ram+Sharma', farmName: 'Sharma Organic Farm', farmSize: '12 hectares', crops: ['Rice', 'Wheat', 'Vegetables'], district: 'Chitwan', municipality: 'Bharatpur', ward: 10, description: 'Third-generation organic farmer specializing in rice and seasonal vegetables. Our farm has been certified organic since 2018.', verified: true, suspended: false, createdAt: '2024-01-15T08:00:00Z', phoneVerified: true, emailVerified: true },
-  { id: 'USR2', name: 'Sita Devi Thapa', email: 'sita@farm.com', phone: '9841234568', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sita+Thapa', farmName: 'Green Valley Farm', farmSize: '8 hectares', crops: ['Tea', 'Coffee', 'Cardamom'], district: 'Ilam', municipality: 'Ilam Municipality', ward: 5, description: 'Premium tea and coffee farm in the hills of Eastern Nepal. Known for high-quality orthodox tea.', verified: true, suspended: false, createdAt: '2024-02-20T08:00:00Z', phoneVerified: true, emailVerified: true },
-  { id: 'USR3', name: 'Hari Bahadur Gurung', email: 'hari@farm.com', phone: '9841234569', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Hari+Gurung', farmName: 'Gurung Dairy Farm', farmSize: '5 hectares', crops: ['Fodder', 'Maize'], district: 'Kaski', municipality: 'Pokhara', ward: 15, description: 'Modern dairy farm with 50+ cattle. We produce fresh milk and dairy products for Pokhara market.', verified: true, suspended: false, createdAt: '2024-03-10T08:00:00Z', phoneVerified: true, emailVerified: false },
-  { id: 'USR4', name: 'Bishnu Maya Limbu', email: 'bishnu@worker.com', phone: '9841234570', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bishnu+Limbu', skills: ['Rice Planting', 'Tea Plucking', 'Weeding', 'Harvesting'], experience: 8, languages: ['Nepali', 'Limbu', 'English'], district: 'Ilam', availableDistricts: ['Ilam', 'Jhapa', 'Morang', 'Sunsari'], expectedWage: { daily: 800, monthly: 18000 }, bio: 'Experienced agricultural worker with 8 years in tea plantations and rice farming. Hard working and reliable.', verified: true, suspended: false, createdAt: '2024-01-20T08:00:00Z', availability: 'available' },
-  { id: 'USR5', name: 'Krishna Prasad Yadav', email: 'krishna@worker.com', phone: '9841234571', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Krishna+Yadav', skills: ['Tractor Driving', 'Irrigation', 'Fertilizing', 'Pest Control', 'Harvesting'], experience: 12, languages: ['Nepali', 'Hindi', 'Bhojpuri'], district: 'Bara', availableDistricts: ['Bara', 'Parsa', 'Rautahat', 'Sarlahi'], expectedWage: { daily: 1000, monthly: 22000 }, bio: 'Skilled farm machinery operator and agricultural worker. Licensed tractor driver with expertise in modern farming techniques.', verified: true, suspended: false, createdAt: '2024-02-05T08:00:00Z', availability: 'available' },
-  { id: 'USR6', name: 'Laxmi Poudel', email: 'laxmi@worker.com', phone: '9841234572', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Laxmi+Poudel', skills: ['Vegetable Farming', 'Greenhouse Management', 'Organic Farming', 'Composting'], experience: 5, languages: ['Nepali', 'English'], district: 'Kaski', availableDistricts: ['Kaski', 'Tanahu', 'Syangja', 'Gorkha'], expectedWage: { daily: 750, monthly: 17000 }, bio: 'Passionate about organic farming and sustainable agriculture. Experienced in greenhouse management and composting.', verified: false, suspended: false, createdAt: '2024-03-15T08:00:00Z', availability: 'available' },
-  { id: 'USR7', name: 'Gopal Basnet', email: 'gopal@farm.com', phone: '9841234573', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Gopal+Basnet', farmName: 'Basnet Poultry Farm', farmSize: '3 hectares', crops: ['Poultry', 'Fish'], district: 'Chitwan', municipality: 'Bharatpur', ward: 22, description: 'Large-scale poultry and fish farm supplying to major markets in Chitwan and Kathmandu.', verified: true, suspended: false, createdAt: '2024-04-01T08:00:00Z', phoneVerified: true, emailVerified: true },
-  { id: 'USR8', name: 'Sunita Tamang', email: 'sunita@worker.com', phone: '9841234574', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sunita+Tamang', skills: ['Mushroom Farming', 'Milk Processing', 'Food Preservation', 'Packaging'], experience: 3, languages: ['Nepali', 'Tamang'], district: 'Dhading', availableDistricts: ['Dhading', 'Nuwakot', 'Kathmandu', 'Lalitpur'], expectedWage: { daily: 700, monthly: 16000 }, bio: 'Young and enthusiastic worker skilled in modern agricultural techniques including mushroom cultivation.', verified: false, suspended: false, createdAt: '2024-05-10T08:00:00Z', availability: 'busy' },
-  { id: 'USR9', name: 'Admin User', email: 'admin@agrinepal.com', phone: '9841000000', password: 'admin123', role: 'admin', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Admin', verified: true, suspended: false, createdAt: '2024-01-01T08:00:00Z' },
-  { id: 'USR10', name: 'Raj Kumar Magar', email: 'raj@worker.com', phone: '9841234575', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Raj+Magar', skills: ['Sugarcane Farming', 'Tobacco Farming', 'Land Preparation', 'Canal Irrigation'], experience: 15, languages: ['Nepali', 'Magar', 'Hindi'], district: 'Rupandehi', availableDistricts: ['Rupandehi', 'Kapilvastu', 'Dang', 'Banke'], expectedWage: { daily: 900, monthly: 20000 }, bio: 'Highly experienced farmer with 15 years in sugarcane and tobacco cultivation. Expert in irrigation systems.', verified: true, suspended: false, createdAt: '2024-02-15T08:00:00Z', availability: 'available' }
+  { id: 'USR1', name: 'Ram Prasad Sharma', email: 'ram@farm.com', phone: '9841234567', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Ram+Sharma', farmName: 'Sharma Organic Farm', farmSize: '12 hectares', crops: ['Rice', 'Wheat', 'Vegetables'], district: 'Chitwan', municipality: 'Bharatpur', ward: 10, description: 'Third-generation organic farmer specializing in rice and seasonal vegetables. Our farm has been certified organic since 2018.', verified: true, suspended: false, createdAt: '2024-01-15T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email' },
+  { id: 'USR2', name: 'Sita Devi Thapa', email: 'sita@farm.com', phone: '9841234568', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sita+Thapa', farmName: 'Green Valley Farm', farmSize: '8 hectares', crops: ['Tea', 'Coffee', 'Cardamom'], district: 'Ilam', municipality: 'Ilam Municipality', ward: 5, description: 'Premium tea and coffee farm in the hills of Eastern Nepal. Known for high-quality orthodox tea.', verified: true, suspended: false, createdAt: '2024-02-20T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email' },
+  { id: 'USR3', name: 'Hari Bahadur Gurung', email: 'hari@farm.com', phone: '9841234569', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Hari+Gurung', farmName: 'Gurung Dairy Farm', farmSize: '5 hectares', crops: ['Fodder', 'Maize'], district: 'Kaski', municipality: 'Pokhara', ward: 15, description: 'Modern dairy farm with 50+ cattle. We produce fresh milk and dairy products for Pokhara market.', verified: true, suspended: false, createdAt: '2024-03-10T08:00:00Z', emailVerified: false, phoneVerified: true, mobileVerified: true, verificationMethod: 'email' },
+  { id: 'USR4', name: 'Bishnu Maya Limbu', email: 'bishnu@worker.com', phone: '9841234570', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Bishnu+Limbu', skills: ['Rice Planting', 'Tea Plucking', 'Weeding', 'Harvesting'], experience: 8, languages: ['Nepali', 'Limbu', 'English'], district: 'Ilam', availableDistricts: ['Ilam', 'Jhapa', 'Morang', 'Sunsari'], expectedWage: { daily: 800, monthly: 18000 }, bio: 'Experienced agricultural worker with 8 years in tea plantations and rice farming. Hard working and reliable.', verified: true, suspended: false, createdAt: '2024-01-20T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email', availability: 'available' },
+  { id: 'USR5', name: 'Krishna Prasad Yadav', email: 'krishna@worker.com', phone: '9841234571', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Krishna+Yadav', skills: ['Tractor Driving', 'Irrigation', 'Fertilizing', 'Pest Control', 'Harvesting'], experience: 12, languages: ['Nepali', 'Hindi', 'Bhojpuri'], district: 'Bara', availableDistricts: ['Bara', 'Parsa', 'Rautahat', 'Sarlahi'], expectedWage: { daily: 1000, monthly: 22000 }, bio: 'Skilled farm machinery operator and agricultural worker. Licensed tractor driver with expertise in modern farming techniques.', verified: true, suspended: false, createdAt: '2024-02-05T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email', availability: 'available' },
+  { id: 'USR6', name: 'Laxmi Poudel', email: 'laxmi@worker.com', phone: '9841234572', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Laxmi+Poudel', skills: ['Vegetable Farming', 'Greenhouse Management', 'Organic Farming', 'Composting'], experience: 5, languages: ['Nepali', 'English'], district: 'Kaski', availableDistricts: ['Kaski', 'Tanahu', 'Syangja', 'Gorkha'], expectedWage: { daily: 750, monthly: 17000 }, bio: 'Passionate about organic farming and sustainable agriculture. Experienced in greenhouse management and composting.', verified: false, suspended: false, createdAt: '2024-03-15T08:00:00Z', emailVerified: false, phoneVerified: false, mobileVerified: false, verificationMethod: 'email', availability: 'available' },
+  { id: 'USR7', name: 'Gopal Basnet', email: 'gopal@farm.com', phone: '9841234573', password: 'password123', role: 'farmer', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Gopal+Basnet', farmName: 'Basnet Poultry Farm', farmSize: '3 hectares', crops: ['Poultry', 'Fish'], district: 'Chitwan', municipality: 'Bharatpur', ward: 22, description: 'Large-scale poultry and fish farm supplying to major markets in Chitwan and Kathmandu.', verified: true, suspended: false, createdAt: '2024-04-01T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email' },
+  { id: 'USR8', name: 'Sunita Tamang', email: 'sunita@worker.com', phone: '9841234574', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Sunita+Tamang', skills: ['Mushroom Farming', 'Milk Processing', 'Food Preservation', 'Packaging'], experience: 3, languages: ['Nepali', 'Tamang'], district: 'Dhading', availableDistricts: ['Dhading', 'Nuwakot', 'Kathmandu', 'Lalitpur'], expectedWage: { daily: 700, monthly: 16000 }, bio: 'Young and enthusiastic worker skilled in modern agricultural techniques including mushroom cultivation.', verified: false, suspended: false, createdAt: '2024-05-10T08:00:00Z', emailVerified: false, phoneVerified: false, mobileVerified: false, verificationMethod: 'email', availability: 'busy' },
+  { id: 'USR9', name: 'Admin User', email: 'admin@agrinepal.com', phone: '9841000000', password: 'admin123', role: 'admin', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Admin', verified: true, suspended: false, createdAt: '2024-01-01T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email' },
+  { id: 'USR10', name: 'Raj Kumar Magar', email: 'raj@worker.com', phone: '9841234575', password: 'password123', role: 'worker', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Raj+Magar', skills: ['Sugarcane Farming', 'Tobacco Farming', 'Land Preparation', 'Canal Irrigation'], experience: 15, languages: ['Nepali', 'Magar', 'Hindi'], district: 'Rupandehi', availableDistricts: ['Rupandehi', 'Kapilvastu', 'Dang', 'Banke'], expectedWage: { daily: 900, monthly: 20000 }, bio: 'Highly experienced farmer with 15 years in sugarcane and tobacco cultivation. Expert in irrigation systems.', verified: true, suspended: false, createdAt: '2024-02-15T08:00:00Z', emailVerified: true, phoneVerified: true, mobileVerified: true, verificationMethod: 'email', availability: 'available' }
 ];
 
 const SAMPLE_JOBS = [

@@ -1,3 +1,5 @@
+let pendingVerificationEmail = '';
+
 function handleLogin(e) {
   e.preventDefault();
   const identifier = document.getElementById('loginIdentifier').value.trim();
@@ -11,11 +13,12 @@ function handleLogin(e) {
 
   const inputType = AuthSystem.detectInputType(identifier);
   if (inputType === 'unknown') {
-    showLoginError('फोन नम्बर वा इमेल सही छैन / Please enter a valid phone number or email');
+    showLoginError('मान्य इमेल ठेगाना लेख्नुहोस् / Please enter a valid email address');
     return false;
   }
 
   showLoginLoading(true);
+  document.getElementById('emailVerificationRequired').style.display = 'none';
 
   setTimeout(async () => {
     const result = await Auth.login(identifier, password, { rememberMe });
@@ -31,12 +34,58 @@ function handleLogin(e) {
       } else {
         setTimeout(() => { window.location.href = redirect || Auth.getDashboardUrl(); }, 800);
       }
+    } else if (result.requiresEmailVerification) {
+      pendingVerificationEmail = result.email || identifier;
+      showEmailVerificationRequired(result.email || identifier);
     } else {
       showLoginError(result.message);
     }
   }, 600);
 
   return false;
+}
+
+function showEmailVerificationRequired(email) {
+  const el = document.getElementById('emailVerificationRequired');
+  const msg = document.getElementById('verificationEmailMsg');
+  msg.textContent = `"${email}" को इमेल सत्यापन भएको छैन। कृपया इमेलमा पठाइएको सत्यापन कोड प्रयोग गर्नुहोस्।`;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('resendVerificationSuccess').classList.add('hidden');
+  document.getElementById('resendVerificationError').classList.add('hidden');
+}
+
+function resendVerificationEmail() {
+  const email = pendingVerificationEmail;
+  if (!email) return;
+
+  const btn = document.getElementById('resendVerificationBtn');
+  const text = document.getElementById('resendVerificationText');
+  const successEl = document.getElementById('resendVerificationSuccess');
+  const errorEl = document.getElementById('resendVerificationError');
+
+  btn.disabled = true;
+  text.textContent = 'पठाइँदैछ...';
+  successEl.classList.add('hidden');
+  errorEl.classList.add('hidden');
+
+  setTimeout(() => {
+    const result = AuthSystem.resendEmailVerification(email);
+    btn.disabled = false;
+    text.textContent = '🔄 पुन: सत्यापन इमेल पठाउनुहोस्';
+
+    if (result.success) {
+      successEl.textContent = `सत्यापन कोड ${email} मा पठाइयो!`;
+      successEl.classList.remove('hidden');
+      errorEl.classList.add('hidden');
+      console.log('[Email Verification] OTP:', result.otp, '(simulated)');
+      console.log('[Email Verification] Link token:', result.linkToken, '(simulated)');
+    } else {
+      errorEl.textContent = result.message;
+      errorEl.classList.remove('hidden');
+      successEl.classList.add('hidden');
+    }
+  }, 800);
 }
 
 function showLoginError(msg) {
@@ -85,28 +134,6 @@ function togglePasswordVisibility(inputId, btn) {
 document.addEventListener('DOMContentLoaded', function() {
   App.init();
   if (Auth.isLoggedIn()) { window.location.href = Auth.getDashboardUrl(); return; }
-
-  const identifierInput = document.getElementById('loginIdentifier');
-  const icon = document.getElementById('inputTypeIcon');
-  const hint = document.getElementById('inputHint');
-
-  identifierInput.addEventListener('input', function() {
-    const val = this.value.trim();
-    const type = AuthSystem.detectInputType(val);
-    if (type === 'phone') {
-      icon.textContent = '📱';
-      hint.textContent = 'फोन नम्बर पहिचान भयो';
-      hint.style.color = '#059669';
-    } else if (type === 'email') {
-      icon.textContent = '📧';
-      hint.textContent = 'इमेल पहिचान भयो';
-      hint.style.color = '#2563eb';
-    } else {
-      icon.textContent = '📱';
-      hint.textContent = 'फोन नम्बर वा इमेल दुवै काम गर्छ';
-      hint.style.color = '';
-    }
-  });
 
   const strengthInput = document.getElementById('loginPassword');
   if (strengthInput) {

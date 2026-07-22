@@ -21,8 +21,11 @@ function validateCurrentStep() {
 
   if (currentStep === 1) {
     const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
     if (!name || name.length < 2) { showRegError('कृपया पूरा नाम लेख्नुहोस्', 'regName'); return false; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showRegError('मान्य इमेल ठेगाना लेख्नुहोस्', 'regEmail'); return false; }
+    if (DB.getUserByEmail(email)) { showRegError('यो इमेल पहिले नै दर्ता भएको छ', 'regEmail'); return false; }
     if (!phone || !/^[9][0-9]{9}$/.test(phone)) { showRegError('मान्य फोन नम्बर लेख्नुहोस् (98XXXXXXXX)', 'regPhone'); return false; }
     if (DB.getUserByPhone(phone)) { showRegError('यो फोन नम्बर पहिले नै दर्ता भएको छ', 'regPhone'); return false; }
     return true;
@@ -133,7 +136,7 @@ async function handleRegister() {
     if (result.success) {
       Auth.currentUser = result.user;
       localStorage.setItem('agri_currentUser', result.user.id);
-      sessionStorage.setItem('agri_pendingPhone', data.phone);
+      sessionStorage.setItem('agri_pendingEmail', data.email.trim().toLowerCase());
 
       if (regPhotoDataUrl) {
         DB.updateUser(result.user.id, {
@@ -144,8 +147,8 @@ async function handleRegister() {
         Auth.currentUser = DB.getUserById(result.user.id);
       }
 
-      Utils.toast('दर्ता सफल भयो! OTP पठाइँदैछ...');
-      setTimeout(() => { window.location.href = 'verify-otp.html?type=phone&phone=' + encodeURIComponent(data.phone); }, 800);
+      Utils.toast('दर्ता सफल भयो! इमेल सत्यापन पठाइँदैछ...');
+      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 800);
     } else {
       if (result.errors && result.errors.length) {
         const firstErr = result.errors[0];

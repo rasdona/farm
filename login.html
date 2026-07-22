@@ -17,20 +17,31 @@
             <span>KrishiConnect</span>
           </a>
           <h1 class="auth-title">लगइन गर्नुहोस्</h1>
-          <p class="auth-subtitle">फोन नम्बर वा इमेल प्रयोग गरेर लगइन गर्नुहोस्</p>
+          <p class="auth-subtitle">इमेल र पासवर्ड प्रयोग गरेर लगइन गर्नुहोस्</p>
         </div>
 
         <div id="loginError" class="auth-alert auth-alert-error hidden"></div>
         <div id="loginSuccess" class="auth-alert auth-alert-success hidden"></div>
+        <div id="emailVerificationRequired" class="auth-alert auth-alert-warning hidden" style="display:none">
+          <div style="margin-bottom:12px">
+            <strong>📧 इमेल सत्यापन आवश्यक / Email Verification Required</strong><br>
+            <span style="font-size:0.9rem" id="verificationEmailMsg"></span>
+          </div>
+          <button type="button" class="auth-btn auth-btn-primary" onclick="resendVerificationEmail()" id="resendVerificationBtn">
+            <span id="resendVerificationText">🔄 पुन: सत्यापन इमेल पठाउनुहोस्</span>
+          </button>
+          <div id="resendVerificationSuccess" class="auth-alert auth-alert-success hidden" style="margin-top:8px"></div>
+          <div id="resendVerificationError" class="auth-alert auth-alert-error hidden" style="margin-top:8px"></div>
+        </div>
 
         <form id="loginForm" class="auth-form" onsubmit="return handleLogin(event)">
           <div class="auth-input-group">
-            <label class="auth-label" for="loginIdentifier">फोन नम्बर वा इमेल <span class="required">*</span></label>
+            <label class="auth-label" for="loginIdentifier">इमेल ठेगाना <span class="required">*</span></label>
             <div class="auth-input-wrapper">
-              <span class="auth-input-icon" id="inputTypeIcon">📱</span>
-              <input type="text" class="auth-input" id="loginIdentifier" placeholder="98XXXXXXXX वा email@domain.com" required autocomplete="username" autofocus>
+              <span class="auth-input-icon" id="inputTypeIcon">📧</span>
+              <input type="email" class="auth-input" id="loginIdentifier" placeholder="तपाईंको इमेल ठेगाना" required autocomplete="email" autofocus>
             </div>
-            <div class="auth-input-hint" id="inputHint">फोन नम्बर वा इमेल दुवै काम गर्छ</div>
+            <div class="auth-input-hint" id="inputHint">केवल इमेल र पासवर्ड लगइन</div>
           </div>
 
           <div class="auth-input-group">
@@ -66,9 +77,9 @@
         <div class="auth-demo-box">
           <strong>🧪 डेमो खाताहरू:</strong>
           <div class="auth-demo-list">
-            <div><strong>किसान:</strong> 9841234567 / password123</div>
-            <div><strong>श्रमिक:</strong> 9841234570 / password123</div>
-            <div><strong>एडमिन:</strong> 9841000000 / admin123</div>
+            <div><strong>किसान:</strong> ram@farm.com / password123</div>
+            <div><strong>श्रमिक:</strong> krishna@worker.com / password123</div>
+            <div><strong>एडमिन:</strong> admin@agrinepal.com / admin123</div>
           </div>
         </div>
       </div>

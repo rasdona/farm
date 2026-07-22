@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ne" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>इमेल सत्यापन - KrishiConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <style>
+    .verify-email-page { max-width: 480px; margin: 0 auto; padding: 40px 20px; }
+    .verify-email-card { background: var(--card); border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+    .verify-email-header { background: linear-gradient(135deg, #16a34a, #22c55e); padding: 40px 30px; text-align: center; color: white; }
+    .verify-email-icon { font-size: 60px; margin-bottom: 16px; display: block; }
+    .verify-email-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .verify-email-header p { font-size: 14px; opacity: 0.9; }
+    .verify-email-body { padding: 30px; }
+    .verify-email-info { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+    .verify-email-info strong { color: #166534; display: block; margin-bottom: 4px; }
+    .verify-email-info p { color: #166534; font-size: 13px; margin: 0; }
+    .otp-inputs { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+    .otp-input { width: 48px; height: 56px; text-align: center; font-size: 22px; font-weight: 700; border: 2px solid var(--border); border-radius: 10px; background: var(--bg-alt); color: var(--text); outline: none; transition: all 0.2s; font-family: 'Courier New', monospace; }
+    .otp-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15); transform: scale(1.05); }
+    .otp-input.error { border-color: #dc2626; animation: shake 0.4s; }
+    .otp-input.filled { border-color: var(--primary); background: #f0fdf4; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
+    .timer-section { display: flex; justify-content: space-between; align-items: center; margin: 16px 0; }
+    .timer { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .timer span { color: var(--primary); font-weight: 700; }
+    .resend-btn { background: none; border: none; color: var(--primary); font-size: 14px; font-weight: 600; cursor: pointer; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
+    .resend-btn:hover:not(:disabled) { background: #f0fdf4; }
+    .resend-btn:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 0.5; }
+    .verify-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--primary); color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .verify-btn:hover:not(:disabled) { background: #15803d; transform: translateY(-1px); }
+    .verify-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .verify-btn.loading { pointer-events: none; }
+    .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
+    .verify-btn.loading .btn-text { display: none; }
+    .verify-btn.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .message { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-top: 16px; display: none; }
+    .message.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .message.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .message.visible { display: block; }
+    .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .success-overlay.visible { opacity: 1; pointer-events: auto; }
+    .success-card { background: white; border-radius: 16px; padding: 40px; text-align: center; max-width: 360px; transform: scale(0.9); transition: transform 0.3s; }
+    .success-overlay.visible .success-card { transform: scale(1); }
+    .success-icon { width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px; }
+    .success-card h2 { font-size: 22px; margin-bottom: 8px; color: #166534; }
+    .success-card p { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+    .success-card button { padding: 12px 32px; border: none; border-radius: 10px; background: var(--primary); color: white; font-weight: 700; cursor: pointer; font-size: 15px; transition: all 0.2s; }
+    .success-card button:hover { background: #15803d; transform: translateY(-1px); }
+    .demo-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 16px; margin-top: 20px; }
+    .demo-box strong { color: #92400e; display: block; margin-bottom: 8px; }
+    .demo-box .demo-otp { background: #fef3c7; padding: 8px 12px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; color: #92400e; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card" style="max-width:480px">
+        <div class="verify-email-header">
+          <span class="verify-email-icon">📧</span>
+          <h1>इमेल सत्यापन</h1>
+          <p>तपाईंको इमेलमा ६ अंकको सत्यापन कोड पठाइएको छ</p>
+        </div>
+
+        <div class="verify-email-body">
+          <div class="verify-email-info" id="emailInfo">
+            <strong>📧 सत्यापन कोड पठाइयो</strong>
+            <p id="emailDisplayText">कृपया तपाईंको इमेलमा पठाइएको ६ अंकको कोड यहाँ प्रविष्ट गर्नुहोस्।</p>
+          </div>
+
+          <div id="verifyError" class="auth-alert auth-alert-error hidden"></div>
+          <div id="verifySuccess" class="auth-alert auth-alert-success hidden"></div>
+
+          <div id="otpSection">
+            <div class="otp-inputs" id="otpInputs">
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="0" autofocus>
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="1">
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="2">
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="3">
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="4">
+              <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="5">
+            </div>
+
+            <div class="timer-section">
+              <div class="timer">म्याद: <span id="timerCount">०५:००</span></div>
+              <button type="button" class="resend-btn" id="resendBtn" onclick="resendEmailOtp()" disabled>
+                <span id="resendText">पुन: पठाउनुहोस् (६० सेकेन्ड)</span>
+              </button>
+            </div>
+
+            <button type="button" class="verify-btn" id="verifyBtn" onclick="verifyEmailOtp()" disabled>
+              <span class="btn-text">सत्यापन गर्नुहोस्</span>
+              <span class="spinner"></span>
+            </button>
+          </div>
+
+          <div class="demo-box" id="demoBox">
+            <strong>🧪 डेमो:</strong>
+            <div>Console मा OTP हेर्नुहोस् (F12 थिच्नुहोस्)</div>
+            <div class="demo-otp" id="demoOtpDisplay">OTP: ---</div>
+          </div>
+
+          <div style="text-align:center;margin-top:20px">
+            <a href="login.html" class="auth-link" style="font-size:14px">← लगइन पेजमा फर्कनुहोस्</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Success Overlay -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+      <div class="success-icon">✅</div>
+      <h2>सत्यापन सफल!</h2>
+      <p>तपाईंको इमेल सफलतापूर्वक सत्यापित भयो। अब तपाईं लगइन गर्न सक्नुहुन्छ।</p>
+      <button onclick="goToLogin()">लगइन गर्नुहोस्</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth-system.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let resendTimer = null;
+    let timerSeconds = 300;
+    let attemptCount = 0;
+    const maxAttempts = 5;
+    let pendingEmail = '';
+
+    document.addEventListener('DOMContentLoaded', function() {
+      App.init();
+
+      const params = new URLSearchParams(window.location.search);
+      pendingEmail = params.get('email') || '';
+      if (!pendingEmail) {
+        pendingEmail = sessionStorage.getItem('agri_pendingEmail') || '';
+      }
+
+      if (pendingEmail) {
+        document.getElementById('emailDisplayText').textContent = `"${pendingEmail}" मा पठाइएको कोड प्रविष्ट गर्नुहोस्।`;
+        sessionStorage.setItem('agri_pendingEmail', pendingEmail);
+      }
+
+      setupOtpInputs();
+      startResendTimer();
+
+      // Show demo OTP from console
+      setTimeout(() => {
+        console.log('[Email Verification] If OTP was sent, check console for the code.');
+      }, 500);
+    });
+
+    function setupOtpInputs() {
+      const inputs = document.querySelectorAll('.otp-input');
+      inputs.forEach((input, i) => {
+        input.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+          if (this.value && i < inputs.length - 1) inputs[i + 1].focus();
+          if (this.value) this.classList.add('filled');
+          else this.classList.remove('filled');
+          document.getElementById('verifyBtn').disabled = getOtpValue().length !== 6;
+        });
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Backspace' && !this.value && i > 0) {
+            inputs[i - 1].focus();
+            inputs[i - 1].value = '';
+            inputs[i - 1].classList.remove('filled');
+          }
+          if (e.key === 'Enter') { e.preventDefault(); verifyEmailOtp(); }
+        });
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+          pasted.split('').forEach((char, j) => {
+            if (inputs[j]) {
+              inputs[j].value = char;
+              inputs[j].classList.add('filled');
+            }
+          });
+          if (pasted.length > 0) inputs[Math.min(pasted.length, inputs.length) - 1].focus();
+          if (pasted.length === 6) setTimeout(verifyEmailOtp, 100);
+        });
+      });
+    }
+
+    function getOtpValue() {
+      return Array.from(document.querySelectorAll('.otp-input')).map(i => i.value).join('');
+    }
+
+    function verifyEmailOtp() {
+      const otp = getOtpValue();
+      if (otp.length !== 6) return;
+      if (attemptCount >= maxAttempts) {
+        showVerifyError('धेरै पटक प्रयास भयो। कृपया फेरि प्रयास गर्नुहोस्');
+        return;
+      }
+
+      showVerifyLoading(true);
+      setTimeout(() => {
+        const result = AuthSystem.verifyEmail(otp);
+        showVerifyLoading(false);
+
+        if (result.success) {
+          document.getElementById('successOverlay').classList.add('visible');
+        } else {
+          attemptCount++;
+          showVerifyError(result.message);
+          document.querySelectorAll('.otp-input').forEach(i => {
+            i.value = '';
+            i.classList.remove('filled');
+            i.classList.add('error');
+          });
+          setTimeout(() => {
+            document.querySelectorAll('.otp-input').forEach(i => i.classList.remove('error'));
+            document.querySelector('.otp-input').focus();
+          }, 500);
+        }
+      }, 800);
+    }
+
+    function resendEmailOtp() {
+      if (!pendingEmail) return;
+      showVerifyLoading(true);
+      setTimeout(() => {
+        const result = AuthSystem.sendEmailVerification(
+          DB.getUserByEmail(pendingEmail)?.id
+        );
+        showVerifyLoading(false);
+
+        if (result && result.success) {
+          showVerifySuccess('नयाँ सत्यापन कोड पठाइयो!');
+          startResendTimer();
+          console.log('[Email Verification] OTP:', result.otp);
+          document.getElementById('demoOtpDisplay').textContent = 'OTP: ' + result.otp;
+        } else {
+          showVerifyError(result?.message || 'कोड पठाउन असफल');
+        }
+      }, 500);
+    }
+
+    function startResendTimer() {
+      let sec = 60;
+      const btn = document.getElementById('resendBtn');
+      const text = document.getElementById('resendText');
+      btn.disabled = true;
+      if (resendTimer) clearInterval(resendTimer);
+      resendTimer = setInterval(() => {
+        sec--;
+        text.textContent = `पुन: पठाउनुहोस् (${sec} सेकेन्ड)`;
+        if (sec <= 0) {
+          clearInterval(resendTimer);
+          btn.disabled = false;
+          text.textContent = 'पुन: पठाउनुहोस्';
+        }
+      }, 1000);
+    }
+
+    function showVerifyError(msg) {
+      const el = document.getElementById('verifyError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      document.getElementById('verifySuccess').classList.add('hidden');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function showVerifySuccess(msg) {
+      const el = document.getElementById('verifySuccess');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      document.getElementById('verifyError').classList.add('hidden');
+    }
+
+    function showVerifyLoading(show) {
+      document.getElementById('verifyBtn').disabled = show;
+      document.getElementById('verifyBtn').classList.toggle('loading', show);
+    }
+
+    function goToLogin() {
+      localStorage.removeItem('agri_currentUser');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

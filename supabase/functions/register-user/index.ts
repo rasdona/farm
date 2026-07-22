@@ -1,11 +1,12 @@
 // ============================================================
-// register-user: Register with mobile, email, or both
+// register-user: Register with email (mandatory) + mobile (mandatory)
+// Email verification is required. Mobile OTP is reserved for future.
 // ============================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   getSupabase, jsonResp, errorResp, parseBody, getIP, getUserAgent,
   parseUserAgent, verifyCaptcha, isValidNepalMobile, isValidEmail,
-  normalizePhone, sendSMS, sendEmail, smsOTPTemplate, emailOTPTemplate,
+  normalizePhone, sendEmail, emailOTPTemplate,
 } from "../_shared/utils.ts";
 
 serve(async (req: Request): Promise<Response> => {
@@ -25,34 +26,32 @@ serve(async (req: Request): Promise<Response> => {
 
   try {
     const body = await parseBody(req);
-    if (!body?.full_name || !body?.password) {
-      return errorResp("full_name and password are required", 400, origin);
+    if (!body?.full_name || !body?.email || !body?.mobile_number || !body?.password) {
+      return errorResp("full_name, email, mobile_number, and password are required", 400, origin);
     }
 
     const {
       full_name,
-      mobile_number,
       email,
+      mobile_number,
       password,
       preferred_language = "en",
       captcha_token,
     } = body;
 
-    // Validate at least one contact
-    if (!mobile_number && !email) {
-      return errorResp("Either mobile or email is required", 400, origin);
+    // Validate email (mandatory)
+    if (!email || !isValidEmail(email)) {
+      return errorResp("Valid email address is required", 400, origin);
     }
 
-    // Validate formats
-    if (mobile_number && !isValidNepalMobile(mobile_number)) {
-      return errorResp("Invalid Nepal mobile number", 400, origin);
-    }
-    if (email && !isValidEmail(email)) {
-      return errorResp("Invalid email address", 400, origin);
+    // Validate mobile (mandatory)
+    if (!mobile_number || !isValidNepalMobile(mobile_number)) {
+      return errorResp("Valid Nepal mobile number is required", 400, origin);
     }
 
     // Normalize
-    const normalizedMobile = mobile_number ? normalizePhone(mobile_number) : null;
+    const normalizedMobile = normalizePhone(mobile_number);
+    const normalizedEmail = email.toLowerCase().trim();
 
     // CAPTCHA check
     if (captcha_token) {
@@ -65,40 +64,31 @@ serve(async (req: Request): Promise<Response> => {
 
     const sb = getSupabase();
 
-    // Check existing user
-    if (normalizedMobile) {
-      const { data: existing } = await sb
-        .from("users")
-        .select("id")
-        .eq("mobile_number", normalizedMobile)
-        .single();
-      if (existing) {
-        return errorResp("Mobile number already registered", 409, origin);
-      }
-    }
-    if (email) {
-      const { data: existing } = await sb
-        .from("users")
-        .select("id")
-        .eq("email", email.toLowerCase())
-        .single();
-      if (existing) {
-        return errorResp("Email already registered", 409, origin);
-      }
+    // Check existing user by email
+    const { data: existingEmail } = await sb
+      .from("users")
+      .select("id")
+      .eq("email", normalizedEmail)
+      .single();
+    if (existingEmail) {
+      return errorResp("Email already registered", 409, origin);
     }
 
-    // Determine registration method
-    let registrationMethod = "mobile";
-    if (email && !mobile_number) registrationMethod = "email";
-    else if (email && mobile_number) registrationMethod = "both";
+    // Check existing user by mobile
+    const { data: existingMobile } = await sb
+      .from("users")
+      .select("id")
+      .eq("mobile_number", normalizedMobile)
+      .single();
+    if (existingMobile) {
+      return errorResp("Mobile number already registered", 409, origin);
+    }
 
-    // Create auth user
+    // Create auth user with email (email confirmation required)
     const { data: authData, error: authErr } = await sb.auth.admin.createUser({
-      email: email || undefined,
-      phone: normalizedMobile || undefined,
+      email: normalizedEmail,
       password,
-      email_confirm: !mobile_number, // confirm email if only email
-      phone_confirm: false,
+      email_confirm: false, // Require email verification
     });
 
     if (authErr) {
@@ -108,20 +98,24 @@ serve(async (req: Request): Promise<Response> => {
 
     const authUserId = authData.user.id;
 
-    // Create profile
+    // Create profile with all required and future-ready fields
     const { error: profileErr } = await sb.from("users").insert({
       id: authUserId,
       full_name: full_name.trim(),
       mobile_number: normalizedMobile,
-      email: email?.toLowerCase() || null,
+      email: normalizedEmail,
       preferred_language,
-      registration_method: registrationMethod,
-      mobile_verified: false,
-      email_verified: false,
+      registration_method: "email", // Email is primary verification method
+      mobile_verified: false,       // Reserved for future SMS OTP
+      email_verified: false,        // Will be set to true after verification
       account_status: "pending_verification",
       verification_status: "unverified",
       requires_photo_upload: true,
       profile_photo_verified: false,
+      // Future-ready fields for SMS OTP
+      verification_method: "email",  // Current method: email
+      failed_otp_attempts: 0,
+      otp_locked_until: null,
     });
 
     if (profileErr) {
@@ -130,61 +124,33 @@ serve(async (req: Request): Promise<Response> => {
       return errorResp("Failed to create profile", 500, origin);
     }
 
-    // Send first OTP
+    // Send email verification OTP
     const ip = getIP(req);
     const ua = getUserAgent(req);
     let otpSent = false;
-    let otpMethod = null;
 
-    if (normalizedMobile) {
-      const { data: otpResult } = await sb.rpc("create_otp", {
-        p_user_id: authUserId,
-        p_identifier: normalizedMobile,
-        p_identifier_type: "mobile",
-        p_purpose: "registration",
-        p_ip_address: ip,
-        p_user_agent: ua,
-      });
+    const { data: otpResult } = await sb.rpc("create_otp", {
+      p_user_id: authUserId,
+      p_identifier: normalizedEmail,
+      p_identifier_type: "email",
+      p_purpose: "email_verify",
+      p_ip_address: ip,
+      p_user_agent: ua,
+    });
 
-      if (otpResult?.[0]?.otp_code) {
-        const smsResult = await sendSMS(
-          normalizedMobile,
-          smsOTPTemplate(otpResult[0].otp_code, "registration")
-        );
-        otpSent = smsResult.success;
-        otpMethod = "mobile";
+    if (otpResult?.[0]?.otp_code) {
+      const emailResult = await sendEmail(
+        normalizedEmail,
+        `Your KrishiConnect Email Verification Code: ${otpResult[0].otp_code}`,
+        emailOTPTemplate(otpResult[0].otp_code, "email_verify")
+      );
+      otpSent = emailResult.success;
 
-        await sb.from("otp_records").update({
-          delivery_status: smsResult.success ? "sent" : "failed",
-          delivery_error: smsResult.error || null,
-          delivery_provider: smsResult.provider,
-        }).eq("id", otpResult[0].otp_id);
-      }
-    } else if (email) {
-      const { data: otpResult } = await sb.rpc("create_otp", {
-        p_user_id: authUserId,
-        p_identifier: email.toLowerCase(),
-        p_identifier_type: "email",
-        p_purpose: "registration",
-        p_ip_address: ip,
-        p_user_agent: ua,
-      });
-
-      if (otpResult?.[0]?.otp_code) {
-        const emailResult = await sendEmail(
-          email,
-          `Your KrishiConnect Verification Code: ${otpResult[0].otp_code}`,
-          emailOTPTemplate(otpResult[0].otp_code, "registration")
-        );
-        otpSent = emailResult.success;
-        otpMethod = "email";
-
-        await sb.from("otp_records").update({
-          delivery_status: emailResult.success ? "sent" : "failed",
-          delivery_error: emailResult.error || null,
-          delivery_provider: emailResult.provider,
-        }).eq("id", otpResult[0].otp_id);
-      }
+      await sb.from("otp_records").update({
+        delivery_status: emailResult.success ? "sent" : "failed",
+        delivery_error: emailResult.error || null,
+        delivery_provider: emailResult.provider,
+      }).eq("id", otpResult[0].otp_id);
     }
 
     // Dev mode: include OTP
@@ -192,13 +158,13 @@ serve(async (req: Request): Promise<Response> => {
 
     return jsonResp({
       success: true,
-      message: "Account created. Please verify your " + (otpMethod || "account"),
+      message: "Account created. Please verify your email address.",
       user_id: authUserId,
       requires_verification: true,
-      verification_method: otpMethod,
-      email: email || null,
-      mobile: normalizedMobile || null,
-      dev_otp: devMode ? "Check server logs" : undefined,
+      verification_method: "email",
+      email: normalizedEmail,
+      mobile: normalizedMobile,
+      dev_otp: devMode ? otpResult?.[0]?.otp_code : undefined,
     }, 201, origin);
 
   } catch (err) {

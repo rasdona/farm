@@ -82,6 +82,21 @@ const Auth = {
     return this.currentUser.profilePhotoUrl || this.currentUser.avatar || '';
   },
 
+  isEmailVerified() {
+    return this.currentUser?.emailVerified === true;
+  },
+
+  requireEmailVerification() {
+    if (!this.requireAuth()) return false;
+    if (this.currentUser.role === 'admin') return true;
+    if (!this.currentUser.emailVerified) {
+      Utils.toast('कृपया इमेल सत्यापन गर्नुहोस् / Please verify your email to continue.', 'warning');
+      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(this.currentUser.email); }, 500);
+      return false;
+    }
+    return true;
+  },
+
   requireRole(role) {
     if (!this.requireAuth()) return false;
     if (this.currentUser.role !== 'admin' && !this.hasRole(role)) {

@@ -108,12 +108,22 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     if (user.account_status === "pending_verification") {
+      // Check if email is verified
+      if (!user.email_verified) {
+        return jsonResp({
+          success: false,
+          message: "Your email address has not been verified. Please verify your email before logging in.",
+          requires_email_verification: true,
+          user_id: user.id,
+          email: user.email,
+        }, 200, origin);
+      }
       return jsonResp({
         success: false,
-        message: "Account not yet verified. Please verify your mobile or email.",
-        requires_verification: true,
+        message: "Account not yet verified. Please verify your email.",
+        requires_email_verification: true,
         user_id: user.id,
-        verification_method: user.registration_method,
+        email: user.email,
       }, 200, origin);
     }
 

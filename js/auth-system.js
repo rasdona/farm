@@ -9,6 +9,7 @@ const AuthSystem = {
   validateRegistration(data) {
     const errors = [];
     if (!data.name || data.name.trim().length < 2) errors.push({ field: 'name', message: 'कृपया पूरा नाम लेख्नुहोस् / Full name is required' });
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push({ field: 'email', message: 'मान्य इमेल लेख्नुहोस् / Valid email address is required' });
     if (!data.phone || !/^[9][0-9]{9}$/.test(data.phone.replace(/\s/g, ''))) errors.push({ field: 'phone', message: 'मान्य फोन नम्बर लेख्नुहोस् (98XXXXXXXX) / Valid 10-digit phone number required' });
     if (!data.password || data.password.length < 8) errors.push({ field: 'password', message: 'पासवर्ड कम्तिमा ८ अक्षरको हुनुपर्छ / Password must be at least 8 characters' });
     if (!/[A-Z]/.test(data.password)) errors.push({ field: 'password', message: 'पासवर्डमा ठूलो अक्षर हुनुपर्छ / Password must contain uppercase letter' });
@@ -19,7 +20,6 @@ const AuthSystem = {
     if (!data.roles || data.roles.length === 0) errors.push({ field: 'roles', message: 'कम्तिमा एउटा भूमिका छान्नुहोस् / Select at least one role' });
     if (!data.province) errors.push({ field: 'province', message: 'प्रदेश छान्नुहोस् / Select province' });
     if (!data.district) errors.push({ field: 'district', message: 'जिल्ला छान्नुहोस् / Select district' });
-    if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push({ field: 'email', message: 'मान्य इमेल लेख्नुहोस् / Valid email address required' });
     return errors;
   },
 
@@ -28,7 +28,7 @@ const AuthSystem = {
     if (validation.length > 0) return { success: false, errors: validation };
 
     if (DB.getUserByPhone(data.phone)) return { success: false, errors: [{ field: 'phone', message: 'यो फोन नम्बर पहिले नै दर्ता भएको छ / Mobile number already registered' }] };
-    if (data.email && DB.getUserByEmail(data.email)) return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ / Email already registered' }] };
+    if (DB.getUserByEmail(data.email)) return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ / Email already registered' }] };
 
     const hashedPassword = await DB.hashPassword(data.password);
     const phone = data.phone.replace(/\s/g, '');
@@ -36,7 +36,7 @@ const AuthSystem = {
     const user = {
       name: data.name.trim(),
       phone: phone,
-      email: data.email || '',
+      email: data.email.trim().toLowerCase(),
       password: hashedPassword,
       roles: data.roles,
       role: data.roles[0],
@@ -50,22 +50,35 @@ const AuthSystem = {
       preferredLanguage: data.preferredLanguage || 'ne',
       avatar: '',
       verified: false,
-      phoneVerified: false,
-      emailVerified: false,
-      farmVerified: false,
       suspended: false,
       lockedUntil: null,
       failedLoginAttempts: 0,
+      emailVerified: false,
+      phoneVerified: false,
+      mobileVerified: false,
+      verificationMethod: 'email',
+      mobileOtpReserved: false,
       createdAt: new Date().toISOString()
     };
 
     const created = DB.addUser(user);
     data.roles.forEach(role => DB.addUserRole(created.id, role));
-    const otpResult = DB.createPhoneOtp(created.id, phone);
+
+    // Create email verification token (both OTP and link)
+    const emailOtpResult = DB.createEmailOtp(created.id, data.email.trim().toLowerCase());
+    const emailLinkResult = DB.createEmailVerificationLink(created.id, data.email.trim().toLowerCase());
+
     DB.addAuditLog({ action: 'register', userId: created.id, details: `New user registered: ${created.name} (${data.roles.join(', ')})`, ip: this._getIP() });
     DB.addNotification({ userId: created.id, type: 'welcome', text: `स्वागत छ, ${created.name}! / Welcome to KrishiConnect Nepal!`, link: '#' });
 
-    return { success: true, user: created, otpId: otpResult.id, otp: otpResult.otp };
+    return {
+      success: true,
+      user: created,
+      emailOtp: emailOtpResult.otp,
+      emailLinkId: emailLinkResult.id,
+      emailLinkToken: emailLinkResult.token,
+      message: 'Account created. Please verify your email address.'
+    };
   },
 
   // ═══════════════════════════════════════════════════════
@@ -103,6 +116,18 @@ const AuthSystem = {
     if (user.suspended) return { success: false, message: 'तपाईंको खाता निलम्बन गरिएको छ / Your account has been suspended', field: 'identifier' };
     if (DB.isAccountLocked(user.id)) return { success: false, message: 'धेरै पटक गलत प्रयास भएको छ। कृपया पछि लगइन गर्नुहोस् / Account temporarily locked due to multiple failed attempts', field: 'identifier' };
 
+    // Check email verification - block login if email not verified
+    if (user.email && !user.emailVerified) {
+      return {
+        success: false,
+        message: 'तपाईंको इमेल ठेगाना सत्यापित भएको छैन। कृपया इमेल सत्यापन गर्नुहोस्। / Your email address has not been verified. Please verify your email before logging in.',
+        field: 'identifier',
+        requiresEmailVerification: true,
+        userId: user.id,
+        email: user.email
+      };
+    }
+
     const valid = await DB.verifyPassword(password, user.password);
     if (!valid) {
       DB.incrementFailedLogin(user.id);
@@ -124,14 +149,59 @@ const AuthSystem = {
   },
 
   // ═══════════════════════════════════════════════════════
-  // OTP VERIFICATION
+  // EMAIL VERIFICATION
+  // ═══════════════════════════════════════════════════════
+
+  sendEmailVerification(userId) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    if (!user.email) return { success: false, message: 'No email address on file' };
+    if (user.emailVerified) return { success: false, message: 'Email already verified' };
+
+    const result = DB.createEmailOtp(userId, user.email);
+    console.log(`[Email Verification] Email: ${user.email} OTP: ${result.otp} (simulated)`);
+    return { success: true, otpId: result.id, otp: result.otp, message: `Verification code sent to ${user.email}` };
+  },
+
+  verifyEmail(otp) {
+    const pendingEmail = sessionStorage.getItem('agri_pendingEmail');
+    if (!pendingEmail) return { success: false, message: 'Session expired. Please login again.' };
+    const result = DB.verifyEmailOtp(pendingEmail, otp);
+    if (result.success) {
+      DB.addAuditLog({ action: 'email_verified', userId: result.userId, details: `Email verified: ${pendingEmail}` });
+      sessionStorage.removeItem('agri_pendingEmail');
+    }
+    return result;
+  },
+
+  resendEmailVerification(email) {
+    const user = DB.getUserByEmail(email);
+    if (!user) return { success: false, message: 'यो इमेलमा खाता छैन / No account found with this email' };
+    if (user.emailVerified) return { success: false, message: 'Email already verified' };
+
+    // Invalidate old tokens and create new ones
+    const otpResult = DB.createEmailOtp(user.id, email);
+    const linkResult = DB.createEmailVerificationLink(user.id, email);
+
+    console.log(`[Resend Email Verification] Email: ${email} OTP: ${otpResult.otp} (simulated)`);
+    return {
+      success: true,
+      userId: user.id,
+      otp: otpResult.otp,
+      linkToken: linkResult.token,
+      message: `Verification code sent to ${email}`
+    };
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // OTP VERIFICATION (Phone - Reserved for Future SMS OTP)
   // ═══════════════════════════════════════════════════════
 
   sendPhoneOtp(userId) {
     const user = DB.getUserById(userId);
     if (!user) return { success: false, message: 'User not found' };
     const result = DB.createPhoneOtp(userId, user.phone);
-    console.log(`[OTP] Phone: ${user.phone} OTP: ${result.otp} (simulated SMS)`);
+    console.log(`[OTP] Phone: ${user.phone} OTP: ${result.otp} (simulated SMS - reserved for future use)`);
     return { success: true, otpId: result.id, otp: result.otp, message: `OTP sent to ${user.phone}` };
   },
 
@@ -240,13 +310,13 @@ const AuthSystem = {
     const total = 10;
     const tasks = [];
     if (user.name) completed++; else tasks.push('Add your name');
+    if (user.email) completed++; else tasks.push('Add email address');
+    if (user.emailVerified) completed++; else tasks.push('Verify your email');
     if (user.phone) completed++; else tasks.push('Add phone number');
     if (user.district) completed++; else tasks.push('Add your district');
     if (user.roles && user.roles.length > 0) completed++; else tasks.push('Select your role');
     if (this.hasUploadedPhoto(user)) completed++; else tasks.push('Upload profile photo');
-    if (user.phoneVerified) completed++; else tasks.push('Verify your phone');
-    if (user.email) completed++; else tasks.push('Add email (optional)');
-    if (user.emailVerified) completed++; else tasks.push('Verify email');
+    if (user.phoneVerified || user.mobileVerified) completed++; else tasks.push('Verify phone (future)');
     if (user.citizenshipNumber) completed++; else tasks.push('Add citizenship number');
     if (user.verified) completed++; else tasks.push('Get verified');
     const notCompleted = total - completed;
