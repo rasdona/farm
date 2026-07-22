@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ne" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>दर्ता गर्नुहोस् - KrishiConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main class="auth-page">
+    <div class="auth-container">
+      <div class="auth-card" style="max-width:600px">
+        <div class="auth-header">
+          <a href="index.html" class="auth-brand">
+            <span class="auth-brand-icon">🌱</span>
+            <span>KrishiConnect</span>
+          </a>
+          <h1 class="auth-title">खाता दर्ता गर्नुहोस्</h1>
+          <p class="auth-subtitle">Nepal कृषि समुदायमा सामेल हुनुहोस्</p>
+        </div>
+
+        <div class="auth-steps">
+          <div class="auth-step active" data-step="1"><div class="auth-step-num">1</div><span>विवरण</span></div>
+          <div class="auth-step-line"></div>
+          <div class="auth-step" data-step="2"><div class="auth-step-num">2</div><span>भूमिका</span></div>
+          <div class="auth-step-line"></div>
+          <div class="auth-step" data-step="3"><div class="auth-step-num">3</div><span>ठेगाना</span></div>
+          <div class="auth-step-line"></div>
+          <div class="auth-step" data-step="4"><div class="auth-step-num">4</div><span>सुरक्षा</span></div>
+        </div>
+
+        <div id="regError" class="auth-alert auth-alert-error hidden"></div>
+
+        <form id="registerForm" class="auth-form" onsubmit="return false">
+
+          <!-- STEP 1: Personal Info -->
+          <div class="auth-form-step active" id="step1">
+            <div class="auth-input-group">
+              <label class="auth-label" for="regName">पूरा नाम <span class="required">*</span></label>
+              <input type="text" class="auth-input" id="regName" placeholder="जस्तै: राम प्रसाद शर्मा" required>
+            </div>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regPhone">फोन नम्बर <span class="required">*</span></label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">📱</span>
+                <input type="tel" class="auth-input" id="regPhone" placeholder="98XXXXXXXX" required pattern="[9][0-9]{9}" maxlength="10">
+              </div>
+              <div class="auth-input-hint">१० अंकको नेपाली फोन नम्बर</div>
+            </div>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regEmail">इमेल <span class="auth-optional">(वैकल्पिक)</span></label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">📧</span>
+                <input type="email" class="auth-input" id="regEmail" placeholder="तपाईंको इमेल (वैकल्पिक)">
+              </div>
+              <div class="auth-input-hint">इमेल नभए पनि सबै सुविधा प्राप्त हुन्छ</div>
+            </div>
+
+            <div class="auth-row">
+              <div class="auth-input-group" style="flex:1">
+                <label class="auth-label" for="regGender">लिङ्ग</label>
+                <select class="auth-select" id="regGender">
+                  <option value="">छान्नुहोस्</option>
+                  <option value="male">पुरुष</option>
+                  <option value="female">महिला</option>
+                  <option value="other">अन्य</option>
+                </select>
+              </div>
+              <div class="auth-input-group" style="flex:1">
+                <label class="auth-label" for="regDob">जन्म मिति</label>
+                <input type="date" class="auth-input" id="regDob">
+              </div>
+            </div>
+
+            <button type="button" class="auth-btn auth-btn-primary auth-btn-lg auth-btn-block" onclick="goToStep(2)">अर्को चरण →</button>
+          </div>
+
+          <!-- STEP 2: Role Selection -->
+          <div class="auth-form-step" id="step2">
+            <h3 class="auth-section-title">तपाईंको भूमिका छान्नुहोस् <span class="required">*</span></h3>
+            <p class="auth-section-desc">एउटा वा बढी भूमिका छान्न सक्नुहुन्छ</p>
+
+            <div class="auth-role-grid" id="roleGrid">
+              <label class="auth-role-card" data-role="farmer">
+                <input type="checkbox" name="roles" value="farmer" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">🌾</div>
+                  <div class="auth-role-name">किसान</div>
+                  <div class="auth-role-desc">रोजगारी पोस्ट, खेत व्यवस्थापन, अर्मा पर्मा</div>
+                </div>
+              </label>
+              <label class="auth-role-card" data-role="worker">
+                <input type="checkbox" name="roles" value="worker" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">👷</div>
+                  <div class="auth-role-name">श्रमिक</div>
+                  <div class="auth-role-desc">रोजगारी खोज्नुहोस्, क्रेडिट कमाउनुहोस्</div>
+                </div>
+              </label>
+              <label class="auth-role-card" data-role="buyer">
+                <input type="checkbox" name="roles" value="buyer" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">🛒</div>
+                  <div class="auth-role-name">किन्ने व्यक्ति</div>
+                  <div class="auth-role-desc">कृषि उत्पादन किन्नुहोस्</div>
+                </div>
+              </label>
+              <label class="auth-role-card" data-role="equipment_owner">
+                <input type="checkbox" name="roles" value="equipment_owner" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">🚜</div>
+                  <div class="auth-role-name">उपकरण स्वामी</div>
+                  <div class="auth-role-desc">कृषि उपकरण किराया/बिक्री</div>
+                </div>
+              </label>
+              <label class="auth-role-card" data-role="expert">
+                <input type="checkbox" name="roles" value="expert" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">🎓</div>
+                  <div class="auth-role-name">कृषि विशेषज्ञ</div>
+                  <div class="auth-role-desc">परामर्श र सुझाव दिनुहोस्</div>
+                </div>
+              </label>
+              <label class="auth-role-card" data-role="cooperative">
+                <input type="checkbox" name="roles" value="cooperative" class="auth-role-check">
+                <div class="auth-role-content">
+                  <div class="auth-role-icon">🏛️</div>
+                  <div class="auth-role-name">सहकारी सदस्य</div>
+                  <div class="auth-role-desc">सहकारी प्रतिनिधित्व</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="auth-flex-row auth-mt-4">
+              <button type="button" class="auth-btn auth-btn-outline auth-btn-lg" onclick="goToStep(1)">← पछाडि</button>
+              <button type="button" class="auth-btn auth-btn-primary auth-btn-lg" onclick="goToStep(3)">अर्को →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3: Location -->
+          <div class="auth-form-step" id="step3">
+            <h3 class="auth-section-title">ठेगाना <span class="required">*</span></h3>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regProvince">प्रदेश <span class="required">*</span></label>
+              <select class="auth-select" id="regProvince" required onchange="updateDistricts()">
+                <option value="">प्रदेश छान्नुहोस्</option>
+              </select>
+            </div>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regDistrict">जिल्ला <span class="required">*</span></label>
+              <select class="auth-select" id="regDistrict" required onchange="updateMunicipalities()">
+                <option value="">पहिले प्रदेश छान्नुहोस्</option>
+              </select>
+            </div>
+
+            <div class="auth-row">
+              <div class="auth-input-group" style="flex:1">
+                <label class="auth-label" for="regMunicipality">नगरपालिका / गाउँपालिका</label>
+                <input type="text" class="auth-input" id="regMunicipality" placeholder="जस्तै: भरतपुर नगरपालिका">
+              </div>
+              <div class="auth-input-group" style="flex:80px">
+                <label class="auth-label" for="regWard">वडा नं.</label>
+                <input type="number" class="auth-input" id="regWard" placeholder="वडा" min="1" max="35">
+              </div>
+            </div>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regCitizenship">नागरिकता नं. <span class="auth-optional">(वैकल्पिक)</span></label>
+              <input type="text" class="auth-input" id="regCitizenship" placeholder="नागरिकता नम्बर">
+            </div>
+
+            <div class="auth-flex-row auth-mt-4">
+              <button type="button" class="auth-btn auth-btn-outline auth-btn-lg" onclick="goToStep(2)">← पछाडि</button>
+              <button type="button" class="auth-btn auth-btn-primary auth-btn-lg" onclick="goToStep(4)">अर्को →</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: Password -->
+          <div class="auth-form-step" id="step4">
+            <h3 class="auth-section-title">सुरक्षा</h3>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regPassword">पासवर्ड <span class="required">*</span></label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">🔒</span>
+                <input type="password" class="auth-input" id="regPassword" placeholder="कम्तिमा ८ अक्षर" required minlength="8" oninput="updatePasswordStrength()">
+                <button type="button" class="auth-toggle-pwd" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+              </div>
+              <div class="auth-pwd-strength" id="pwdStrengthBar">
+                <div class="auth-pwd-strength-fill" id="pwdStrengthFill"></div>
+              </div>
+              <div class="auth-pwd-strength-label" id="pwdStrengthLabel"></div>
+              <div class="auth-pwd-requirements" id="pwdRequirements">
+                <div class="auth-pwd-req" id="reqLength">कम्तिमा ८ अक्षर</div>
+                <div class="auth-pwd-req" id="reqUpper">ठूलो अक्षर (A-Z)</div>
+                <div class="auth-pwd-req" id="reqLower">सानो अक्षर (a-z)</div>
+                <div class="auth-pwd-req" id="reqNumber">अंक (0-9)</div>
+                <div class="auth-pwd-req" id="reqSpecial">विशेष चिह्न (!@#$)</div>
+              </div>
+            </div>
+
+            <div class="auth-input-group">
+              <label class="auth-label" for="regConfirmPassword">पासवर्ड पुष्टि <span class="required">*</span></label>
+              <div class="auth-input-wrapper">
+                <span class="auth-input-icon">🔒</span>
+                <input type="password" class="auth-input" id="regConfirmPassword" placeholder="पासवर्ड फेरि लेख्नुहोस्" required>
+              </div>
+            </div>
+
+            <label class="auth-check auth-mb-4">
+              <input type="checkbox" id="regTerms" required>
+              <span>म <a href="#">सेवाका शर्तहरू</a> र <a href="#">गोपनीयता नीति</a> सहमत छु</span>
+            </label>
+
+            <div class="auth-flex-row auth-mb-4">
+              <button type="button" class="auth-btn auth-btn-outline auth-btn-lg" onclick="goToStep(3)">← पछाडि</button>
+              <button type="submit" class="auth-btn auth-btn-primary auth-btn-lg" id="regSubmitBtn" onclick="handleRegister()">दर्ता गर्नुहोस्</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="auth-divider"><span>वा</span></div>
+        <p class="auth-text-center">पहिले नै खाता छ? <a href="login.html" class="auth-link-bold">लगइन गर्नुहोस्</a></p>
+      </div>
+    </div>
+  </main>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script src="js/register.js"></script>
+</body>
+</html>

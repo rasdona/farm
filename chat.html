@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Messages - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <div class="chat-layout">
+    <aside class="chat-sidebar">
+      <div class="chat-sidebar-header">
+        <h3>Messages</h3>
+        <div class="chat-sidebar-search">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search conversations...">
+        </div>
+      </div>
+      <div class="chat-contacts" id="chatContacts"></div>
+    </aside>
+    <main class="chat-main">
+      <div class="chat-header" id="chatHeader">
+        <div class="empty-state" style="flex:1;padding:20px"><p class="text-muted">Select a conversation to start chatting</p></div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <button class="chat-attach-btn" title="Attach file">📎</button>
+        <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){Chat.sendMessage(this.value);event.preventDefault();}">
+        <button class="chat-send-btn" onclick="Chat.sendMessage(document.getElementById('chatInput').value)">➤</button>
+      </div>
+    </main>
+  </div>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/chat.js"></script>
+  <script>
+    App.init();
+    Chat.renderChatPage();
+  </script>
+</body>
+</html>

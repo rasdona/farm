@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Settings - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/dashboard.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh">
+    <div class="container">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Settings</span></div>
+      <h1 style="font-size:1.6rem;margin-bottom:24px">Account Settings</h1>
+      <div class="settings-layout">
+        <div class="settings-sidebar">
+          <a href="#profile" class="active" onclick="showSettingsSection('profile',this)">👤 Profile</a>
+          <a href="#account" onclick="showSettingsSection('account',this)">🔐 Account</a>
+          <a href="#notifications" onclick="showSettingsSection('notifications',this)">🔔 Notifications</a>
+          <a href="#appearance" onclick="showSettingsSection('appearance',this)">🎨 Appearance</a>
+          <a href="#danger" onclick="showSettingsSection('danger',this)">⚠️ Danger Zone</a>
+        </div>
+        <div>
+          <div id="settingsProfile" class="settings-section">
+            <h3>Edit Profile</h3>
+            <p class="subtitle">Update your personal information</p>
+            <div class="settings-group">
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="setName"></div>
+                <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="setPhone"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="setEmail" type="email"></div>
+              <div class="form-group"><label class="form-label">Bio / Description</label><textarea class="form-textarea" id="setBio" rows="3"></textarea></div>
+              <div id="farmerSettings" class="hidden">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Farm Name</label><input class="form-input" id="setFarmName"></div>
+                  <div class="form-group"><label class="form-label">Farm Size</label><input class="form-input" id="setFarmSize"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Crops (comma separated)</label><input class="form-input" id="setCrops"></div>
+              </div>
+              <div id="workerSettings" class="hidden">
+                <div class="form-group"><label class="form-label">Skills (comma separated)</label><input class="form-input" id="setSkills"></div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Experience (years)</label><input type="number" class="form-input" id="setExp"></div>
+                  <div class="form-group"><label class="form-label">Expected Daily Wage</label><input type="number" class="form-input" id="setDailyWage"></div>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+            </div>
+          </div>
+          <div id="settingsAccount" class="settings-section hidden">
+            <h3>Account Security</h3>
+            <p class="subtitle">Manage your password and security settings</p>
+            <div class="settings-group">
+              <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" id="setCurrPwd"></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="setNewPwd"></div>
+                <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" id="setConfirmPwd"></div>
+              </div>
+              <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+            </div>
+            <div class="settings-group">
+              <div class="settings-row" id="emailVerifiedRow"><div><div class="settings-row-label">Email Verified</div><div class="settings-row-desc">Your email verification status</div></div></div>
+              <div class="settings-row" id="phoneVerifiedRow"><div><div class="settings-row-label">Phone Verified</div><div class="settings-row-desc">Your phone number verification status</div></div></div>
+            </div>
+          </div>
+          <div id="settingsNotifications" class="settings-section hidden">
+            <h3>Notification Preferences</h3>
+            <p class="subtitle">Control what notifications you receive</p>
+            <div class="settings-group">
+              <div class="settings-row"><div><div class="settings-row-label">Email Notifications</div><div class="settings-row-desc">Receive notifications via email</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label">Application Alerts</div><div class="settings-row-desc">Get notified when someone applies</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label">Message Notifications</div><div class="settings-row-desc">Get notified for new messages</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label">Marketing Emails</div><div class="settings-row-desc">Receive tips and platform updates</div></div><label class="toggle"><input type="checkbox"><span class="slider"></span></label></div>
+            </div>
+          </div>
+          <div id="settingsAppearance" class="settings-section hidden">
+            <h3>Appearance</h3>
+            <p class="subtitle">Customize how AgriConnect looks</p>
+            <div class="settings-group">
+              <div class="settings-row"><div><div class="settings-row-label">Dark Mode</div><div class="settings-row-desc">Switch between light and dark theme</div></div><label class="toggle"><input type="checkbox" id="darkModeToggle" onchange="Utils.toggleTheme()"><span class="slider"></span></label></div>
+            </div>
+          </div>
+          <div id="settingsDanger" class="settings-section hidden">
+            <h3 style="color:var(--danger)">Danger Zone</h3>
+            <p class="subtitle">Irreversible actions</p>
+            <div class="settings-group" style="border-color:var(--danger)">
+              <div class="settings-row"><div><div class="settings-row-label">Delete Account</div><div class="settings-row-desc">Permanently delete your account and all data</div></div><button class="btn btn-danger btn-sm" onclick="if(confirm('Are you sure? This cannot be undone.')){DB.deleteUser(Auth.currentUser.id);Auth.logout()}">Delete Account</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script>
+    App.init();
+    if (!Auth.requireAuth()) throw new Error('Not auth');
+    const u = Auth.currentUser;
+    document.getElementById('setName').value = u.name || '';
+    document.getElementById('setPhone').value = u.phone || '';
+    document.getElementById('setEmail').value = u.email || '';
+    document.getElementById('setBio').value = u.bio || u.description || '';
+    if (u.role === 'farmer') {
+      document.getElementById('farmerSettings').classList.remove('hidden');
+      document.getElementById('setFarmName').value = u.farmName || '';
+      document.getElementById('setFarmSize').value = u.farmSize || '';
+      document.getElementById('setCrops').value = (u.crops || []).join(', ');
+    }
+    if (u.role === 'worker') {
+      document.getElementById('workerSettings').classList.remove('hidden');
+      document.getElementById('setSkills').value = (u.skills || []).join(', ');
+      document.getElementById('setExp').value = u.experience || '';
+      document.getElementById('setDailyWage').value = u.expectedWage?.daily || '';
+    }
+    document.getElementById('darkModeToggle').checked = document.documentElement.getAttribute('data-theme') === 'dark';
+    const emailRow = document.getElementById('emailVerifiedRow');
+    const phoneRow = document.getElementById('phoneVerifiedRow');
+    if (emailRow) emailRow.querySelector('div').insertAdjacentHTML('beforeend', u.emailVerified ? '<span class="badge badge-success">✅ Verified</span>' : '<button class="btn btn-outline btn-sm">Verify Email</button>');
+    if (phoneRow) phoneRow.querySelector('div').insertAdjacentHTML('beforeend', u.phoneVerified ? '<span class="badge badge-success">✅ Verified</span>' : '<button class="btn btn-outline btn-sm">Verify Phone</button>');
+    function showSettingsSection(section, el) {
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('settings' + section.charAt(0).toUpperCase() + section.slice(1)).classList.remove('hidden');
+      document.querySelectorAll('.settings-sidebar a').forEach(a => a.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+    function saveSettings() {
+      const data = { name: document.getElementById('setName').value.trim(), phone: document.getElementById('setPhone').value.trim(), email: document.getElementById('setEmail').value.trim(), bio: document.getElementById('setBio').value.trim() };
+      if (u.role === 'farmer') { data.farmName = document.getElementById('setFarmName').value.trim(); data.farmSize = document.getElementById('setFarmSize').value.trim(); data.crops = document.getElementById('setCrops').value.split(',').map(s=>s.trim()).filter(Boolean); }
+      if (u.role === 'worker') { data.skills = document.getElementById('setSkills').value.split(',').map(s=>s.trim()).filter(Boolean); data.experience = parseInt(document.getElementById('setExp').value)||0; data.expectedWage = { ...u.expectedWage, daily: parseInt(document.getElementById('setDailyWage').value)||0 }; }
+      Auth.updateProfile(data);
+      Utils.toast('Settings saved!');
+      setTimeout(() => location.reload(), 500);
+    }
+    function changePassword() {
+      const np = document.getElementById('setNewPwd').value;
+      const cp = document.getElementById('setConfirmPwd').value;
+      if (np.length < 6) { Utils.toast('Password must be at least 6 characters', 'warning'); return; }
+      if (np !== cp) { Utils.toast('Passwords do not match', 'warning'); return; }
+      Auth.updateProfile({ password: np });
+      Utils.toast('Password updated!');
+      document.getElementById('setCurrPwd').value = '';
+      document.getElementById('setNewPwd').value = '';
+      document.getElementById('setConfirmPwd').value = '';
+    }
+  </script>
+</body>
+</html>

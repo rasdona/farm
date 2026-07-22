@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Post a Job - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .work-mode-toggle{display:flex;gap:0;margin-bottom:24px;border-radius:var(--radius-md);overflow:hidden;border:2px solid var(--border)}
+    .work-mode-btn{flex:1;padding:16px;text-align:center;cursor:pointer;transition:var(--transition);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--bg-alt)}
+    .work-mode-btn:hover{background:var(--primary-50)}
+    .work-mode-btn.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .work-mode-btn .mode-icon{font-size:1.8rem}
+    .work-mode-btn .mode-label{font-size:0.95rem}
+    .work-mode-btn .mode-desc{font-size:0.75rem;opacity:0.7;font-weight:400}
+    .arma-fields{display:none;border:2px solid var(--primary);border-radius:var(--radius-md);padding:20px;margin-bottom:24px;background:var(--primary-50)}
+    .arma-fields.show{display:block}
+    .paid-fields.hidden{display:none}
+    .agreement-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-top:16px}
+    .agreement-box h4{margin:0 0 8px;color:var(--primary)}
+    .agreement-box ul{margin:0;padding-left:20px;font-size:0.9rem;color:var(--text-secondary)}
+    .agreement-box li{margin-bottom:4px}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh;background:var(--bg-alt)">
+    <div class="container" style="max-width:800px">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><a href="dashboard-farmer.html">Dashboard</a><span class="separator">/</span><span class="current" id="pageTitle">Post a Job</span></div>
+      <div class="card">
+        <div class="card-header"><h2 id="formTitle" style="font-size:1.3rem">Post a New Job</h2></div>
+        <div class="card-body p-6">
+          <div class="work-mode-toggle" id="workModeToggle">
+            <div class="work-mode-btn active" data-mode="paid" onclick="ArmaParma.toggleWorkMode('paid')">
+              <span class="mode-icon">💰</span>
+              <span class="mode-label">Paid Work</span>
+              <span class="mode-desc">Pay workers a daily, weekly, or monthly wage</span>
+            </div>
+            <div class="work-mode-btn" data-mode="arma-parma" onclick="ArmaParma.toggleWorkMode('arma-parma')">
+              <span class="mode-icon">🤝</span>
+              <span class="mode-label">Arma Parma</span>
+              <span class="mode-desc">Labor exchange — return help later instead of paying</span>
+            </div>
+          </div>
+
+          <form id="postJobForm" onsubmit="handlePostJob(event)">
+            <input type="hidden" id="workMode" value="paid">
+
+            <div class="form-group"><label class="form-label">Job Title <span class="required">*</span></label><input class="form-input" id="jobTitle" required placeholder="e.g. Rice Planting Workers Needed"></div>
+            <div class="form-group"><label class="form-label">Description <span class="required">*</span></label><textarea class="form-textarea" id="jobDesc" rows="5" required placeholder="Describe the job, requirements, working conditions..."></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Crop Type</label><select class="form-select" id="jobCrop"></select></div>
+              <div class="form-group"><label class="form-label">Farm Type</label><select class="form-select" id="jobFarmType"><option>Organic</option><option>Commercial</option><option>Small Scale</option><option>Specialty</option><option>Subsistence</option></select></div>
+            </div>
+            <div class="form-group"><label class="form-label">Required Skills (comma separated)</label><input class="form-input" id="jobSkills" placeholder="e.g. Rice Planting, Weeding, Harvesting"></div>
+
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Work Type</label><select class="form-select" id="jobWorkType"><option value="">Select</option><option>Planting</option><option>Transplanting</option><option>Harvesting</option><option>Weeding</option><option>Irrigation</option><option>Plucking</option><option>Processing</option><option>Maintenance</option><option>Milking</option><option>Feeding</option><option>Composting</option><option>Land Preparation</option><option>Other</option></select></div>
+              <div class="form-group"><label class="form-label">Workers Needed <span class="required">*</span></label><input type="number" class="form-input" id="jobWorkers" required min="1" value="1"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="jobStart"></div>
+              <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="jobEnd"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Start Time</label><input type="time" class="form-input" id="jobStartTime" value="06:00"></div>
+              <div class="form-group"><label class="form-label">Expected Duration</label><input class="form-input" id="jobDuration" placeholder="e.g. 3 days, 1 week"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Working Hours</label><input class="form-input" id="jobHours" placeholder="e.g. 6 AM - 4 PM"></div>
+              <div class="form-group"><label class="form-label">Working Days</label><input class="form-input" id="jobDays" placeholder="e.g. Mon-Sat"></div>
+            </div>
+
+            <div class="paid-fields" id="paidFields">
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Daily Wage (NPR) <span class="required">*</span></label><input type="number" class="form-input" id="jobDailyWage" min="0"></div>
+                <div class="form-group"><label class="form-label">Weekly Wage (NPR)</label><input type="number" class="form-input" id="jobWeeklyWage" min="0"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Monthly Wage (NPR)</label><input type="number" class="form-input" id="jobMonthlyWage" min="0"></div>
+            </div>
+
+            <div class="arma-fields" id="armaFields">
+              <h3 style="margin:0 0 16px;color:var(--primary);font-size:1.1rem">🤝 Arma Parma Details</h3>
+              <div class="form-group"><label class="form-label">Return Labor Commitment <span class="required">*</span></label><textarea class="form-textarea" id="jobReturnCommitment" rows="3" placeholder="Describe how you will return the labor, e.g. I will help for the same number of days during wheat sowing."></textarea></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-check"><input type="checkbox" id="jobTeaSnacks"><span>🍵 Tea/Snacks Provided</span></label></div>
+                <div class="form-group"><label class="form-check"><input type="checkbox" id="jobEquipment"><span>🔧 Equipment Provided</span></label></div>
+              </div>
+
+              <div class="agreement-box">
+                <h4>🤝 Arma Parma Agreement</h4>
+                <p style="font-size:0.85rem;color:var(--text-secondary);margin:0 0 8px">By posting this request, both farmers agree to:</p>
+                <ul>
+                  <li>Equal labor exchange — return the same amount of work</li>
+                  <li>Mutual respect and fair treatment</li>
+                  <li>Safe working conditions for all participants</li>
+                  <li>Completion of agreed work within the specified timeframe</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="form-row mt-4">
+              <div class="form-group"><label class="form-label">District <span class="required">*</span></label><select class="form-select" id="jobDistrict" required></select></div>
+              <div class="form-group"><label class="form-label">Municipality</label><input class="form-input" id="jobMunicipality" placeholder="e.g. Bharatpur"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Ward Number</label><input type="number" class="form-input" id="jobWard" min="1"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobFood"><span>🍽️ Food Provided</span></label></div>
+              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobAccom"><span>🏠 Accommodation Provided</span></label></div>
+            </div>
+            <div class="form-group"><label class="form-check"><input type="checkbox" id="jobUrgent"><span>🔥 Mark as Urgent Hiring</span></label></div>
+            <div class="form-group"><label class="form-label">Additional Notes</label><textarea class="form-textarea" id="jobNotes" rows="3" placeholder="Any additional information for workers..."></textarea></div>
+
+            <div class="flex gap-4 mt-6">
+              <button type="submit" class="btn btn-primary btn-lg" id="submitJobBtn">Post Job</button>
+              <a href="dashboard-farmer.html" class="btn btn-outline btn-lg">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/arma-parma.js"></script>
+  <script>
+    App.init();
+    if (!Auth.requireRole('farmer')) throw new Error('Not authorized');
+    document.getElementById('jobCrop').innerHTML = Jobs.getCropOptions();
+    document.getElementById('jobDistrict').innerHTML = Jobs.getDistrictOptions().replace('All Districts', 'Select District');
+    const editId = Utils.getParam('edit');
+    const editType = Utils.getParam('type');
+    let editingJob = null;
+
+    if (editId) {
+      if (editType === 'arma-parma') {
+        editingJob = DB.getArmaParmaById(editId);
+        if (editingJob && editingJob.farmerId === Auth.currentUser.id) {
+          ArmaParma.toggleWorkMode('arma-parma');
+          document.getElementById('pageTitle').textContent = 'Edit Arma Parma Request';
+          document.getElementById('formTitle').textContent = 'Edit Arma Parma Request';
+          document.getElementById('submitJobBtn').textContent = 'Save Changes';
+          document.getElementById('jobTitle').value = editingJob.title || '';
+          document.getElementById('jobDesc').value = editingJob.description || '';
+          document.getElementById('jobCrop').value = editingJob.cropType || '';
+          document.getElementById('jobWorkType').value = editingJob.workType || '';
+          document.getElementById('jobWorkers').value = editingJob.helpersNeeded || 1;
+          document.getElementById('jobStart').value = editingJob.date || '';
+          document.getElementById('jobStartTime').value = editingJob.startTime || '06:00';
+          document.getElementById('jobDuration').value = editingJob.expectedDuration || '';
+          document.getElementById('jobDistrict').value = editingJob.district || '';
+          document.getElementById('jobMunicipality').value = editingJob.municipality || '';
+          document.getElementById('jobWard').value = editingJob.ward || '';
+          document.getElementById('jobFood').checked = editingJob.foodProvided;
+          document.getElementById('jobTeaSnacks').checked = editingJob.teaSnacksProvided;
+          document.getElementById('jobEquipment').checked = editingJob.equipmentProvided;
+          document.getElementById('jobReturnCommitment').value = editingJob.returnCommitment || '';
+          document.getElementById('jobNotes').value = editingJob.additionalNotes || '';
+        }
+      } else {
+        editingJob = DB.getJobById(editId);
+        if (editingJob && editingJob.farmerId === Auth.currentUser.id) {
+          document.getElementById('pageTitle').textContent = 'Edit Job';
+          document.getElementById('formTitle').textContent = 'Edit Job Posting';
+          document.getElementById('submitJobBtn').textContent = 'Save Changes';
+          document.getElementById('jobTitle').value = editingJob.title || '';
+          document.getElementById('jobDesc').value = editingJob.description || '';
+          document.getElementById('jobCrop').value = editingJob.cropType || '';
+          document.getElementById('jobFarmType').value = editingJob.farmType || 'Organic';
+          document.getElementById('jobSkills').value = (editingJob.requiredSkills || []).join(', ');
+          document.getElementById('jobWorkers').value = editingJob.workersNeeded || 1;
+          document.getElementById('jobStart').value = editingJob.startDate || '';
+          document.getElementById('jobEnd').value = editingJob.endDate || '';
+          document.getElementById('jobHours').value = editingJob.workingHours || '';
+          document.getElementById('jobDays').value = editingJob.workingDays || '';
+          document.getElementById('jobDailyWage').value = editingJob.wage?.daily || '';
+          document.getElementById('jobWeeklyWage').value = editingJob.wage?.weekly || '';
+          document.getElementById('jobMonthlyWage').value = editingJob.wage?.monthly || '';
+          document.getElementById('jobDistrict').value = editingJob.district || '';
+          document.getElementById('jobMunicipality').value = editingJob.municipality || '';
+          document.getElementById('jobWard').value = editingJob.ward || '';
+          document.getElementById('jobFood').checked = editingJob.foodProvided;
+          document.getElementById('jobAccom').checked = editingJob.accommodationProvided;
+          document.getElementById('jobUrgent').checked = editingJob.urgent;
+        }
+      }
+    }
+
+    function handlePostJob(e) {
+      e.preventDefault();
+      const mode = document.getElementById('workMode').value;
+      const baseData = {
+        title: document.getElementById('jobTitle').value.trim(),
+        description: document.getElementById('jobDesc').value.trim(),
+        cropType: document.getElementById('jobCrop').value,
+        farmType: document.getElementById('jobFarmType').value,
+        requiredSkills: document.getElementById('jobSkills').value.split(',').map(s => s.trim()).filter(Boolean),
+        workType: document.getElementById('jobWorkType').value,
+        district: document.getElementById('jobDistrict').value,
+        municipality: document.getElementById('jobMunicipality').value.trim(),
+        ward: parseInt(document.getElementById('jobWard').value) || null,
+        foodProvided: document.getElementById('jobFood').checked,
+        location: { lat: 27.68 + Math.random() * 0.1, lng: 84.42 + Math.random() * 0.1 }
+      };
+
+      if (mode === 'arma-parma') {
+        const returnCommitment = document.getElementById('jobReturnCommitment').value.trim();
+        if (!returnCommitment) { Utils.toast('Please describe your return labor commitment.', 'warning'); return; }
+        const apData = {
+          ...baseData,
+          helpersNeeded: parseInt(document.getElementById('jobWorkers').value) || 1,
+          date: document.getElementById('jobStart').value,
+          startTime: document.getElementById('jobStartTime').value,
+          expectedDuration: document.getElementById('jobDuration').value.trim(),
+          teaSnacksProvided: document.getElementById('jobTeaSnacks').checked,
+          equipmentProvided: document.getElementById('jobEquipment').checked,
+          returnCommitment,
+          additionalNotes: document.getElementById('jobNotes').value.trim()
+        };
+        if (editingJob) {
+          DB.updateArmaParmaRequest(editingJob.id, apData);
+          Utils.toast('Arma Parma request updated!');
+        } else {
+          ArmaParma.postRequest(apData);
+          Utils.toast('Arma Parma request posted!');
+        }
+      } else {
+        const jobData = {
+          ...baseData,
+          workMode: 'paid',
+          workersNeeded: parseInt(document.getElementById('jobWorkers').value) || 1,
+          startDate: document.getElementById('jobStart').value,
+          endDate: document.getElementById('jobEnd').value,
+          workingHours: document.getElementById('jobHours').value.trim(),
+          workingDays: document.getElementById('jobDays').value.trim(),
+          wage: { daily: parseInt(document.getElementById('jobDailyWage').value) || 0, weekly: parseInt(document.getElementById('jobWeeklyWage').value) || 0, monthly: parseInt(document.getElementById('jobMonthlyWage').value) || 0 },
+          accommodationProvided: document.getElementById('jobAccom').checked,
+          urgent: document.getElementById('jobUrgent').checked
+        };
+        if (editingJob) {
+          DB.updateJob(editingJob.id, jobData);
+          Utils.toast('Job updated!');
+        } else {
+          Jobs.postJob(jobData);
+          Utils.toast('Job posted successfully!');
+        }
+      }
+      setTimeout(() => { window.location.href = 'dashboard-farmer.html'; }, 500);
+    }
+  </script>
+</body>
+</html>

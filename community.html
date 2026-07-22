@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Community - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .community-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+    .community-tab{padding:8px 16px;border-radius:var(--radius-full);font-weight:600;font-size:0.85rem;cursor:pointer;border:1px solid var(--border);background:var(--bg-alt);transition:var(--transition)}
+    .community-tab:hover{border-color:var(--primary)}
+    .community-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .create-post-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:24px;transition:var(--transition)}
+    .create-post-card:focus-within{border-color:var(--primary)}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh;background:var(--bg-alt)">
+    <div class="container" style="max-width:900px">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Community</span></div>
+      <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <div><h1 style="font-size:1.6rem">👥 Farming Community</h1><p class="text-muted">Share tips, ask questions, and connect with fellow farmers</p></div>
+      </div>
+      <div class="community-tabs">
+        <div class="community-tab active" data-filter="all" onclick="Community.filterPosts('all', this)">All Posts</div>
+        <div class="community-tab" data-filter="tip" onclick="Community.filterPosts('tip', this)">💡 Tips</div>
+        <div class="community-tab" data-filter="question" onclick="Community.filterPosts('question', this)">❓ Questions</div>
+        <div class="community-tab" data-filter="event" onclick="Community.filterPosts('event', this)">📅 Events</div>
+        <div class="community-tab" data-filter="celebration" onclick="Community.filterPosts('celebration', this)">🎉 Celebrations</div>
+      </div>
+      <div id="createPostSection"></div>
+      <div id="communityPosts"></div>
+    </div>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/community.js"></script>
+  <script>
+    App.init();
+    Community.init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Find Jobs - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .mode-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .mode-tab{padding:10px 20px;border-radius:var(--radius-full);font-weight:600;font-size:0.9rem;cursor:pointer;border:2px solid var(--border);background:var(--bg-alt);transition:var(--transition);display:flex;align-items:center;gap:8px}
+    .mode-tab:hover{border-color:var(--primary)}
+    .mode-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .mode-tab.active-arma{background:#059669;color:white;border-color:#059669}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh">
+    <div class="container">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Find Jobs</span></div>
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+        <div><h1 style="font-size:1.6rem" id="pageTitle">Find Agricultural Jobs</h1><p class="text-muted" id="jobCount"></p></div>
+        <div class="flex gap-2">
+          <select class="form-select" id="jobSort" style="width:auto" onchange="applyAllFilters()">
+            <option value="newest">Newest First</option><option value="wage-high">Highest Wage</option><option value="wage-low">Lowest Wage</option><option value="oldest">Oldest</option>
+          </select>
+          <button class="btn btn-outline" onclick="document.querySelector('.filter-sidebar').classList.toggle('show')">🔧 Filters</button>
+        </div>
+      </div>
+      <div class="mode-tabs">
+        <div class="mode-tab active" data-mode="all" onclick="setModeTab('all')">📋 All</div>
+        <div class="mode-tab" data-mode="paid" onclick="setModeTab('paid')">💰 Paid Jobs</div>
+        <div class="mode-tab" data-mode="arma-parma" onclick="setModeTab('arma-parma')">🤝 Arma Parma</div>
+      </div>
+      <div class="flex gap-6" style="align-items:flex-start">
+        <aside class="filter-sidebar" style="width:280px;flex-shrink:0;position:sticky;top:calc(var(--navbar-height)+16px)">
+          <div class="flex justify-between items-center mb-4"><h4 style="margin:0">Filters</h4><span class="filter-clear" onclick="clearJobFilters()">Clear All</span></div>
+          <div class="filter-group"><label>Search</label><input type="text" id="filterQ" placeholder="Keywords..." oninput="applyAllFilters()"></div>
+          <div class="filter-group"><label>District</label><select id="filterDistrict" onchange="applyAllFilters()"></select></div>
+          <div class="filter-group"><label>Crop Type</label><select id="filterCrop" onchange="applyAllFilters()"></select></div>
+          <div class="filter-group" id="wageFilterGroup"><label>Min Daily Wage (NPR)</label><input type="number" id="filterWageMin" placeholder="e.g. 500" oninput="applyAllFilters()"></div>
+          <div class="filter-group" id="wageFilterMaxGroup"><label>Max Daily Wage (NPR)</label><input type="number" id="filterWageMax" placeholder="e.g. 2000" oninput="applyAllFilters()"></div>
+          <div class="filter-group"><label>Status</label><select id="filterStatus" onchange="applyAllFilters()">
+            <option value="">All</option><option value="open">Open</option><option value="active">Active</option><option value="in-progress">In Progress</option><option value="completed">Completed</option><option value="filled">Filled</option><option value="closed">Closed</option>
+          </select></div>
+          <div class="filter-group" id="armaFilterGroup" style="display:none">
+            <label>Work Type</label>
+            <select id="filterWorkType" onchange="applyAllFilters()">
+              <option value="">All Types</option><option>Planting</option><option>Transplanting</option><option>Harvesting</option><option>Weeding</option><option>Irrigation</option><option>Plucking</option><option>Processing</option><option>Maintenance</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="form-check"><input type="checkbox" id="filterUrgent" onchange="applyAllFilters()"><span>🔥 Urgent Only</span></label>
+            <label class="form-check mt-2"><input type="checkbox" id="filterFood" onchange="applyAllFilters()"><span>🍽️ Food Provided</span></label>
+            <label class="form-check mt-2"><input type="checkbox" id="filterAccom" onchange="applyAllFilters()"><span>🏠 Accommodation</span></label>
+          </div>
+        </aside>
+        <div style="flex:1;min-width:0">
+          <div id="activeFilters" class="flex flex-wrap gap-2 mb-4"></div>
+          <div class="grid grid-auto gap-6" id="jobList"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="applyModal" class="modal">
+    <div class="modal-content" style="max-width:550px">
+      <div class="modal-header"><h3>Apply</h3><button class="modal-close" onclick="Utils.hideModal('applyModal')">&times;</button></div>
+      <div class="modal-body"></div>
+      <div class="modal-footer"></div>
+    </div>
+  </div>
+  <footer id="footer" class="footer"></footer>
+  <div class="back-to-top">↑</div>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/arma-parma.js"></script>
+  <script>
+    App.init();
+    document.getElementById('filterDistrict').innerHTML = Jobs.getDistrictOptions();
+    document.getElementById('filterCrop').innerHTML = Jobs.getCropOptions();
+    let currentMode = Utils.getParam('mode') || 'all';
+
+    function setModeTab(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-tab').forEach(t => {
+        t.classList.remove('active', 'active-arma');
+        if (t.dataset.mode === mode) t.classList.add(mode === 'arma-parma' ? 'active-arma' : 'active');
+      });
+      const wageGroup = document.getElementById('wageFilterGroup');
+      const wageMaxGroup = document.getElementById('wageFilterMaxGroup');
+      const armaGroup = document.getElementById('armaFilterGroup');
+      if (mode === 'arma-parma') {
+        wageGroup.style.display = 'none'; wageMaxGroup.style.display = 'none'; armaGroup.style.display = 'block';
+        document.getElementById('pageTitle').textContent = 'Arma Parma — Labor Exchange';
+      } else if (mode === 'paid') {
+        wageGroup.style.display = ''; wageMaxGroup.style.display = ''; armaGroup.style.display = 'none';
+        document.getElementById('pageTitle').textContent = 'Paid Agricultural Jobs';
+      } else {
+        wageGroup.style.display = ''; wageMaxGroup.style.display = ''; armaGroup.style.display = 'none';
+        document.getElementById('pageTitle').textContent = 'Find Agricultural Jobs';
+      }
+      applyAllFilters();
+    }
+
+    const qParam = Utils.getParam('q');
+    const distParam = Utils.getParam('district');
+    const cropParam = Utils.getParam('crop');
+    if (qParam) document.getElementById('filterQ').value = qParam;
+    if (distParam) document.getElementById('filterDistrict').value = distParam;
+    if (cropParam) document.getElementById('filterCrop').value = cropParam;
+
+    function applyAllFilters() {
+      const container = document.getElementById('jobList');
+      let html = '';
+      let totalCount = 0;
+
+      if (currentMode === 'all' || currentMode === 'paid') {
+        const filters = {
+          q: document.getElementById('filterQ').value, district: document.getElementById('filterDistrict').value,
+          cropType: document.getElementById('filterCrop').value, wageMin: document.getElementById('filterWageMin').value,
+          wageMax: document.getElementById('filterWageMax').value, status: document.getElementById('filterStatus').value,
+          urgent: document.getElementById('filterUrgent').checked, foodProvided: document.getElementById('filterFood').checked,
+          accommodation: document.getElementById('filterAccom').checked, sort: document.getElementById('jobSort').value
+        };
+        let jobs = Jobs.searchJobs(filters);
+        if (currentMode === 'paid') jobs = jobs.filter(j => j.workMode === 'paid');
+        totalCount += jobs.length;
+        if (currentMode === 'paid' || currentMode === 'all') {
+          html += jobs.map(j => App.renderJobCard(j)).join('');
+        }
+      }
+
+      if (currentMode === 'all' || currentMode === 'arma-parma') {
+        const apFilters = {
+          q: document.getElementById('filterQ').value, district: document.getElementById('filterDistrict').value,
+          cropType: document.getElementById('filterCrop').value, workType: document.getElementById('filterWorkType')?.value || '',
+          status: document.getElementById('filterStatus').value, sort: document.getElementById('jobSort').value
+        };
+        let apReqs = ArmaParma.searchRequests(apFilters);
+        totalCount += apReqs.length;
+        html += apReqs.map(r => ArmaParma.renderArmaParmaCard(r)).join('');
+      }
+
+      document.getElementById('jobCount').textContent = `${totalCount} result${totalCount !== 1 ? 's' : ''} found`;
+      if (!html) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">💼</div><h3>No results found</h3><p>Try adjusting your search filters or check back later.</p></div>';
+      } else {
+        container.innerHTML = html;
+      }
+    }
+
+    function clearJobFilters() {
+      document.getElementById('filterQ').value = '';
+      document.getElementById('filterDistrict').value = '';
+      document.getElementById('filterCrop').value = '';
+      document.getElementById('filterWageMin').value = '';
+      document.getElementById('filterWageMax').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterUrgent').checked = false;
+      document.getElementById('filterFood').checked = false;
+      document.getElementById('filterAccom').checked = false;
+      applyAllFilters();
+    }
+
+    setModeTab(currentMode);
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Work Calendar - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh">
+    <div class="container">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Calendar</span></div>
+      <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <div><h1 style="font-size:1.6rem">📅 Work Calendar</h1><p class="text-muted">Track your jobs, exchanges, and seasons</p></div>
+        <div class="flex gap-2">
+          <button class="btn btn-outline" onclick="CalendarView.prevMonth()">← Prev</button>
+          <button class="btn btn-outline" onclick="CalendarView.goToday()">Today</button>
+          <button class="btn btn-outline" onclick="CalendarView.nextMonth()">Next →</button>
+        </div>
+      </div>
+      <div class="flex gap-6" style="align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div class="card">
+            <div class="card-header flex justify-between items-center">
+              <h3 id="calendarMonthYear" style="margin:0"></h3>
+              <div class="flex gap-2" id="calendarFilters">
+                <span class="badge badge-info calendar-filter active" data-type="all" onclick="CalendarView.toggleType('all',this)" style="cursor:pointer;padding:6px 12px">All</span>
+                <span class="badge calendar-filter" data-type="paid" onclick="CalendarView.toggleType('paid',this)" style="cursor:pointer;padding:6px 12px;background:#2563eb;color:white">💰 Paid</span>
+                <span class="badge calendar-filter" data-type="arma" onclick="CalendarView.toggleType('arma',this)" style="cursor:pointer;padding:6px 12px;background:#059669;color:white">🤝 Arma Parma</span>
+                <span class="badge calendar-filter" data-type="season" onclick="CalendarView.toggleType('season',this)" style="cursor:pointer;padding:6px 12px;background:#d97706;color:white">🌱 Seasons</span>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div id="calendarGrid" class="calendar-grid"></div>
+            </div>
+          </div>
+        </div>
+        <aside style="width:300px;flex-shrink:0">
+          <div class="card mb-4">
+            <div class="card-header"><h4 style="margin:0">📅 Events This Month</h4></div>
+            <div class="card-body" id="monthEvents"></div>
+          </div>
+          <div class="card mb-4">
+            <div class="card-header"><h4 style="margin:0">🌱 Season Guide</h4></div>
+            <div class="card-body" id="seasonGuide"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h4 style="margin:0">📊 Summary</h4></div>
+            <div class="card-body" id="calendarSummary"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <script src="js/data.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/utils.js"></script><script src="js/app.js"></script><script src="js/calendar.js"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ne" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>पहिचान सत्यापन - KrishiConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh;background:var(--bg-alt)">
+    <div class="container" style="max-width:700px">
+      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">पहिचान सत्यापन</span></div>
+
+      <div class="card mb-6">
+        <div class="card-header">
+          <h2 style="margin:0">🪪 पहिचान सत्यापन / Identity Verification</h2>
+        </div>
+        <div class="card-body">
+          <div id="verifyAlert" class="hidden mb-4" style="padding:12px 16px;border-radius:var(--radius);font-weight:500"></div>
+
+          <!-- Current Status -->
+          <div id="verificationStatus" class="mb-6"></div>
+
+          <!-- Submit New Document -->
+          <div id="submitSection">
+            <h3 class="mb-4" style="font-size:1.1rem">📄 दस्तावेज अपलोड गर्नुहोस्</h3>
+
+            <div class="auth-input-group mb-4">
+              <label class="auth-label">दस्तावेजको प्रकार <span class="required">*</span></label>
+              <select class="auth-select" id="docType">
+                <option value="">छान्नुहोस्</option>
+                <option value="citizenship">नागरिकता / Citizenship Card</option>
+                <option value="passport">पासपोर्ट / Passport</option>
+                <option value="license">सवारी चालक लाइसेन्स / Driving License</option>
+              </select>
+            </div>
+
+            <div class="auth-input-group mb-4">
+              <label class="auth-label">दस्तावेजको नम्बर <span class="required">*</span></label>
+              <input type="text" class="auth-input" id="docNumber" placeholder="दस्तावेज नम्बर लेख्नुहोस्">
+            </div>
+
+            <div class="auth-input-group mb-4">
+              <label class="auth-label">दस्तावेजको फोटो <span class="required">*</span></label>
+              <div class="auth-upload-zone" id="uploadZone">
+                <input type="file" id="docFile" accept="image/*" class="hidden" onchange="handleDocUpload(this)">
+                <div class="auth-upload-content" onclick="document.getElementById('docFile').click()">
+                  <div class="auth-upload-icon">📷</div>
+                  <p class="auth-upload-text">फोटो छान्नुहोस् वा तान्नुहोस्</p>
+                  <p class="auth-upload-hint">JPG, PNG - अधिकतम 5MB</p>
+                </div>
+                <div class="auth-upload-preview hidden" id="uploadPreview">
+                  <img id="previewImg" src="" alt="Preview">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="removeDocFile()">हटाउनुहोस्</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="auth-btn auth-btn-primary auth-btn-lg auth-btn-block" onclick="submitVerification()">
+              📨 दस्तावेज पेश गर्नुहोस्
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Farm Verification (for farmers) -->
+      <div id="farmVerifySection" class="card hidden">
+        <div class="card-header"><h2 style="margin:0">🌾 खेत सत्यापन / Farm Verification</h2></div>
+        <div class="card-body">
+          <p class="text-muted mb-4">किसानहरूले आफ्नो खेत स्वामित्व वा सहकारी सदस्यता प्रमाणित गर्न सक्छन्।</p>
+          <div class="auth-input-group mb-4">
+            <label class="auth-label">खेत दस्तावेज प्रकार</label>
+            <select class="auth-select" id="farmDocType">
+              <option value="">छान्नुहोस्</option>
+              <option value="farm_registration">खेत दर्ता / Farm Registration</option>
+              <option value="land_ownership">जमिन स्वामित्व / Land Ownership</option>
+              <option value="cooperative_cert">सहकारी प्रमाणपत्र / Cooperative Certificate</option>
+            </select>
+          </div>
+          <div class="auth-input-group mb-4">
+            <label class="auth-label">दस्तावेज फोटो</label>
+            <div class="auth-upload-zone" id="farmUploadZone">
+              <input type="file" id="farmDocFile" accept="image/*" class="hidden" onchange="handleFarmDocUpload(this)">
+              <div class="auth-upload-content" onclick="document.getElementById('farmDocFile').click()">
+                <div class="auth-upload-icon">📷</div>
+                <p class="auth-upload-text">फोटो छान्नुहोस्</p>
+              </div>
+              <div class="auth-upload-preview hidden" id="farmUploadPreview">
+                <img id="farmPreviewImg" src="" alt="Preview">
+                <button type="button" class="btn btn-outline btn-sm" onclick="removeFarmDocFile()">हटाउनुहोस्</button>
+              </div>
+            </div>
+          </div>
+          <button class="auth-btn auth-btn-primary auth-btn-lg auth-btn-block" onclick="submitFarmVerification()">🌾 खेत दस्तावेज पेश गर्नुहोस्</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script>
+    let currentDocFile = null;
+    let currentFarmDocFile = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      App.init();
+      if (!Auth.requireAuth()) return;
+      renderVerificationStatus();
+      if (Auth.isFarmer()) document.getElementById('farmVerifySection').classList.remove('hidden');
+    });
+
+    function renderVerificationStatus() {
+      const user = Auth.currentUser;
+      const docs = AuthSystem.getUserVerifications(user.id);
+      const el = document.getElementById('verificationStatus');
+      const status = user.verified ? 'approved' : docs.length ? docs[docs.length - 1].status : 'none';
+      const statusMap = {
+        none: { icon: '⏳', text: 'सत्यापित भएको छैन', color: '#f59e0b', bg: '#fffbeb' },
+        pending: { icon: '🔍', text: 'समीक्षा अन्तर्गत', color: '#2563eb', bg: '#eff6ff' },
+        approved: { icon: '✅', text: 'सत्यापित!', color: '#059669', bg: '#ecfdf5' },
+        rejected: { icon: '❌', text: 'अस्वीकृत', color: '#ef4444', bg: '#fef2f2' }
+      };
+      const s = statusMap[status];
+      el.innerHTML = `<div style="padding:16px 20px;border-radius:var(--radius-md);background:${s.bg};border-left:4px solid ${s.color}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:1.5rem">${s.icon}</span>
+          <div>
+            <div style="font-weight:700;color:${s.color}">${s.text}</div>
+            <div class="text-sm text-muted mt-1">${status === 'pending' ? 'हामी तपाईंको दस्तावेज समीक्षा गर्दैछौं। धैर्य राख्नुहोस्।' : status === 'approved' ? 'तपाईंको खाता सत्यापित भएको छ।' : status === 'rejected' ? (docs.length ? docs[docs.length-1].notes || 'दस्तावेज स्वीकार भएन। फेरि प्रयास गर्नुहोस्।' : '') : 'सत्यापित खाताले विश्वास बढाउँछ।'}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function handleDocUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { showVerifyAlert('फाइल ठूलो छ। 5MB भन्दा सानो राख्नुहोस्।', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentDocFile = e.target.result;
+        document.getElementById('previewImg').src = currentDocFile;
+        document.getElementById('uploadPreview').classList.remove('hidden');
+        document.querySelector('#uploadZone .auth-upload-content').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeDocFile() {
+      currentDocFile = null;
+      document.getElementById('docFile').value = '';
+      document.getElementById('uploadPreview').classList.add('hidden');
+      document.querySelector('#uploadZone .auth-upload-content').classList.remove('hidden');
+    }
+
+    function handleFarmDocUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentFarmDocFile = e.target.result;
+        document.getElementById('farmPreviewImg').src = currentFarmDocFile;
+        document.getElementById('farmUploadPreview').classList.remove('hidden');
+        document.querySelector('#farmUploadZone .auth-upload-content').classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeFarmDocFile() {
+      currentFarmDocFile = null;
+      document.getElementById('farmDocFile').value = '';
+      document.getElementById('farmUploadPreview').classList.add('hidden');
+      document.querySelector('#farmUploadZone .auth-upload-content').classList.remove('hidden');
+    }
+
+    function submitVerification() {
+      const docType = document.getElementById('docType').value;
+      const docNumber = document.getElementById('docNumber').value.trim();
+      if (!docType) { showVerifyAlert('दस्तावेजको प्रकार छान्नुहोस्', 'error'); return; }
+      if (!docNumber) { showVerifyAlert('दस्तावेज नम्बर लेख्नुहोस्', 'error'); return; }
+      if (!currentDocFile) { showVerifyAlert('दस्तावेजको फोटो अपलोड गर्नुहोस्', 'error'); return; }
+      AuthSystem.submitVerificationDocument(Auth.currentUser.id, {
+        type: 'identity', docType, docNumber, filePreview: currentDocFile
+      });
+      DB.addAuditLog({ action: 'verification_submitted', userId: Auth.currentUser.id, details: `${docType} document submitted` });
+      showVerifyAlert('दस्तावेज सफलतापूर्वक पेश भयो! समीक्षा अन्तर्गत छ।', 'success');
+      renderVerificationStatus();
+    }
+
+    function submitFarmVerification() {
+      const docType = document.getElementById('farmDocType').value;
+      if (!docType) { showVerifyAlert('दस्तावेज प्रकार छान्नुहोस्', 'error'); return; }
+      if (!currentFarmDocFile) { showVerifyAlert('दस्तावेज फोटो अपलोड गर्नुहोस्', 'error'); return; }
+      AuthSystem.submitVerificationDocument(Auth.currentUser.id, {
+        type: 'farm', docType, filePreview: currentFarmDocFile
+      });
+      showVerifyAlert('खेत दस्तावेज पेश भयो!', 'success');
+    }
+
+    function showVerifyAlert(msg, type) {
+      const el = document.getElementById('verifyAlert');
+      el.textContent = msg;
+      el.style.background = type === 'success' ? '#ecfdf5' : '#fef2f2';
+      el.style.color = type === 'success' ? '#059669' : '#ef4444';
+      el.classList.remove('hidden');
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => el.classList.add('hidden'), 5000);
+    }
+  </script>
+</body>
+</html>

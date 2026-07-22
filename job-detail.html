@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Job Detail - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .arma-commitment-box{background:linear-gradient(135deg,var(--primary-50),#ecfdf5);border:1px solid #d1fae5;border-radius:var(--radius-md);padding:20px;margin-top:8px}
+    .arma-detail-section{margin-top:16px}
+    .arma-agreement-section{background:var(--bg-alt);border-radius:var(--radius-md);padding:20px}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main id="jobDetailContent" style="min-height:80vh"></main>
+  <div class="modal-backdrop" id="applyModal">
+    <div class="modal"><div class="modal-header"><h3>Apply</h3><span class="modal-close" onclick="Utils.hideModal('applyModal')">×</span></div><div class="modal-body"></div><div class="modal-footer"></div></div>
+  </div>
+  <footer id="footer" class="footer"></footer>
+  <div class="back-to-top">↑</div>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/arma-parma.js"></script>
+  <script>
+    App.init();
+    const jobId = Utils.getParam('id');
+    const type = Utils.getParam('type');
+    let content = '';
+    if (type === 'arma-parma') {
+      const req = DB.getArmaParmaById(jobId);
+      content = ArmaParma.renderArmaParmaDetail(req);
+      if (req) document.title = req.title + ' - AgriConnect Nepal';
+    } else {
+      const job = DB.getJobById(jobId);
+      if (job && job.workMode === 'arma-parma') {
+        const req = DB.getArmaParmaById(jobId);
+        if (req) { content = ArmaParma.renderArmaParmaDetail(req); document.title = req.title + ' - AgriConnect Nepal'; }
+        else { content = Jobs.renderJobDetail(job); document.title = job.title + ' - AgriConnect Nepal'; }
+      } else {
+        content = Jobs.renderJobDetail(job);
+        if (job) document.title = job.title + ' - AgriConnect Nepal';
+      }
+    }
+    document.getElementById('jobDetailContent').innerHTML = content;
+  </script>
+</body>
+</html>
