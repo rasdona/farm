@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="description" content="KrishiConnect Nepal - Verify your account">
+<title>KrishiConnect Nepal - Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0fdf4;--card:#fff;--text:#1a1a1a;--muted:#6b7280;--border:#e5e7eb;
+  --primary:#16a34a;--primary-dark:#15803d;--primary-light:#dcfce7;
+  --error:#dc2626;--error-bg:#fef2f2;--success:#16a34a;--success-bg:#f0fdf4;
+  --input-bg:#f9fafb;--input-border:#d1d5db;--input-focus:#16a34a;
+  --shadow:0 4px 24px rgba(0,0,0,0.08);--radius:12px;
+}
+[data-theme="dark"]{
+  --bg:#0a1a0f;--card:#1a2e1f;--text:#e8f5e9;--muted:#9ca3af;--border:#2d4a35;
+  --primary:#4ade80;--primary-dark:#22c55e;--primary-light:#14532d;
+  --error:#f87171;--error-bg:#450a0a;--success:#4ade80;--success-bg:#14532d;
+  --input-bg:#0f2618;--input-border:#2d4a35;--input-focus:#4ade80;
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background .3s,color .3s}
+.container{width:100%;max-width:420px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:background .3s}
+.header{background:linear-gradient(135deg,#16a34a,#22c55e);padding:32px 24px;text-align:center;position:relative}
+[data-theme="dark"] .header{background:linear-gradient(135deg,#15803d,#166534)}
+.header h1{color:#fff;font-size:22px;font-weight:700;margin-bottom:4px}
+.header p{color:rgba(255,255,255,.8);font-size:14px}
+.theme-toggle{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#fff;font-size:16px;transition:background .2s}
+.theme-toggle:hover{background:rgba(255,255,255,.3)}
+.body{padding:28px 24px}
+.method-tabs{display:flex;gap:8px;margin-bottom:24px}
+.method-tab{flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.method-tab.active{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.method-tab:hover:not(.active){border-color:var(--primary);opacity:.7}
+.method-tab .icon{font-size:20px;display:block;margin-bottom:4px}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:20px}
+.status-badge.verified{background:var(--success-bg);color:var(--success);border:1px solid var(--success)}
+.status-badge.pending{background:#fffbeb;color:#d97706;border:1px solid #fbbf24}
+.identifier-label{font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:500}
+.identifier-display{font-size:15px;font-weight:600;color:var(--text);margin-bottom:20px;word-break:break-all}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+.otp-input{width:48px;height:56px;text-align:center;font-size:22px;font-weight:700;border:2px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--text);outline:none;transition:all .2s;font-family:'Courier New',monospace;-webkit-appearance:none;appearance:none}
+.otp-input:focus{border-color:var(--input-focus);box-shadow:0 0 0 3px rgba(22,163,74,.15);transform:scale(1.05)}
+.otp-input.error{border-color:var(--error);animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+.otp-input.filled{border-color:var(--primary);background:var(--primary-light)}
+.timer-section{display:flex;justify-content:space-between;align-items:center;margin:16px 0}
+.timer{font-size:14px;color:var(--muted);font-weight:500}
+.timer span{color:var(--primary);font-weight:700;font-variant-numeric:tabular-nums}
+.resend-btn{background:none;border:none;color:var(--primary);font-size:14px;font-weight:600;cursor:pointer;padding:8px 16px;border-radius:8px;transition:all .2s}
+.resend-btn:hover:not(:disabled){background:var(--primary-light)}
+.resend-btn:disabled{color:var(--muted);cursor:not-allowed;opacity:.5}
+.verify-btn{width:100%;padding:14px;border:none;border-radius:10px;background:var(--primary);color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.verify-btn:hover:not(:disabled){background:var(--primary-dark);transform:translateY(-1px)}
+.verify-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.verify-btn.loading{pointer-events:none}
+.spinner{display:none;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto}
+.verify-btn.loading .btn-text{display:none}
+.verify-btn.loading .spinner{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.message{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-top:16px;display:none;animation:fadeIn .3s}
+.message.success{background:var(--success-bg);color:var(--success);border:1px solid var(--success)}
+.message.error{background:var(--error-bg);color:var(--error);border:1px solid var(--error)}
+.message.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.success-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .3s}
+.success-overlay.visible{opacity:1;pointer-events:auto}
+.success-card{background:var(--card);border-radius:var(--radius);padding:40px;text-align:center;max-width:360px;transform:scale(.9);transition:transform .3s}
+.success-overlay.visible .success-card{transform:scale(1)}
+.success-icon{width:72px;height:72px;background:var(--success-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px}
+.success-card h2{font-size:20px;margin-bottom:8px}
+.success-card p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.success-card button{padding:10px 24px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;cursor:pointer;font-size:14px}
+.footer{text-align:center;padding:16px 0;font-size:12px;color:var(--muted)}
+.lang-toggle{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:#fff;font-size:12px;font-weight:600}
+.lang-toggle:hover{background:rgba(255,255,255,.3)}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.input-group input{width:100%;padding:12px 14px;border:2px solid var(--input-border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;outline:none;transition:border-color .2s}
+.input-group input:focus{border-color:var(--input-focus)}
+@media(max-width:480px){
+  .otp-input{width:42px;height:50px;font-size:20px}
+  .otp-inputs{gap:8px}
+  .body{padding:24px 16px}
+  .header{padding:24px 16px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <button class="lang-toggle" onclick="toggleLang()" id="langBtn">नेपाली</button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      <h1>KrishiConnect Nepal</h1>
+      <p id="headerSub">Account Verification</p>
+    </div>
+
+    <div class="body">
+      <!-- Status display -->
+      <div id="statusSection" style="display:none">
+        <div class="status-badge" id="mobileBadge">📱 ...</div>
+        <div class="status-badge" id="emailBadge">📧 ...</div>
+      </div>
+
+      <!-- Method selector -->
+      <div class="method-tabs" id="methodTabs">
+        <button class="method-tab active" onclick="selectMethod('mobile')" id="tabMobile">
+          <span class="icon">📱</span>
+          <span data-en="Mobile OTP" data-np="मोबाइल OTP">Mobile OTP</span>
+        </button>
+        <button class="method-tab" onclick="selectMethod('email')" id="tabEmail">
+          <span class="icon">📧</span>
+          <span data-en="Email OTP" data-np="इमेल OTP">Email OTP</span>
+        </button>
+      </div>
+
+      <!-- OTP input -->
+      <div id="otpSection">
+        <div class="identifier-label" id="identifierLabel" data-en="Enter the code sent to" data-np="पठाइएको कोड प्रविष्ट गर्नुहोस्">Enter the code sent to</div>
+        <div class="identifier-display" id="identifierDisplay">+977 98XX XXXXX</div>
+
+        <div class="otp-inputs" id="otpInputs">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" data-index="0">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="4">
+          <input type="tel" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="5">
+        </div>
+
+        <div class="timer-section">
+          <div class="timer" id="timerDisplay">
+            <span id="timerCount">05:00</span>
+          </div>
+          <button class="resend-btn" id="resendBtn" onclick="resendOTP()" disabled>
+            <span data-en="Resend Code" data-np="कोड पुन: पठाउनुहोस्">Resend Code</span>
+          </button>
+        </div>
+
+        <button class="verify-btn" id="verifyBtn" onclick="verifyOTP()" disabled>
+          <span class="btn-text" data-en="Verify" data-np="प्रमाणित गर्नुहोस्">Verify</span>
+          <span class="spinner"></span>
+        </button>
+
+        <div class="message" id="msgBox"></div>
+      </div>
+
+      <!-- Registration form (for initial setup) -->
+      <div id="registerSection" style="display:none">
+        <div class="input-group">
+          <label data-en="Full Name" data-np="पूरा नाम">Full Name</label>
+          <input type="text" id="regName" placeholder="Ram Bahadur Thapa">
+        </div>
+        <div class="input-group">
+          <label data-en="Mobile Number" data-np="मोबाइल नम्बर">Mobile Number</label>
+          <input type="tel" id="regMobile" placeholder="+977 98XXXXXXXX">
+        </div>
+        <div class="input-group">
+          <label data-en="Email (Optional)" data-np="इमेल (वैकल्पिक)">Email (Optional)</label>
+          <input type="email" id="regEmail" placeholder="ram@example.com">
+        </div>
+        <div class="input-group">
+          <label data-en="Password" data-np="पासवर्ड">Password</label>
+          <input type="password" id="regPassword" placeholder="Min 8 characters">
+        </div>
+        <button class="verify-btn" onclick="registerUser()">
+          <span class="btn-text" data-en="Create Account" data-np="खाता बनाउनुहोस्">Create Account</span>
+          <span class="spinner"></span>
+        </button>
+        <div class="message" id="regMsgBox"></div>
+      </div>
+    </div>
+
+    <div class="footer" id="footerText">
+      KrishiConnect Nepal © 2025 · For farmers, by farmers 🌾
+    </div>
+  </div>
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <h2 id="successTitle">Verified!</h2>
+    <p id="successMsg">Your account has been verified successfully.</p>
+    <button onclick="goHome()" data-en="Continue" data-np="जारी राख्नुहोस्">Continue</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yutjmviwwikvwousgtjy.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u';
+
+let currentMethod = 'mobile';
+let currentPurpose = 'registration';
+let currentIdentifier = '';
+let otpTimer = null;
+let timerSeconds = 300;
+let resendCooldown = 60;
+let resendTimer = null;
+let lang = localStorage.getItem('kc_lang') || 'en';
+let theme = localStorage.getItem('kc_theme') || 'light';
+let otpId = null;
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(theme);
+  applyLang(lang);
+
+  const params = new URLSearchParams(window.location.search);
+  currentPurpose = params.get('purpose') || 'registration';
+  currentIdentifier = params.get('identifier') || '';
+
+  if (params.get('success') === 'true') {
+    showSuccess('Verified!', 'Your email has been verified successfully.');
+    return;
+  }
+
+  if (params.get('error') === 'invalid_token') {
+    showMessage('msgBox', 'Invalid or expired verification link.', 'error');
+  }
+
+  if (currentIdentifier) {
+    document.getElementById('registerSection').style.display = 'none';
+    document.getElementById('otpSection').style.display = 'block';
+    updateIdentifierDisplay();
+    sendOTP();
+  } else {
+    document.getElementById('registerSection').style.display = 'block';
+    document.getElementById('otpSection').style.display = 'none';
+  }
+
+  setupOTPInputs();
+});
+
+// ============================================
+// THEME
+// ============================================
+function toggleTheme() {
+  theme = theme === 'light' ? 'dark' : 'light';
+  applyTheme(theme);
+  localStorage.setItem('kc_theme', theme);
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+
+// ============================================
+// LANGUAGE
+// ============================================
+function toggleLang() {
+  lang = lang === 'en' ? 'np' : 'en';
+  applyLang(lang);
+  localStorage.setItem('kc_lang', lang);
+}
+
+function applyLang(l) {
+  document.getElementById('langBtn').textContent = l === 'en' ? 'नेपाली' : 'English';
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = el.getAttribute(`data-${l}`);
+  });
+}
+
+// ============================================
+// METHOD SELECTION
+// ============================================
+function selectMethod(method) {
+  currentMethod = method;
+  document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab${method.charAt(0).toUpperCase() + method.slice(1)}`).classList.add('active');
+  updateIdentifierDisplay();
+  clearOTP();
+  sendOTP();
+}
+
+function updateIdentifierDisplay() {
+  const display = document.getElementById('identifierDisplay');
+  if (currentMethod === 'mobile') {
+    const mobile = currentIdentifier || '+977 98XXXXXXXX';
+    display.textContent = mobile;
+  } else {
+    const email = currentIdentifier || 'your@email.com';
+    display.textContent = email;
+  }
+}
+
+// ============================================
+// OTP INPUTS
+// ============================================
+function setupOTPInputs() {
+  const inputs = document.querySelectorAll('.otp-input');
+
+  inputs.forEach((input, i) => {
+    input.addEventListener('input', (e) => {
+      const val = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = val;
+
+      if (val && i < 5) {
+        inputs[i + 1].focus();
+      }
+
+      if (val) {
+        e.target.classList.add('filled');
+      } else {
+        e.target.classList.remove('filled');
+      }
+
+      checkOTPComplete();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && i > 0) {
+        inputs[i - 1].focus();
+        inputs[i - 1].value = '';
+        inputs[i - 1].classList.remove('filled');
+      }
+    });
+
+    input.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+      for (let j = 0; j < Math.min(paste.length, 6); j++) {
+        inputs[j].value = paste[j];
+        inputs[j].classList.add('filled');
+      }
+      if (paste.length >= 6) {
+        inputs[5].focus();
+        checkOTPComplete();
+      } else if (paste.length > 0) {
+        inputs[Math.min(paste.length, 5)].focus();
+      }
+    });
+
+    input.addEventListener('focus', () => {
+      input.select();
+    });
+  });
+}
+
+function getOTPValue() {
+  return Array.from(document.querySelectorAll('.otp-input'))
+    .map(i => i.value).join('');
+}
+
+function checkOTPComplete() {
+  const otp = getOTPValue();
+  document.getElementById('verifyBtn').disabled = otp.length !== 6;
+}
+
+function clearOTP() {
+  document.querySelectorAll('.otp-input').forEach(i => {
+    i.value = '';
+    i.classList.remove('filled', 'error');
+  });
+  document.getElementById('verifyBtn').disabled = true;
+}
+
+// ============================================
+// SEND OTP
+// ============================================
+async function sendOTP() {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        identifier: currentIdentifier,
+        purpose: currentPurpose,
+      }),
+    });
+
+    const data = await resp.json();
+
+    if (data.dev_otp) {
+      showMessage('msgBox', `DEV OTP: ${data.dev_otp}`, 'success');
+    }
+
+    otpId = data.otp_id;
+    startTimer(300);
+    startResendCooldown(60);
+  } catch (err) {
+    showMessage('msgBox', 'Failed to send OTP. Please try again.', 'error');
+  }
+}
+
+// ============================================
+// VERIFY OTP
+// ============================================
+async function verifyOTP() {
+  const otp = getOTPValue();
+  if (otp.length !== 6) return;
+
+  const btn = document.getElementById('verifyBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        identifier: currentIdentifier,
+        code: otp,
+        purpose: currentPurpose,
+      }),
+    });
+
+    const data = await resp.json();
+
+    if (data.success) {
+      showSuccess(
+        lang === 'np' ? 'प्रमाणित भयो!' : 'Verified!',
+        lang === 'np' ? 'तपाईंको खाता सफलतापूर्वक प्रमाणित भयो।' : 'Your account has been verified successfully.'
+      );
+    } else if (data.locked) {
+      showMessage('msgBox',
+        lang === 'np' ? 'धेरै गलत प्रयास। कृपया 15 मिनेट पर्खनुहोस्।' : 'Too many attempts. Please wait 15 minutes.',
+        'error'
+      );
+      clearOTP();
+      stopTimer();
+    } else {
+      showMessage('msgBox', data.message || 'Invalid OTP', 'error');
+      // Shake and clear
+      document.querySelectorAll('.otp-input').forEach(i => {
+        i.classList.add('error');
+        i.value = '';
+        i.classList.remove('filled');
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.otp-input').forEach(i => i.classList.remove('error'));
+        document.querySelector('.otp-input').focus();
+      }, 500);
+    }
+  } catch (err) {
+    showMessage('msgBox', 'Verification failed. Please try again.', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ============================================
+// RESEND OTP
+// ============================================
+async function resendOTP() {
+  clearOTP();
+  showMessage('msgBox', '', '');
+  await sendOTP();
+  document.querySelector('.otp-input').focus();
+}
+
+// ============================================
+// TIMER
+// ============================================
+function startTimer(seconds) {
+  stopTimer();
+  timerSeconds = seconds;
+  updateTimerDisplay();
+  otpTimer = setInterval(() => {
+    timerSeconds--;
+    updateTimerDisplay();
+    if (timerSeconds <= 0) {
+      stopTimer();
+      showMessage('msgBox', lang === 'np' ? 'OTP को म्याद सकियो। कृपया पुन: पठाउनुहोस्।' : 'OTP expired. Please resend.', 'error');
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (otpTimer) clearInterval(otpTimer);
+  otpTimer = null;
+}
+
+function updateTimerDisplay() {
+  const min = Math.floor(timerSeconds / 60);
+  const sec = timerSeconds % 60;
+  document.getElementById('timerCount').textContent =
+    `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+}
+
+function startResendCooldown(seconds) {
+  resendCooldown = seconds;
+  const btn = document.getElementById('resendBtn');
+  btn.disabled = true;
+
+  if (resendTimer) clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    resendCooldown--;
+    btn.textContent = `${resendCooldown}s`;
+    if (resendCooldown <= 0) {
+      clearInterval(resendTimer);
+      btn.disabled = false;
+      btn.innerHTML = `<span data-en="Resend Code" data-np="कोड पुन: पठाउनुहोस्">Resend Code</span>`;
+    }
+  }, 1000);
+}
+
+// ============================================
+// REGISTER
+// ============================================
+async function registerUser() {
+  const name = document.getElementById('regName').value.trim();
+  const mobile = document.getElementById('regMobile').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+
+  if (!name) return showMessage('regMsgBox', 'Name is required', 'error');
+  if (!mobile && !email) return showMessage('regMsgBox', 'Mobile or email required', 'error');
+  if (password.length < 8) return showMessage('regMsgBox', 'Password must be at least 8 characters', 'error');
+
+  const btn = document.querySelector('#registerSection .verify-btn');
+  btn.classList.add('loading');
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/register-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        full_name: name,
+        mobile_number: mobile || undefined,
+        email: email || undefined,
+        password,
+        preferred_language: lang,
+      }),
+    });
+
+    const data = await resp.json();
+
+    if (data.success) {
+      currentIdentifier = mobile || email;
+      currentMethod = mobile ? 'mobile' : 'email';
+      document.getElementById('registerSection').style.display = 'none';
+      document.getElementById('otpSection').style.display = 'block';
+      updateIdentifierDisplay();
+      await sendOTP();
+    } else {
+      showMessage('regMsgBox', data.error || 'Registration failed', 'error');
+    }
+  } catch (err) {
+    showMessage('regMsgBox', 'Registration failed. Please try again.', 'error');
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+// ============================================
+// MESSAGES
+// ============================================
+function showMessage(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `message ${type}` + (text ? ' visible' : '');
+}
+
+function showSuccess(title, msg) {
+  document.getElementById('successTitle').textContent = title;
+  document.getElementById('successMsg').textContent = msg;
+  document.getElementById('successOverlay').classList.add('visible');
+}
+
+function goHome() {
+  window.location.href = '/';
+}
+</script>
+</body>
+</html>

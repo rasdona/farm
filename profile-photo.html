@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KrishiConnect Nepal - Profile Photo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0fdf4;--card:#fff;--text:#1a1a1a;--muted:#6b7280;--border:#e5e7eb;
+  --primary:#16a34a;--primary-dark:#15803d;--primary-light:#dcfce7;
+  --error:#dc2626;--error-bg:#fef2f2;--success:#16a34a;--success-bg:#f0fdf4;
+  --input-bg:#f9fafb;--input-border:#d1d5db;
+  --shadow:0 4px 24px rgba(0,0,0,0.08);--radius:12px;
+}
+[data-theme="dark"]{
+  --bg:#0a1a0f;--card:#1a2e1f;--text:#e8f5e9;--muted:#9ca3af;--border:#2d4a35;
+  --primary:#4ade80;--primary-dark:#22c55e;--primary-light:#14532d;
+  --error:#f87171;--error-bg:#450a0a;--success:#4ade80;--success-bg:#14532d;
+  --input-bg:#0f2618;--input-border:#2d4a35;
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+}
+html{font-size:16px}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background .3s,color .3s}
+.container{width:100%;max-width:480px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:background .3s}
+.header{background:linear-gradient(135deg,#16a34a,#22c55e);padding:28px 24px;text-align:center;position:relative}
+[data-theme="dark"] .header{background:linear-gradient(135deg,#15803d,#166534)}
+.header h1{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px}
+.header p{color:rgba(255,255,255,.8);font-size:13px}
+.theme-toggle{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#fff;font-size:16px}
+.body{padding:28px 24px}
+.info-banner{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.5;color:var(--text)}
+.info-banner strong{color:var(--primary)}
+.photo-display{display:flex;flex-direction:column;align-items:center;margin-bottom:24px}
+.avatar-ring{width:140px;height:140px;border-radius:50%;border:4px solid var(--primary);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:var(--input-bg)}
+.avatar-ring img{width:100%;height:100%;object-fit:cover}
+.avatar-placeholder{font-size:48px;color:var(--muted)}
+.verified-badge{position:absolute;bottom:4px;right:4px;background:var(--primary);color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--card)}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;position:relative}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--primary);background:var(--primary-light)}
+.upload-zone .icon{font-size:40px;margin-bottom:8px}
+.upload-zone h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.upload-zone p{font-size:12px;color:var(--muted)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.btn-row{display:flex;gap:10px;margin-bottom:16px}
+.btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--primary-dark)}
+.btn-secondary{background:var(--input-bg);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:var(--error-bg);color:var(--error);border:1px solid var(--error)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.loading{pointer-events:none}
+.btn .spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin:0 auto}
+.btn.loading .spinner{display:inline-block}
+.btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-bar{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:12px 0;display:none}
+.progress-bar.visible{display:block}
+.progress-fill{height:100%;background:var(--primary);border-radius:3px;width:0%;transition:width .3s}
+.message{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-top:12px;display:none;animation:fadeIn .3s}
+.message.success{background:var(--success-bg);color:var(--success);border:1px solid var(--success)}
+.message.error{background:var(--error-bg);color:var(--error);border:1px solid var(--error)}
+.message.visible{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;justify-content:center}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--input-bg)}
+.badge.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.badge.inactive{opacity:.4}
+.photo-history{margin-top:20px}
+.photo-history h3{font-size:14px;font-weight:600;margin-bottom:12px}
+.history-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.history-item:last-child{border-bottom:none}
+.history-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.history-icon.upload{background:var(--success-bg)}
+.history-icon.delete{background:var(--error-bg)}
+.history-info{flex:1;min-width:0}
+.history-info .action{font-weight:600}
+.history-info .detail{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-time{color:var(--muted);font-size:11px;white-space:nowrap}
+.footer{text-align:center;padding:16px;font-size:12px;color:var(--muted)}
+@media(max-width:480px){.body{padding:20px 16px}.avatar-ring{width:120px;height:120px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      <h1>Profile Photo</h1>
+      <p>Upload a clear photo to build trust</p>
+    </div>
+
+    <div class="body">
+      <!-- Info banner -->
+      <div class="info-banner" id="infoBanner">
+        <strong>Uploading a clear profile photo is required</strong> to create your account and helps build trust within the community.
+      </div>
+
+      <!-- Current photo -->
+      <div class="photo-display">
+        <div class="avatar-ring" id="avatarRing">
+          <span class="avatar-placeholder" id="avatarPlaceholder">👤</span>
+          <img id="avatarImg" style="display:none" alt="Profile">
+          <div class="verified-badge" id="verifiedBadge" style="display:none">✓</div>
+        </div>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="badges" id="badgesContainer"></div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="uploadZone">
+        <div class="icon">📸</div>
+        <h3>Drag & drop your photo</h3>
+        <p>or click to browse · JPG, PNG, WEBP · Max 5MB</p>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" capture="user">
+      </div>
+
+      <!-- Crop preview (hidden by default) -->
+      <div id="cropSection" style="display:none;margin-bottom:16px">
+        <div style="text-align:center;margin-bottom:8px;font-size:13px;font-weight:600">Preview & Adjust</div>
+        <div style="display:flex;justify-content:center;margin-bottom:12px">
+          <div style="width:150px;height:150px;border-radius:50%;overflow:hidden;border:2px solid var(--primary)">
+            <canvas id="cropCanvas" width="300" height="300" style="width:150px;height:150px;object-fit:cover"></canvas>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">
+          <button class="btn btn-secondary" onclick="rotatePhoto(-90)" style="flex:0;padding:8px 14px">↺ Rotate</button>
+          <button class="btn btn-secondary" onclick="rotatePhoto(90)" style="flex:0;padding:8px 14px">↻ Rotate</button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="btn-row" id="actionRow" style="display:none">
+        <button class="btn btn-secondary" onclick="cancelUpload()">Cancel</button>
+        <button class="btn btn-primary" id="uploadBtn" onclick="confirmUpload()">
+          <span class="btn-text">Upload Photo</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+
+      <div class="btn-row" id="deleteRow" style="display:none">
+        <button class="btn btn-danger" onclick="deletePhoto()">
+          <span class="btn-text">Remove Photo</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+
+      <!-- Message -->
+      <div class="message" id="msgBox"></div>
+
+      <!-- Photo history -->
+      <div class="photo-history" id="historySection" style="display:none">
+        <h3>Upload History</h3>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      KrishiConnect Nepal © 2025 · For farmers, by farmers 🌾
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yutjmviwwikvwousgtjy.supabase.co';
+const ANON_KEY = 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u';
+let currentFile = null;
+let rotationDeg = 0;
+let rawImageData = null;
+let theme = localStorage.getItem('kc_theme') || 'light';
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(theme);
+  loadStatus();
+  setupDragDrop();
+});
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  theme = theme === 'light' ? 'dark' : 'light';
+  applyTheme(theme);
+  localStorage.setItem('kc_theme', theme);
+}
+
+function setupDragDrop() {
+  const zone = document.getElementById('uploadZone');
+  const input = document.getElementById('fileInput');
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  input.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+}
+
+function handleFile(file) {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    showMessage('Invalid file type. Use JPG, PNG, or WEBP.', 'error');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showMessage('File too large. Maximum 5MB.', 'error');
+    return;
+  }
+
+  currentFile = file;
+  rotationDeg = 0;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    rawImageData = e.target.result;
+    showCropPreview(rawImageData);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showCropPreview(src) {
+  const canvas = document.getElementById('cropCanvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = 300;
+    canvas.height = 300;
+    ctx.clearRect(0, 0, 300, 300);
+    ctx.save();
+    ctx.translate(150, 150);
+    ctx.rotate((rotationDeg * Math.PI) / 180);
+    const size = Math.min(img.width, img.height);
+    const sx = (img.width - size) / 2;
+    const sy = (img.height - size) / 2;
+    ctx.drawImage(img, sx, sy, size, size, -150, -150, 300, 300);
+    ctx.restore();
+  };
+  img.src = src;
+
+  document.getElementById('cropSection').style.display = 'block';
+  document.getElementById('actionRow').style.display = 'flex';
+  document.getElementById('deleteRow').style.display = 'none';
+}
+
+function rotatePhoto(deg) {
+  rotationDeg = (rotationDeg + deg) % 360;
+  if (rawImageData) showCropPreview(rawImageData);
+}
+
+function cancelUpload() {
+  currentFile = null;
+  rawImageData = null;
+  rotationDeg = 0;
+  document.getElementById('cropSection').style.display = 'none';
+  document.getElementById('actionRow').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+}
+
+async function confirmUpload() {
+  if (!currentFile) return;
+  const btn = document.getElementById('uploadBtn');
+  btn.classList.add('loading');
+  showProgress(true);
+
+  try {
+    const canvas = document.getElementById('cropCanvas');
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+
+    const formData = new FormData();
+    formData.append('photo', blob, 'profile.jpg');
+
+    simulateProgress();
+
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-photo`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
+        'apikey': ANON_KEY,
+      },
+      body: formData,
+    });
+
+    const data = await resp.json();
+
+    if (data.success) {
+      showMessage('Photo uploaded successfully!', 'success');
+      document.getElementById('avatarImg').src = data.photo_url;
+      document.getElementById('avatarImg').style.display = 'block';
+      document.getElementById('avatarPlaceholder').style.display = 'none';
+      document.getElementById('verifiedBadge').style.display = 'flex';
+      document.getElementById('deleteRow').style.display = 'block';
+      cancelUpload();
+      loadStatus();
+    } else {
+      showMessage(data.error || data.message || 'Upload failed', 'error');
+    }
+  } catch (err) {
+    showMessage('Upload failed. Please try again.', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    showProgress(false);
+  }
+}
+
+async function deletePhoto() {
+  if (!confirm('Remove your profile photo? You will need to upload a new one.')) return;
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/delete-photo`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
+        'apikey': ANON_KEY,
+      },
+    });
+
+    const data = await resp.json();
+    if (data.success) {
+      showMessage('Photo removed. Please upload a new one.', 'error');
+      document.getElementById('avatarImg').style.display = 'none';
+      document.getElementById('avatarPlaceholder').style.display = 'block';
+      document.getElementById('verifiedBadge').style.display = 'none';
+      document.getElementById('deleteRow').style.display = 'none';
+      loadStatus();
+    }
+  } catch (err) {
+    showMessage('Failed to remove photo.', 'error');
+  }
+}
+
+async function loadStatus() {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/photo-status`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
+        'apikey': ANON_KEY,
+      },
+    });
+    const data = await resp.json();
+    if (!data.success) return;
+
+    const p = data.profile;
+    if (p.photo_url) {
+      document.getElementById('avatarImg').src = p.photo_url;
+      document.getElementById('avatarImg').style.display = 'block';
+      document.getElementById('avatarPlaceholder').style.display = 'none';
+      if (p.photo_verified) document.getElementById('verifiedBadge').style.display = 'flex';
+      document.getElementById('deleteRow').style.display = 'block';
+    }
+
+    if (p.profile_completed) {
+      document.getElementById('infoBanner').innerHTML = '<strong>✅ Profile Completed!</strong> Your profile is verified and complete.';
+    }
+
+    // Badges
+    const bc = document.getElementById('badgesContainer');
+    bc.innerHTML = '';
+    (data.badges || []).forEach(b => {
+      const el = document.createElement('div');
+      el.className = 'badge ' + (b.is_active ? 'active' : 'inactive');
+      el.innerHTML = `${b.badge_icon || '🏅'} ${b.badge_name}`;
+      bc.appendChild(el);
+    });
+
+    // History
+    if (data.history && data.history.length > 0) {
+      document.getElementById('historySection').style.display = 'block';
+      const hl = document.getElementById('historyList');
+      hl.innerHTML = '';
+      data.history.forEach(h => {
+        const isDelete = h.action === 'delete' || h.action === 'admin_remove';
+        hl.innerHTML += `
+          <div class="history-item">
+            <div class="history-icon ${isDelete ? 'delete' : 'upload'}">${isDelete ? '🗑️' : '📸'}</div>
+            <div class="history-info">
+              <div class="action">${h.action.charAt(0).toUpperCase() + h.action.slice(1)}</div>
+              <div class="detail">${h.file_name || ''} ${h.file_size ? '· ' + h.file_size : ''}</div>
+            </div>
+            <div class="history-time">${new Date(h.created_at).toLocaleDateString()}</div>
+          </div>`;
+      });
+    }
+  } catch (err) {
+    console.error('loadStatus error:', err);
+  }
+}
+
+function showProgress(show) {
+  document.getElementById('progressBar').classList.toggle('visible', show);
+  document.getElementById('progressFill').style.width = '0%';
+}
+
+function simulateProgress() {
+  let w = 0;
+  const fill = document.getElementById('progressFill');
+  const iv = setInterval(() => {
+    w += Math.random() * 15;
+    if (w >= 90) { clearInterval(iv); w = 90; }
+    fill.style.width = w + '%';
+  }, 200);
+  setTimeout(() => { clearInterval(iv); fill.style.width = '100%'; }, 3000);
+}
+
+function showMessage(text, type) {
+  const el = document.getElementById('msgBox');
+  el.textContent = text;
+  el.className = `message ${type} visible`;
+}
+</script>
+</body>
+</html>
