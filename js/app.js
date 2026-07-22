@@ -38,6 +38,7 @@ const App = {
         <div class="navbar-actions">
           <button class="navbar-btn tooltip" data-tooltip="Theme" onclick="Utils.toggleTheme();location.reload()">🌓</button>
           ${user ? `
+            ${AuthSystem.requiresPhotoUpload(user) ? `<a href="photo-gate.html" class="navbar-btn tooltip" data-tooltip="Upload Photo" style="color:#f59e0b;font-size:1.1rem">⚠️📸</a>` : ''}
             <div style="position:relative">
               <button class="navbar-btn" onclick="this.nextElementSibling.classList.toggle('show')" id="notifBtn">
                 🔔${unreadNotifs > 0 ? `<span class="badge-count">${unreadNotifs}</span>` : ''}
@@ -52,12 +53,13 @@ const App = {
             </a>
             <div style="position:relative">
               <div class="navbar-profile" onclick="this.nextElementSibling.classList.toggle('show')">
-                ${Utils.avatarHTML(user.avatar, user.name, 'sm')}
+                ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
                 <span class="name">${user.name.split(' ')[0]}</span>
               </div>
               <div class="navbar-dropdown" id="profileDropdown">
                 <a href="${Auth.getDashboardUrl()}">📊 Dashboard</a>
                 <a href="profile.html?id=${user.id}">👤 My Profile</a>
+                <a href="photo-gate.html">📸 Profile Photo</a>
                 <a href="jobs.html?mode=arma-parma">🤝 Arma Parma</a>
                 <a href="verify-identity.html">🪪 Verify Identity</a>
                 <a href="settings.html">⚙️ Settings</a>
@@ -242,7 +244,7 @@ const App = {
         <div class="job-card-body">
           <div class="job-card-title"><a href="job-detail.html?id=${job.id}${isArmaParma ? '&type=arma-parma' : ''}">${Utils.escapeHtml(job.title)}</a></div>
           <div class="job-card-company">
-            ${farmer ? Utils.avatarHTML(farmer.avatar, farmer.name, 'sm') : ''}
+            ${farmer ? Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'sm') : ''}
             <span>${farmer ? farmer.farmName || farmer.name : 'Unknown Farm'}</span>
           </div>
           <div class="job-card-meta">
@@ -273,7 +275,7 @@ const App = {
     return `
       <div class="worker-card hover-lift" data-animate="fadeUp">
         ${worker.verified ? '<div class="worker-card-verified" title="Verified">✅</div>' : ''}
-        <img src="${worker.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(worker.name)}" alt="${worker.name}" class="worker-card-avatar">
+        <img src="${Utils.getUserPhoto(worker) || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(worker.name)}" alt="${worker.name}" class="worker-card-avatar">
         <div class="worker-card-name"><a href="worker-profile.html?id=${worker.id}">${worker.name}</a></div>
         <div class="worker-card-location">📍 ${worker.district || 'Nepal'}</div>
         ${rating > 0 ? `<div class="worker-card-rating">${Utils.ratingHTML(rating, reviewCount)}</div>` : ''}

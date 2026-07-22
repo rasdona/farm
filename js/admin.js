@@ -70,7 +70,7 @@ const Admin = {
         <div class="dashboard-card-body">
           <div class="table-wrapper"><table class="admin-table"><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead><tbody>
             ${DB.getUsers().slice(-5).reverse().map(u => `<tr>
-              <td><div class="flex items-center gap-3">${Utils.avatarHTML(u.avatar, u.name, 'sm')}<div><div class="font-semibold">${u.name}</div><div class="text-xs text-muted">${u.email}</div></div></div></td>
+              <td><div class="flex items-center gap-3">${Utils.avatarHTML(Utils.getUserPhoto(u), u.name, 'sm')}<div><div class="font-semibold">${u.name}</div><div class="text-xs text-muted">${u.email}</div></div></div></td>
               <td><span class="badge badge-${u.role === 'farmer' ? 'accent' : u.role === 'admin' ? 'danger' : 'primary'}">${Utils.capitalize(u.role)}</span></td>
               <td>${u.verified ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-secondary">Unverified</span>'}${u.suspended ? ' <span class="badge badge-danger">Suspended</span>' : ''}</td>
               <td class="text-sm text-muted">${Utils.formatTime(u.createdAt)}</td>
@@ -97,7 +97,7 @@ const Admin = {
 
   renderUserRows(users) {
     return users.map(u => `<tr>
-      <td><div class="flex items-center gap-3">${Utils.avatarHTML(u.avatar, u.name, 'sm')}<div><div class="font-semibold">${u.name}</div><div class="text-xs text-muted">${u.email}</div></div></div></td>
+      <td><div class="flex items-center gap-3">${Utils.avatarHTML(Utils.getUserPhoto(u), u.name, 'sm')}<div><div class="font-semibold">${u.name}</div><div class="text-xs text-muted">${u.email}</div></div></div></td>
       <td class="text-sm">${u.phone || '-'}</td>
       <td><span class="badge badge-${u.role === 'farmer' ? 'accent' : u.role === 'admin' ? 'danger' : 'primary'}">${Utils.capitalize(u.role)}</span></td>
       <td>${u.verified ? '✅' : '❌'}</td>
@@ -187,7 +187,7 @@ const Admin = {
             const worker = DB.getUserById(a.workerId);
             const job = DB.getJobById(a.jobId);
             return `<tr>
-              <td><div class="flex items-center gap-2">${Utils.avatarHTML(worker?.avatar, worker?.name || 'W', 'sm')}<span>${worker?.name || 'Unknown'}</span></div></td>
+              <td><div class="flex items-center gap-2">${Utils.avatarHTML(Utils.getUserPhoto(worker), worker?.name || 'W', 'sm')}<span>${worker?.name || 'Unknown'}</span></div></td>
               <td>${job ? Utils.escapeHtml(job.title) : 'Deleted'}</td>
               <td><span class="badge badge-${a.status === 'accepted' ? 'success' : a.status === 'rejected' ? 'danger' : 'warning'}">${Utils.capitalize(a.status)}</span></td>
               <td class="text-sm text-muted">${Utils.formatTime(a.createdAt)}</td>

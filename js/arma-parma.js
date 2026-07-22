@@ -62,7 +62,7 @@ const ArmaParma = {
         <div class="job-card-body">
           <div class="job-card-title"><a href="job-detail.html?id=${req.id}&type=arma-parma">${Utils.escapeHtml(req.title)}</a></div>
           <div class="job-card-company">
-            ${farmer ? Utils.avatarHTML(farmer.avatar, farmer.name, 'sm') : ''}
+            ${farmer ? Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'sm') : ''}
             <span>${farmer ? farmer.farmName || farmer.name : 'Unknown Farm'}</span>
             ${farmer?.verified ? '<span class="badge badge-success" style="font-size:0.65rem">✅ Verified</span>' : ''}
           </div>
@@ -184,7 +184,7 @@ const ArmaParma = {
                 <div class="card-body">
                   <h4 class="mb-4">Posted By</h4>
                   <div class="flex items-center gap-3 mb-4">
-                    ${Utils.avatarHTML(farmer.avatar, farmer.name, 'lg')}
+                    ${Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'lg')}
                     <div>
                       <div class="font-semibold"><a href="worker-profile.html?id=${farmer.id}">${farmer.name}</a></div>
                       <div class="text-sm text-muted">${farmer.farmName || 'Farmer'}</div>
@@ -203,7 +203,7 @@ const ArmaParma = {
                 <h4 class="mb-3">Smart Matches</h4>
                 ${this.getSmartMatches(req).length ? this.getSmartMatches(req).map(m => `
                   <div class="flex items-center gap-3 p-2 hover-lift" style="border-bottom:1px solid var(--border-light);cursor:pointer" onclick="window.location.href='worker-profile.html?id=${m.id}'">
-                    ${Utils.avatarHTML(m.avatar, m.name, 'sm')}
+                    ${Utils.avatarHTML(Utils.getUserPhoto(m), m.name, 'sm')}
                     <div class="flex-1">
                       <div class="font-semibold text-sm">${m.name}</div>
                       <div class="text-xs text-muted">📍 ${m.district} | ⭐ ${DB.getAvgRating(m.id) || 'New'}</div>

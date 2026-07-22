@@ -123,6 +123,7 @@
   <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/arma-parma.js"></script>
   <script>
     App.init();
+    if (!Auth.requireProfilePhoto()) throw new Error('Photo required');
     if (!Auth.requireRole('farmer')) throw new Error('Not authorized');
     document.getElementById('jobCrop').innerHTML = Jobs.getCropOptions();
     document.getElementById('jobDistrict').innerHTML = Jobs.getDistrictOptions().replace('All Districts', 'Select District');

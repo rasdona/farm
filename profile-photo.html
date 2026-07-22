@@ -307,6 +307,15 @@ async function confirmUpload() {
       document.getElementById('deleteRow').style.display = 'block';
       cancelUpload();
       loadStatus();
+
+      if (typeof Auth !== 'undefined' && Auth.currentUser) {
+        DB.updateUser(Auth.currentUser.id, {
+          profilePhotoUrl: data.photo_url,
+          profilePhotoVerified: true,
+          requiresPhotoUpload: false
+        });
+        Auth.currentUser = DB.getUserById(Auth.currentUser.id);
+      }
     } else {
       showMessage(data.error || data.message || 'Upload failed', 'error');
     }
@@ -338,6 +347,15 @@ async function deletePhoto() {
       document.getElementById('verifiedBadge').style.display = 'none';
       document.getElementById('deleteRow').style.display = 'none';
       loadStatus();
+
+      if (typeof Auth !== 'undefined' && Auth.currentUser) {
+        DB.updateUser(Auth.currentUser.id, {
+          profilePhotoUrl: '',
+          profilePhotoVerified: false,
+          requiresPhotoUpload: true
+        });
+        Auth.currentUser = DB.getUserById(Auth.currentUser.id);
+      }
     }
   } catch (err) {
     showMessage('Failed to remove photo.', 'error');

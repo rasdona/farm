@@ -47,7 +47,7 @@ const Dashboard = {
               ${recentApps.length ? recentApps.map(a => {
                 const worker = DB.getUserById(a.workerId);
                 return `<div class="application-card">
-                  ${Utils.avatarHTML(worker?.avatar, worker?.name || 'W', 'lg')}
+                  ${Utils.avatarHTML(Utils.getUserPhoto(worker), worker?.name || 'W', 'lg')}
                   <div class="applicant-info">
                     <div class="applicant-name"><a href="worker-profile.html?id=${a.workerId}">${worker?.name || 'Unknown'}</a></div>
                     <div class="applicant-meta">Applied for: ${a.jobTitle} ${a.workMode === 'arma-parma' ? '<span class="badge badge-arma" style="font-size:0.65rem">🤝</span>' : ''} • ${Utils.formatTime(a.createdAt)}</div>
@@ -121,7 +121,7 @@ const Dashboard = {
               ${exchanges.slice(0, 3).map(e => {
                 const partner = DB.getUserById(e.farmer1Id === user.id ? e.farmer2Id : e.farmer1Id);
                 return `<div class="flex items-center gap-3 p-2" style="border-bottom:1px solid var(--border-light)">
-                  ${Utils.avatarHTML(partner?.avatar, partner?.name || '?', 'sm')}
+                  ${Utils.avatarHTML(Utils.getUserPhoto(partner), partner?.name || '?', 'sm')}
                   <div class="flex-1">
                     <div class="text-sm font-semibold">${partner?.name || 'Unknown'}</div>
                     <div class="text-xs text-muted">${e.cropType} • ${e.days} day${e.days > 1 ? 's' : ''}</div>
@@ -193,7 +193,7 @@ const Dashboard = {
                   const farmer = job ? DB.getUserById(job.farmerId) : null;
                   return `<tr>
                     <td><a href="job-detail.html?id=${a.jobId}" class="font-semibold">${job ? Utils.escapeHtml(job.title) : 'Unknown Job'}</a></td>
-                    <td>${farmer ? `<div class="flex items-center gap-2">${Utils.avatarHTML(farmer.avatar, farmer.name, 'sm')}<span>${farmer.name.split(' ')[0]}</span></div>` : '-'}</td>
+                    <td>${farmer ? `<div class="flex items-center gap-2">${Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'sm')}<span>${farmer.name.split(' ')[0]}</span></div>` : '-'}</td>
                     <td><span class="badge badge-${a.status === 'accepted' ? 'success' : a.status === 'rejected' ? 'danger' : 'warning'}">${Utils.capitalize(a.status)}</span></td>
                     <td class="text-sm text-muted">${Utils.formatTime(a.createdAt)}</td>
                     <td><a href="chat.html?user=${farmer?.id || ''}" class="btn btn-ghost btn-sm">💬</a></td>
@@ -259,7 +259,7 @@ const Dashboard = {
               ${exchanges.slice(0, 3).map(e => {
                 const partner = DB.getUserById(e.farmer1Id === user.id ? e.farmer2Id : e.farmer1Id);
                 return `<div class="flex items-center gap-3 p-2" style="border-bottom:1px solid var(--border-light)">
-                  ${Utils.avatarHTML(partner?.avatar, partner?.name || '?', 'sm')}
+                  ${Utils.avatarHTML(Utils.getUserPhoto(partner), partner?.name || '?', 'sm')}
                   <div class="flex-1">
                     <div class="text-sm font-semibold">${partner?.name || 'Unknown'}</div>
                     <div class="text-xs text-muted">${e.cropType} • ${e.days} day${e.days > 1 ? 's' : ''}</div>

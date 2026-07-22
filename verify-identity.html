@@ -105,7 +105,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       App.init();
-      if (!Auth.requireAuth()) return;
+      if (!Auth.requireProfilePhoto()) return;
       renderVerificationStatus();
       if (Auth.isFarmer()) document.getElementById('farmVerifySection').classList.remove('hidden');
     });

@@ -120,6 +120,8 @@ serve(async (req: Request): Promise<Response> => {
       email_verified: false,
       account_status: "pending_verification",
       verification_status: "unverified",
+      requires_photo_upload: true,
+      profile_photo_verified: false,
     });
 
     if (profileErr) {

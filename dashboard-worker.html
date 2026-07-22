@@ -35,11 +35,14 @@
   <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/dashboard.js"></script><script src="js/notifications.js"></script>
   <script>
     App.init();
-    if (Auth.currentUser) {
-      document.getElementById('sidebarName').textContent = Auth.currentUser.name;
-      document.getElementById('profileLink').href = 'profile.html?id=' + Auth.currentUser.id;
+    if (!Auth.requireProfilePhoto()) { /* redirected */ }
+    else {
+      if (Auth.currentUser) {
+        document.getElementById('sidebarName').textContent = Auth.currentUser.name;
+        document.getElementById('profileLink').href = 'profile.html?id=' + Auth.currentUser.id;
+      }
+      Dashboard.renderWorkerDashboard();
     }
-    Dashboard.renderWorkerDashboard();
   </script>
 </body>
 </html>

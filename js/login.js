@@ -26,7 +26,11 @@ function handleLogin(e) {
       Auth.currentUser = result.user;
       localStorage.setItem('agri_currentUser', result.user.id);
       const redirect = new URLSearchParams(window.location.search).get('redirect');
-      setTimeout(() => { window.location.href = redirect || Auth.getDashboardUrl(); }, 800);
+      if (AuthSystem.requiresPhotoUpload(result.user)) {
+        setTimeout(() => { window.location.href = 'photo-gate.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : ''); }, 800);
+      } else {
+        setTimeout(() => { window.location.href = redirect || Auth.getDashboardUrl(); }, 800);
+      }
     } else {
       showLoginError(result.message);
     }

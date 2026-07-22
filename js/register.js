@@ -1,5 +1,7 @@
 let currentStep = 1;
-const totalSteps = 4;
+const totalSteps = 5;
+let regPhotoDataUrl = null;
+let regPhotoFile = null;
 
 function goToStep(step) {
   if (step > currentStep && !validateCurrentStep()) return;
@@ -33,6 +35,18 @@ function validateCurrentStep() {
   if (currentStep === 3) {
     if (!document.getElementById('regProvince').value) { showRegError('प्रदेश छान्नुहोस्'); return false; }
     if (!document.getElementById('regDistrict').value) { showRegError('जिल्ला छान्नुहोस्'); return false; }
+    return true;
+  }
+  if (currentStep === 4) {
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+    if (password.length < 8) { showRegError('पासवर्ड कम्तिमा ८ अक्षरको हुनुपर्छ'); return false; }
+    if (!/[A-Z]/.test(password)) { showRegError('पासवर्डमा ठूलो अक्षर चाहिन्छ'); return false; }
+    if (!/[a-z]/.test(password)) { showRegError('पासवर्डमा सानो अक्षर चाहिन्छ'); return false; }
+    if (!/[0-9]/.test(password)) { showRegError('पासवर्डमा अंक चाहिन्छ'); return false; }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) { showRegError('पासवर्डमा विशेष चिह्न चाहिन्छ'); return false; }
+    if (password !== confirmPassword) { showRegError('पासवर्ड मिल्दैन'); return false; }
+    if (!document.getElementById('regTerms').checked) { showRegError('सेवाका शर्त सहमत हुनुहोस्'); return false; }
     return true;
   }
   return true;
@@ -91,14 +105,6 @@ async function handleRegister() {
   const password = document.getElementById('regPassword').value;
   const confirmPassword = document.getElementById('regConfirmPassword').value;
 
-  if (password.length < 8) { showRegError('पासवर्ड कम्तिमा ८ अक्षरको हुनुपर्छ'); return; }
-  if (!/[A-Z]/.test(password)) { showRegError('पासवर्डमा ठूलो अक्षर चाहिन्छ'); return; }
-  if (!/[a-z]/.test(password)) { showRegError('पासवर्डमा सानो अक्षर चाहिन्छ'); return; }
-  if (!/[0-9]/.test(password)) { showRegError('पासवर्डमा अंक चाहिन्छ'); return; }
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) { showRegError('पासवर्डमा विशेष चिह्न चाहिन्छ'); return; }
-  if (password !== confirmPassword) { showRegError('पासवर्ड मिल्दैन'); return; }
-  if (!document.getElementById('regTerms').checked) { showRegError('सेवाका शर्त सहमत हुनुहोस्'); return; }
-
   const roles = Array.from(document.querySelectorAll('.auth-role-check:checked')).map(c => c.value);
 
   const data = {
@@ -128,6 +134,16 @@ async function handleRegister() {
       Auth.currentUser = result.user;
       localStorage.setItem('agri_currentUser', result.user.id);
       sessionStorage.setItem('agri_pendingPhone', data.phone);
+
+      if (regPhotoDataUrl) {
+        DB.updateUser(result.user.id, {
+          profilePhotoUrl: regPhotoDataUrl,
+          profilePhotoVerified: true,
+          requiresPhotoUpload: false
+        });
+        Auth.currentUser = DB.getUserById(result.user.id);
+      }
+
       Utils.toast('दर्ता सफल भयो! OTP पठाइँदैछ...');
       setTimeout(() => { window.location.href = 'verify-otp.html?type=phone&phone=' + encodeURIComponent(data.phone); }, 800);
     } else {
@@ -152,6 +168,58 @@ async function handleRegister() {
   }
 }
 
+function handleRegPhotoSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    showRegPhotoError('मान्य फोटो छान्नुहोस्। JPG, PNG, वा WEBP मात्र।');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showRegPhotoError('फोटो साइज धेरै ठूलो छ। अधिकतम 5MB।');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      if (img.width < 300 || img.height < 300) {
+        showRegPhotoError('फोटो कम्तिमा 300x300 पिक्सेल हुनुपर्छ।');
+        return;
+      }
+      regPhotoDataUrl = e.target.result;
+      regPhotoFile = file;
+      document.getElementById('regPhotoPreview').src = e.target.result;
+      document.getElementById('regPhotoPreview').style.display = 'block';
+      document.getElementById('regPhotoPlaceholder').style.display = 'none';
+      document.getElementById('regPhotoRing').style.borderStyle = 'solid';
+      document.getElementById('regPhotoRing').style.borderColor = 'var(--primary)';
+      document.getElementById('regPhotoHint').innerHTML = '<span style="color:var(--primary);font-weight:600">✓ फोटो छानियो!</span> <span style="color:var(--text-tertiary)">फोटो बदल्न यहाँ क्लिक गर्नुहोस्</span>';
+      document.getElementById('regPhotoError').classList.add('hidden');
+      document.getElementById('regPhotoSuccess').textContent = 'फोटो तयार छ! दर्ता गर्दा अपलोड हुनेछ।';
+      document.getElementById('regPhotoSuccess').classList.remove('hidden');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showRegPhotoError(msg) {
+  const el = document.getElementById('regPhotoError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  document.getElementById('regPhotoSuccess').classList.add('hidden');
+}
+
+function skipPhotoUpload() {
+  regPhotoDataUrl = null;
+  regPhotoFile = null;
+  handleRegister();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   App.init();
   if (Auth.isLoggedIn()) { window.location.href = Auth.getDashboardUrl(); return; }
@@ -163,5 +231,18 @@ document.addEventListener('DOMContentLoaded', function() {
         this.classList.toggle('selected', checked);
       }, 10);
     });
+  });
+  document.getElementById('regPhotoRing').addEventListener('dragover', (e) => { e.preventDefault(); document.getElementById('regPhotoRing').style.borderColor = 'var(--primary)'; });
+  document.getElementById('regPhotoRing').addEventListener('dragleave', () => { if (!regPhotoDataUrl) { document.getElementById('regPhotoRing').style.borderColor = 'var(--border)'; } });
+  document.getElementById('regPhotoRing').addEventListener('drop', (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const input = document.getElementById('regPhotoInput');
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      handleRegPhotoSelect(input);
+    }
   });
 });

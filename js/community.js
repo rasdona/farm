@@ -16,7 +16,7 @@ const Community = {
     el.innerHTML = `
       <div class="create-post-card">
         <div class="flex items-center gap-3 mb-4">
-          ${Utils.avatarHTML(Auth.currentUser.avatar, Auth.currentUser.name, 'lg')}
+          ${Utils.avatarHTML(Utils.getUserPhoto(Auth.currentUser), Auth.currentUser.name, 'lg')}
           <div>
             <div class="font-semibold">${Auth.currentUser.name}</div>
             <div class="text-sm text-muted">What's on your mind?</div>
@@ -64,7 +64,7 @@ const Community = {
       return `
         <div class="community-post" data-animate="fadeUp">
           <div class="community-post-header">
-            ${Utils.avatarHTML(author?.avatar, author?.name || '?', 'lg')}
+            ${Utils.avatarHTML(Utils.getUserPhoto(author), author?.name || '?', 'lg')}
             <div class="flex-1">
               <div class="font-semibold"><a href="worker-profile.html?id=${p.userId}">${author?.name || 'Unknown'}</a></div>
               <div class="text-xs text-muted">${Utils.formatTime(p.createdAt)} • <span style="color:${typeColors[p.type] || 'var(--text-secondary)'}">${typeIcons[p.type] || ''} ${Utils.capitalize(p.type || 'post')}</span></div>
@@ -86,7 +86,7 @@ const Community = {
             ${(p.comments || []).map(c => {
               const commenter = DB.getUserById(c.userId);
               return `<div class="flex gap-3 mb-3">
-                ${Utils.avatarHTML(commenter?.avatar, commenter?.name || '?', 'sm')}
+                ${Utils.avatarHTML(Utils.getUserPhoto(commenter), commenter?.name || '?', 'sm')}
                 <div class="flex-1">
                   <div class="text-sm"><strong>${commenter?.name || 'Unknown'}</strong> <span class="text-muted text-xs">${Utils.formatTime(c.createdAt)}</span></div>
                   <div class="text-sm" style="color:var(--text-secondary)">${Utils.escapeHtml(c.text)}</div>
@@ -106,7 +106,7 @@ const Community = {
   },
 
   createPost() {
-    if (!Auth.requireAuth()) return;
+    if (!Auth.requireProfilePhoto()) return;
     const content = document.getElementById('postContent')?.value.trim();
     if (!content) { Utils.toast('Please write something to post.', 'warning'); return; }
     const title = document.getElementById('postTitle')?.value.trim();
@@ -121,7 +121,7 @@ const Community = {
   },
 
   toggleLike(postId) {
-    if (!Auth.requireAuth()) return;
+    if (!Auth.requireProfilePhoto()) return;
     const post = DB.getCommunityPosts().find(p => p.id === postId);
     if (!post) return;
     if (!post.likes) post.likes = [];
@@ -138,7 +138,7 @@ const Community = {
   },
 
   addComment(postId) {
-    if (!Auth.requireAuth()) return;
+    if (!Auth.requireProfilePhoto()) return;
     const input = document.getElementById('commentInput-' + postId);
     const text = input?.value.trim();
     if (!text) return;

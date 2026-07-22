@@ -48,7 +48,7 @@ const Workers = {
         </div>
         <div class="profile-info">
           <div class="profile-avatar-wrapper">
-            ${Utils.avatarHTML(worker.avatar, worker.name, 'xxl')}
+            ${Utils.avatarHTML(Utils.getUserPhoto(worker), worker.name, 'xxl')}
             ${worker.verified ? '<div class="profile-verification">✅</div>' : ''}
           </div>
           <div class="profile-header-content">
@@ -109,7 +109,7 @@ const Workers = {
                 const reviewer = DB.getUserById(r.reviewerId);
                 return `<div class="review-card">
                   <div class="review-card-header">
-                    ${Utils.avatarHTML(reviewer?.avatar, reviewer?.name || 'User', 'md')}
+                    ${Utils.avatarHTML(Utils.getUserPhoto(reviewer), reviewer?.name || 'User', 'md')}
                     <div><div class="review-card-author">${reviewer?.name || 'Anonymous'}</div><div class="review-card-date">${Utils.formatDate(r.createdAt)}</div></div>
                     <div style="margin-left:auto">${Utils.ratingHTML(r.rating)}</div>
                   </div>
@@ -182,7 +182,7 @@ const Workers = {
         </div>
         <div class="profile-info">
           <div class="profile-avatar-wrapper">
-            ${Utils.avatarHTML(farmer.avatar, farmer.name, 'xxl')}
+            ${Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'xxl')}
             ${farmer.verified ? '<div class="profile-verification">✅</div>' : ''}
           </div>
           <div class="profile-header-content">
@@ -236,7 +236,7 @@ const Workers = {
                 const reviewer = DB.getUserById(r.reviewerId);
                 return `<div class="review-card">
                   <div class="review-card-header">
-                    ${Utils.avatarHTML(reviewer?.avatar, reviewer?.name || 'User', 'md')}
+                    ${Utils.avatarHTML(Utils.getUserPhoto(reviewer), reviewer?.name || 'User', 'md')}
                     <div><div class="review-card-author">${reviewer?.name || 'Anonymous'}</div><div class="review-card-date">${Utils.formatDate(r.createdAt)}</div></div>
                     <div style="margin-left:auto">${Utils.ratingHTML(r.rating)}</div>
                   </div>

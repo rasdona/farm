@@ -62,6 +62,26 @@ const Auth = {
     return true;
   },
 
+  requireProfilePhoto() {
+    if (!this.requireAuth()) return false;
+    if (this.currentUser.role === 'admin') return true;
+    if (AuthSystem.requiresPhotoUpload(this.currentUser)) {
+      Utils.toast('कृपया प्रोफाइल फोटो अपलोड गर्नुहोस् / Please upload a profile photo to continue.', 'warning');
+      setTimeout(() => { window.location.href = 'photo-gate.html?redirect=' + encodeURIComponent(window.location.href); }, 500);
+      return false;
+    }
+    return true;
+  },
+
+  hasUploadedPhoto() {
+    return AuthSystem.hasUploadedPhoto(this.currentUser);
+  },
+
+  getProfilePhoto() {
+    if (!this.currentUser) return '';
+    return this.currentUser.profilePhotoUrl || this.currentUser.avatar || '';
+  },
+
   requireRole(role) {
     if (!this.requireAuth()) return false;
     if (this.currentUser.role !== 'admin' && !this.hasRole(role)) {

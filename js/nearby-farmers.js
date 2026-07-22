@@ -92,7 +92,7 @@ const NearbyFarmers = {
     el.innerHTML = farmers.map(f => `
       <div class="nearby-farmer-card" onclick="window.location.href='profile.html?id=${f.id}'">
         <div class="relative">
-          ${Utils.avatarHTML(f.avatar, f.name, 'md')}
+          ${Utils.avatarHTML(Utils.getUserPhoto(f), f.name, 'md')}
           ${f.distance <= 10 ? '<div style="position:absolute;bottom:-2px;right:-2px;background:#059669;color:white;font-size:0.6rem;padding:2px 5px;border-radius:var(--radius-full);font-weight:700">NEAR</div>' : ''}
         </div>
         <div style="flex:1;min-width:0">

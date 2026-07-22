@@ -24,7 +24,7 @@ const Chat = {
       return `
         <div class="chat-contact ${this.currentChat?.id === chat.id ? 'active' : ''}" data-chat-user="${otherId}" onclick="Chat.openChat('${otherId}')">
           <div class="chat-contact-avatar">
-            ${Utils.avatarHTML(other.avatar, other.name, 'md')}
+            ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
             <div class="online"></div>
           </div>
           <div class="chat-contact-info">
@@ -47,7 +47,7 @@ const Chat = {
     if (header) {
       header.innerHTML = `
         <div class="chat-header-info">
-          ${Utils.avatarHTML(other.avatar, other.name, 'md')}
+          ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
           <div>
             <div class="chat-header-name">${other.name}</div>
             <div class="chat-header-status">● Online</div>
@@ -82,7 +82,7 @@ const Chat = {
       const sender = DB.getUserById(msg.senderId);
       html += `
         <div class="chat-message ${isSent ? 'sent' : 'received'}">
-          ${!isSent ? Utils.avatarHTML(sender?.avatar, sender?.name || '', 'sm') : ''}
+          ${!isSent ? Utils.avatarHTML(Utils.getUserPhoto(sender), sender?.name || '', 'sm') : ''}
           <div>
             <div class="chat-bubble">${Utils.escapeHtml(msg.text)}</div>
             <div class="chat-message-time">${new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ${isSent ? '<span class="chat-message-read">' + (msg.read ? '✓✓' : '✓') + '</span>' : ''}</div>

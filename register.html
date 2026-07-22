@@ -28,6 +28,8 @@
           <div class="auth-step" data-step="3"><div class="auth-step-num">3</div><span>ठेगाना</span></div>
           <div class="auth-step-line"></div>
           <div class="auth-step" data-step="4"><div class="auth-step-num">4</div><span>सुरक्षा</span></div>
+          <div class="auth-step-line"></div>
+          <div class="auth-step" data-step="5"><div class="auth-step-num">5</div><span>फोटो</span></div>
         </div>
 
         <div id="regError" class="auth-alert auth-alert-error hidden"></div>
@@ -219,7 +221,42 @@
 
             <div class="auth-flex-row auth-mb-4">
               <button type="button" class="auth-btn auth-btn-outline auth-btn-lg" onclick="goToStep(3)">← पछाडि</button>
-              <button type="submit" class="auth-btn auth-btn-primary auth-btn-lg" id="regSubmitBtn" onclick="handleRegister()">दर्ता गर्नुहोस्</button>
+              <button type="button" class="auth-btn auth-btn-primary auth-btn-lg" onclick="goToStep(5)">अर्को →</button>
+            </div>
+          </div>
+
+          <!-- STEP 5: Profile Photo (Mandatory) -->
+          <div class="auth-form-step" id="step5">
+            <h3 class="auth-section-title">📸 प्रोफाइल फोटो <span class="required">*</span></h3>
+            <p class="auth-section-desc">स्पष्ट प्रोफाइल फोटो अपलोड गर्नुहोस् — यो अनिवार्य छ। यसले विश्वास र सुरक्षा बढाउँछ।</p>
+
+            <div class="auth-alert auth-alert-success auth-mb-4" style="font-size:0.85rem">
+              <strong>किन फोटो चाहिन्छ?</strong><br>
+              अर्मा पर्मा, बजार, काम खोजी, र सन्देशमा अरूले तपाईंलाई चिन्न सक्छन्।
+            </div>
+
+            <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px">
+              <div id="regPhotoRing" style="width:130px;height:130px;border-radius:50%;border:3px dashed var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg-alt);margin-bottom:12px;cursor:pointer;transition:all .2s" onclick="document.getElementById('regPhotoInput').click()">
+                <span id="regPhotoPlaceholder" style="font-size:44px;color:var(--text-tertiary)">👤</span>
+                <img id="regPhotoPreview" style="display:none;width:100%;height:100%;object-fit:cover" alt="Preview">
+              </div>
+              <div id="regPhotoHint" style="font-size:0.8rem;color:var(--text-tertiary);text-align:center">
+                फोटो छान्न क्लिक गर्नुहोस्<br>JPG, PNG, WEBP · अधिकतम 5MB · कम्तिमा 300x300px
+              </div>
+              <input type="file" id="regPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleRegPhotoSelect(this)">
+            </div>
+
+            <div id="regPhotoError" class="auth-alert auth-alert-error hidden" style="font-size:0.85rem"></div>
+            <div id="regPhotoSuccess" class="auth-alert auth-alert-success hidden" style="font-size:0.85rem"></div>
+
+            <div class="auth-flex-row auth-mt-4">
+              <button type="button" class="auth-btn auth-btn-outline auth-btn-lg" onclick="goToStep(4)">← पछाडि</button>
+              <button type="button" class="auth-btn auth-btn-primary auth-btn-lg" id="regSubmitBtn" onclick="handleRegister()" style="flex:2">दर्ता गर्नुहोस्</button>
+            </div>
+            <div style="text-align:center;margin-top:8px">
+              <button type="button" class="auth-btn auth-btn-ghost" onclick="skipPhotoUpload()" style="font-size:0.82rem;color:var(--text-tertiary)">
+                पछि अपलोड गर्छु (Skip for now)
+              </button>
             </div>
           </div>
         </form>

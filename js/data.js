@@ -40,7 +40,7 @@ const DB = {
   getUserById(id) { return this.getUsers().find(u => u.id === id); },
   getUserByEmail(email) { return this.getUsers().find(u => u.email === email); },
   getUserByPhone(phone) { return this.getUsers().find(u => u.phone === phone); },
-  addUser(user) { const u = this.getUsers(); user.id = 'USR' + Date.now(); user.createdAt = new Date().toISOString(); user.verified = false; user.suspended = false; user.avatar = user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(user.name); u.push(user); this.setUsers(u); return user; },
+  addUser(user) { const u = this.getUsers(); user.id = 'USR' + Date.now(); user.createdAt = new Date().toISOString(); user.verified = false; user.suspended = false; user.avatar = user.avatar || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(user.name); user.profilePhotoUrl = ''; user.profilePhotoVerified = false; user.requiresPhotoUpload = true; u.push(user); this.setUsers(u); return user; },
   updateUser(id, data) { const u = this.getUsers(); const i = u.findIndex(x => x.id === id); if (i >= 0) { u[i] = { ...u[i], ...data }; this.setUsers(u); return u[i]; } return null; },
   deleteUser(id) { this.setUsers(this.getUsers().filter(u => u.id !== id)); },
   getJobs() { return this._get('jobs') || []; },
@@ -193,6 +193,25 @@ const DB = {
   },
   deleteCalendarEvent(id) { this.setCalendarEvents(this.getCalendarEvents().filter(e => e.id !== id)); },
   getStats() { const users = this.getUsers(); const jobs = this.getJobs(); const ap = this.getArmaParmaRequests(); return { totalUsers: users.length, totalFarmers: users.filter(u => u.role === 'farmer').length, totalWorkers: users.filter(u => u.role === 'worker').length, totalJobs: jobs.length, activeJobs: jobs.filter(j => j.status === 'active').length, filledJobs: jobs.filter(j => j.status === 'filled').length, totalApplications: this.getApplications().length, verifiedUsers: users.filter(u => u.verified).length, armaParmaRequests: ap.length, activeArmaParma: ap.filter(r => r.status === 'open').length, completedExchanges: this.getExchangeHistory().filter(e => e.status === 'completed').length }; },
+  hasUploadedPhoto(userId) {
+    const user = this.getUserById(userId);
+    if (!user) return false;
+    return !!(user.profilePhotoUrl && !user.profilePhotoUrl.includes('dicebear'));
+  },
+  getProfilePhoto(userId) {
+    const user = this.getUserById(userId);
+    if (!user) return '';
+    return user.profilePhotoUrl || user.avatar || '';
+  },
+  setProfilePhoto(userId, photoUrl) {
+    const user = this.getUserById(userId);
+    this.updateUser(userId, {
+      profilePhotoUrl: photoUrl,
+      profilePhotoVerified: true,
+      requiresPhotoUpload: false,
+      avatar: photoUrl || (user ? user.avatar : '')
+    });
+  },
   reset() { Object.keys(localStorage).filter(k => k.startsWith('agri_')).forEach(k => localStorage.removeItem(k)); this.init(); },
 
   // ══════════════════════════════════════════════════════════

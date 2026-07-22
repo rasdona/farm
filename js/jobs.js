@@ -103,7 +103,7 @@ const Jobs = {
                 <div class="card-body">
                   <h4 class="mb-4">Posted By</h4>
                   <div class="flex items-center gap-3 mb-4">
-                    ${Utils.avatarHTML(farmer.avatar, farmer.name, 'lg')}
+                    ${Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'lg')}
                     <div>
                       <div class="font-semibold">${farmer.name}</div>
                       <div class="text-sm text-muted">${farmer.farmName || 'Farmer'}</div>
@@ -124,7 +124,7 @@ const Jobs = {
   },
 
   showApplyModal(jobId) {
-    if (!Auth.requireAuth()) return;
+    if (!Auth.requireProfilePhoto()) return;
     const job = DB.getJobById(jobId);
     if (!job) return;
     const modal = document.getElementById('applyModal');

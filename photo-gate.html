@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ne" data-theme="light">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Profile Photo Required - KrishiConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <style>
+    .photo-gate-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+    }
+    [data-theme="dark"] .photo-gate-page { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .photo-gate-card {
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid var(--border-light);
+      padding: 36px 28px;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      animation: fadeInUp 0.4s ease;
+    }
+    [data-theme="dark"] .photo-gate-card { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+    .photo-gate-icon { font-size: 3.5rem; margin-bottom: 12px; }
+    .photo-gate-title { font-size: 1.4rem; font-weight: 700; color: var(--text); margin: 0 0 8px 0; }
+    .photo-gate-desc { font-size: 0.9rem; color: var(--text-secondary); margin: 0 0 24px 0; line-height: 1.5; }
+    .photo-gate-reasons {
+      text-align: left;
+      background: var(--bg-alt);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-light);
+    }
+    .photo-gate-reasons h4 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin: 0 0 10px 0; }
+    .photo-gate-reasons ul { list-style: none; margin: 0; padding: 0; }
+    .photo-gate-reasons li { font-size: 0.82rem; color: var(--text-secondary); padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+    .photo-gate-reasons li::before { content: '✓'; color: var(--primary); font-weight: 700; font-size: 0.9rem; }
+    .photo-gate-avatar-ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      border: 3px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      overflow: hidden;
+      background: var(--bg-alt);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .photo-gate-avatar-ring:hover { border-color: var(--primary); transform: scale(1.02); }
+    .photo-gate-avatar-ring.has-photo { border-style: solid; border-color: var(--primary); }
+    .photo-gate-avatar-ring img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-gate-avatar-placeholder { font-size: 3rem; color: var(--text-tertiary); }
+    .photo-gate-avatar-ring .overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+      color: white; font-size: 0.85rem; font-weight: 600;
+    }
+    .photo-gate-avatar-ring:hover .overlay { opacity: 1; }
+    .photo-gate-hint { font-size: 0.78rem; color: var(--text-tertiary); margin-bottom: 20px; }
+    .photo-gate-progress {
+      height: 6px; background: var(--border); border-radius: 3px;
+      overflow: hidden; margin-bottom: 16px; display: none;
+    }
+    .photo-gate-progress.visible { display: block; }
+    .photo-gate-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; width: 0; transition: width 0.3s; }
+    .photo-gate-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+    .photo-gate-skip {
+      background: none; border: none; color: var(--text-tertiary);
+      font-size: 0.82rem; cursor: pointer; padding: 8px;
+      text-decoration: underline;
+    }
+    .photo-gate-skip:hover { color: var(--text-secondary); }
+    .photo-gate-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; margin-top: 12px; display: none; }
+    .photo-gate-msg.success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: block; }
+    .photo-gate-msg.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @media(max-width:480px) { .photo-gate-card { padding: 28px 20px; } .photo-gate-avatar-ring { width: 120px; height: 120px; } }
+  </style>
+</head>
+<body>
+  <div class="photo-gate-page">
+    <div class="photo-gate-card">
+      <div class="photo-gate-icon">📸</div>
+      <h1 class="photo-gate-title">Profile Photo अनिवार्य छ</h1>
+      <p class="photo-gate-desc">
+        KrishiConnect Nepal मा प्रवेश गर्न पहिले स्पष्ट प्रोफाइल फोटो अपलोड गर्नुपर्छ।
+        यसले विश्वास, पारदर्शिता, र सुरक्षा बढाउँछ।
+      </p>
+
+      <div class="photo-gate-reasons">
+        <h4>किन फोटो चाहिन्छ?</h4>
+        <ul>
+          <li>अर्मा पर्मामा अरूले तपाईंलाई चिन्न सक्छन्</li>
+          <li>बजार र काम खोजीमा विश्वास बढ्छ</li>
+          <li>सन्देश र सम्पर्कमा सजिलो हुन्छ</li>
+          <li>समुदायमा आफ्नो पहिचान बनाउँछ</li>
+        </ul>
+      </div>
+
+      <div class="photo-gate-avatar-ring" id="avatarRing" onclick="document.getElementById('photoInput').click()">
+        <span class="photo-gate-avatar-placeholder" id="avatarPlaceholder">👤</span>
+        <img id="avatarPreview" style="display:none" alt="Preview">
+        <div class="overlay">📷 फोटो छान्नुहोस्</div>
+        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoSelect(this)">
+      </div>
+      <div class="photo-gate-hint" id="photoHint">क्लिक गर्नुहोस् वा फोटो तानेर छाड्नुहोस् · JPG, PNG, WEBP · अधिकतम 5MB</div>
+
+      <div class="photo-gate-progress" id="progressBar">
+        <div class="photo-gate-progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="photo-gate-actions" id="actionRow" style="display:none">
+        <button class="auth-btn auth-btn-outline" onclick="cancelPhoto()" style="flex:1">रद्द गर्नुहोस्</button>
+        <button class="auth-btn auth-btn-primary" id="uploadBtn" onclick="uploadPhoto()" style="flex:2">
+          <span id="uploadText">फोटो अपलोड गर्नुहोस्</span>
+          <span id="uploadSpinner" class="auth-spinner" style="display:none"></span>
+        </button>
+      </div>
+
+      <div class="photo-gate-msg" id="msgBox"></div>
+
+      <button class="photo-gate-skip" onclick="skipForNow()">पछि अपलोड गर्छु →</button>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth-system.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentPhotoFile = null;
+    let currentPhotoDataUrl = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      DB.init();
+      Auth.init();
+
+      if (!Auth.isLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!AuthSystem.requiresPhotoUpload(Auth.currentUser)) {
+        redirectAfterPhoto();
+        return;
+      }
+
+      setupDragDrop();
+    });
+
+    function setupDragDrop() {
+      const ring = document.getElementById('avatarRing');
+      ring.addEventListener('dragover', (e) => { e.preventDefault(); ring.style.borderColor = 'var(--primary)'; ring.style.borderStyle = 'solid'; });
+      ring.addEventListener('dragleave', () => { if (!currentPhotoDataUrl) { ring.style.borderColor = 'var(--border)'; ring.style.borderStyle = 'dashed'; } });
+      ring.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) processFile(file);
+      });
+    }
+
+    function handlePhotoSelect(input) {
+      const file = input.files[0];
+      if (file) processFile(file);
+    }
+
+    function processFile(file) {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) { showMsg('मान्य फोटो छान्नुहोस्। JPG, PNG, वा WEBP मात्र।', 'error'); return; }
+      if (file.size > 5 * 1024 * 1024) { showMsg('फोटो साइज धेरै ठूलो छ। अधिकतम 5MB।', 'error'); return; }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 300 || img.height < 300) { showMsg('फोटो कम्तिमा 300x300 पिक्सेल हुनुपर्छ।', 'error'); return; }
+          currentPhotoDataUrl = e.target.result;
+          currentPhotoFile = file;
+          document.getElementById('avatarPreview').src = e.target.result;
+          document.getElementById('avatarPreview').style.display = 'block';
+          document.getElementById('avatarPlaceholder').style.display = 'none';
+          document.getElementById('avatarRing').classList.add('has-photo');
+          document.getElementById('photoHint').innerHTML = '<span style="color:var(--primary);font-weight:600">✓ फोटो छानियो!</span>';
+          document.getElementById('actionRow').style.display = 'flex';
+          document.getElementById('msgBox').className = 'photo-gate-msg';
+          document.getElementById('msgBox').style.display = 'none';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function cancelPhoto() {
+      currentPhotoFile = null;
+      currentPhotoDataUrl = null;
+      document.getElementById('avatarPreview').style.display = 'none';
+      document.getElementById('avatarPlaceholder').style.display = 'block';
+      document.getElementById('avatarRing').classList.remove('has-photo');
+      document.getElementById('photoHint').innerHTML = 'क्लिक गर्नुहोस् वा फोटो तानेर छाड्नुहोस् · JPG, PNG, WEBP · अधिकतम 5MB';
+      document.getElementById('actionRow').style.display = 'none';
+      document.getElementById('photoInput').value = '';
+    }
+
+    function uploadPhoto() {
+      if (!currentPhotoDataUrl) return;
+      const btn = document.getElementById('uploadBtn');
+      const text = document.getElementById('uploadText');
+      const spinner = document.getElementById('uploadSpinner');
+      btn.disabled = true;
+      text.style.display = 'none';
+      spinner.style.display = 'inline-block';
+      document.getElementById('progressBar').classList.add('visible');
+      simulateProgress();
+
+      setTimeout(() => {
+        DB.updateUser(Auth.currentUser.id, {
+          profilePhotoUrl: currentPhotoDataUrl,
+          profilePhotoVerified: true,
+          requiresPhotoUpload: false
+        });
+        Auth.currentUser = DB.getUserById(Auth.currentUser.id);
+
+        showMsg('फोटो सफलतापूर्वक अपलोड भयो! 🎉', 'success');
+        document.getElementById('progressBar').classList.remove('visible');
+        document.getElementById('actionRow').style.display = 'none';
+
+        setTimeout(() => redirectAfterPhoto(), 1200);
+      }, 1500);
+    }
+
+    function simulateProgress() {
+      let w = 0;
+      const fill = document.getElementById('progressFill');
+      const iv = setInterval(() => {
+        w += Math.random() * 20;
+        if (w >= 90) { clearInterval(iv); w = 90; }
+        fill.style.width = w + '%';
+      }, 200);
+      setTimeout(() => { clearInterval(iv); fill.style.width = '100%'; }, 1500);
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('msgBox');
+      el.textContent = text;
+      el.className = 'photo-gate-msg ' + type;
+      el.style.display = 'block';
+    }
+
+    function skipForNow() {
+      if (!confirm('फोटो बिना प्लेटफर्मका सबै सुविधा प्राप्त हुँदैन। पछि अपलोड गर्न चाहनुहुन्छ?')) return;
+      redirectAfterPhoto();
+    }
+
+    function redirectAfterPhoto() {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get('redirect');
+      if (redirect) {
+        window.location.href = decodeURIComponent(redirect);
+      } else {
+        window.location.href = Auth.getDashboardUrl();
+      }
+    }
+  </script>
+</body>
+</html>

@@ -64,6 +64,11 @@ const Utils = {
     return src ? `<img src="${src}" alt="${name}" class="avatar avatar-${size}">` : `<div class="avatar-placeholder avatar-${size}">${name.split(' ').map(w => w[0]).join('').substring(0, 2)}</div>`;
   },
 
+  getUserPhoto(user) {
+    if (!user) return '';
+    return user.profilePhotoUrl || user.avatar || '';
+  },
+
   toast(message, type = 'success', duration = 3000) {
     let container = document.getElementById('toast-container');
     if (!container) {

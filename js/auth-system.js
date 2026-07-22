@@ -223,6 +223,17 @@ const AuthSystem = {
   // PROFILE COMPLETION
   // ═══════════════════════════════════════════════════════
 
+  hasUploadedPhoto(user) {
+    if (!user) return false;
+    return !!(user.profilePhotoUrl && !user.profilePhotoUrl.includes('dicebear'));
+  },
+
+  requiresPhotoUpload(user) {
+    if (!user) return false;
+    if (user.role === 'admin') return false;
+    return user.requiresPhotoUpload !== false && !this.hasUploadedPhoto(user);
+  },
+
   getProfileCompletion(user) {
     if (!user) return { percentage: 0, tasks: [] };
     let completed = 0;
@@ -232,7 +243,7 @@ const AuthSystem = {
     if (user.phone) completed++; else tasks.push('Add phone number');
     if (user.district) completed++; else tasks.push('Add your district');
     if (user.roles && user.roles.length > 0) completed++; else tasks.push('Select your role');
-    if (user.avatar && !user.avatar.includes('dicebear')) completed++; else tasks.push('Upload profile photo');
+    if (this.hasUploadedPhoto(user)) completed++; else tasks.push('Upload profile photo');
     if (user.phoneVerified) completed++; else tasks.push('Verify your phone');
     if (user.email) completed++; else tasks.push('Add email (optional)');
     if (user.emailVerified) completed++; else tasks.push('Verify email');
