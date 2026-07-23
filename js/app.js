@@ -81,6 +81,17 @@ const App = {
           <span style="font-weight:700;font-size:1.1rem;color:var(--primary)">AgriConnect</span>
           <span class="mobile-menu-close" onclick="App.toggleMobileMenu()">✕</span>
         </div>
+        <div class="mobile-menu-user">
+          ${user ? `
+            <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-alt);border-radius:var(--radius-md);margin-bottom:16px">
+              ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'md')}
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;color:var(--text)">${user.name}</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary)">${user.role === 'farmer' ? '🌾 Farmer' : '👷 Worker'}</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
         <nav>
           <a href="index.html">🏠 Home</a>
           <a href="jobs.html">💼 Find Jobs</a>
@@ -89,16 +100,19 @@ const App = {
           ${user ? `
             <a href="${Auth.getDashboardUrl()}">📊 Dashboard</a>
             <a href="chat.html">💬 Messages</a>
+            <a href="profile.html?id=${user.id}">👤 My Profile</a>
             <a href="settings.html">⚙️ Settings</a>
-            <hr class="divider">
-            <button onclick="Auth.logout()" style="display:block;padding:12px 16px;width:100%;text-align:left;color:var(--danger);font-weight:500">🚪 Logout</button>
+            <hr class="divider" style="margin:8px 0">
+            <button onclick="Auth.logout()" style="display:flex;align-items:center;gap:10px;padding:12px 16px;width:100%;text-align:left;color:var(--danger);font-weight:600;border-radius:var(--radius);transition:var(--transition)" onmouseover="this.style.background='var(--bg-alt)'" onmouseout="this.style.background='transparent'">🚪 Logout</button>
           ` : `
             <a href="login.html">🔑 Log In</a>
             <a href="register.html">📝 Sign Up</a>
           `}
         </nav>
       </div>
+      <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="App.toggleMobileMenu()"></div>
     `;
+    this.renderMobileBottomNav();
   },
 
   renderNotifications(userId) {
@@ -204,9 +218,54 @@ const App = {
     return current === page ? 'active' : '';
   },
 
+  renderMobileBottomNav() {
+    let bottomNav = document.getElementById('mobileBottomNav');
+    if (!bottomNav) {
+      bottomNav = document.createElement('nav');
+      bottomNav.id = 'mobileBottomNav';
+      bottomNav.className = 'mobile-bottom-nav';
+      document.body.appendChild(bottomNav);
+    }
+    const user = Auth.currentUser;
+    const current = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
+    bottomNav.innerHTML = `
+      <div class="mobile-bottom-nav-inner">
+        <a href="index.html" class="${current === 'index' ? 'active' : ''}">
+          <span class="nav-icon">🏠</span>
+          <span>Home</span>
+        </a>
+        <a href="jobs.html" class="${current === 'jobs' ? 'active' : ''}">
+          <span class="nav-icon">💼</span>
+          <span>Jobs</span>
+        </a>
+        <a href="workers.html" class="${current === 'workers' ? 'active' : ''}">
+          <span class="nav-icon">👷</span>
+          <span>Workers</span>
+        </a>
+        <a href="community.html" class="${current === 'community' ? 'active' : ''}">
+          <span class="nav-icon">💬</span>
+          <span>Community</span>
+        </a>
+        ${user ? `
+          <a href="chat.html" class="${current === 'chat' ? 'active' : ''}">
+            <span class="nav-icon">✉️</span>
+            <span>Chat</span>
+          </a>
+        ` : `
+          <a href="login.html" class="${current === 'login' ? 'active' : ''}">
+            <span class="nav-icon">🔑</span>
+            <span>Login</span>
+          </a>
+        `}
+      </div>
+    `;
+  },
+
   toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
+    const overlay = document.getElementById('mobileMenuOverlay');
     if (menu) menu.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
     document.body.style.overflow = menu?.classList.contains('open') ? 'hidden' : '';
   },
 

@@ -10,6 +10,15 @@ const Admin = {
   renderSidebar() {
     const nav = document.getElementById('adminNav');
     if (!nav) return;
+    const adminLayout = document.querySelector('.admin-layout');
+    if (adminLayout && !adminLayout.querySelector('.dashboard-sidebar-toggle')) {
+      const toggle = document.createElement('button');
+      toggle.className = 'dashboard-sidebar-toggle';
+      toggle.setAttribute('aria-label', 'Toggle menu');
+      toggle.textContent = '☰';
+      toggle.onclick = () => document.getElementById('adminNav').classList.toggle('open');
+      adminLayout.insertBefore(toggle, nav);
+    }
     const stats = DB.getStats();
     nav.innerHTML = `
       <div class="admin-sidebar-header"><h3>Admin Panel</h3><p>AgriConnect Nepal</p></div>
