@@ -387,10 +387,6 @@ async function sendOTP() {
 
     const data = await resp.json();
 
-    if (data.dev_otp) {
-      showMessage('msgBox', `DEV OTP: ${data.dev_otp}`, 'success');
-    }
-
     otpId = data.otp_id;
     startTimer(300);
     startResendCooldown(60);

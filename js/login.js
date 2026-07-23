@@ -55,7 +55,7 @@ function showEmailVerificationRequired(email) {
   document.getElementById('resendVerificationError').classList.add('hidden');
 }
 
-function resendVerificationEmail() {
+async function resendVerificationEmail() {
   const email = pendingVerificationEmail;
   if (!email) return;
 
@@ -69,23 +69,19 @@ function resendVerificationEmail() {
   successEl.classList.add('hidden');
   errorEl.classList.add('hidden');
 
-  setTimeout(() => {
-    const result = AuthSystem.resendEmailVerification(email);
-    btn.disabled = false;
-    text.textContent = '🔄 पुन: सत्यापन इमेल पठाउनुहोस्';
+  const result = await AuthSystem.resendEmailVerification(email);
+  btn.disabled = false;
+  text.textContent = '🔄 पुन: सत्यापन इमेल पठाउनुहोस्';
 
-    if (result.success) {
-      successEl.textContent = `सत्यापन कोड ${email} मा पठाइयो!`;
-      successEl.classList.remove('hidden');
-      errorEl.classList.add('hidden');
-      console.log('[Email Verification] OTP:', result.otp, '(simulated)');
-      console.log('[Email Verification] Link token:', result.linkToken, '(simulated)');
-    } else {
-      errorEl.textContent = result.message;
-      errorEl.classList.remove('hidden');
-      successEl.classList.add('hidden');
-    }
-  }, 800);
+  if (result.success) {
+    successEl.textContent = `सत्यापन कोड ${email} मा पठाइयो!`;
+    successEl.classList.remove('hidden');
+    errorEl.classList.add('hidden');
+  } else {
+    errorEl.textContent = result.message;
+    errorEl.classList.remove('hidden');
+    successEl.classList.add('hidden');
+  }
 }
 
 function showLoginError(msg) {

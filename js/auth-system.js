@@ -30,6 +30,8 @@ const AuthSystem = {
     if (DB.getUserByPhone(data.phone)) return { success: false, errors: [{ field: 'phone', message: 'यो फोन नम्बर पहिले नै दर्ता भएको छ / Mobile number already registered' }] };
     if (DB.getUserByEmail(data.email)) return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ / Email already registered' }] };
 
+    console.log('[Registration] Creating user account...');
+
     const hashedPassword = await DB.hashPassword(data.password);
     const phone = data.phone.replace(/\s/g, '');
 
@@ -64,19 +66,29 @@ const AuthSystem = {
     const created = DB.addUser(user);
     data.roles.forEach(role => DB.addUserRole(created.id, role));
 
-    // Create email verification token (both OTP and link)
-    const emailOtpResult = DB.createEmailOtp(created.id, data.email.trim().toLowerCase());
-    const emailLinkResult = DB.createEmailVerificationLink(created.id, data.email.trim().toLowerCase());
+    console.log('[Registration] OTP Generated for:', created.email);
+    DB.createEmailOtp(created.id, data.email.trim().toLowerCase());
+    DB.createEmailVerificationLink(created.id, data.email.trim().toLowerCase());
+    console.log('[Registration] OTP Stored securely');
 
     DB.addAuditLog({ action: 'register', userId: created.id, details: `New user registered: ${created.name} (${data.roles.join(', ')})`, ip: this._getIP() });
     DB.addNotification({ userId: created.id, type: 'welcome', text: `स्वागत छ, ${created.name}! / Welcome to KrishiConnect Nepal!`, link: '#' });
 
+    try {
+      console.log('[Registration] Email Sending Started');
+      const emailResult = await EmailService.sendEmailOtp(created.email, 'registration');
+      if (emailResult.success) {
+        console.log('[Registration] Email Sent Successfully');
+      } else {
+        console.error('[Registration] Email Failed:', emailResult.message);
+      }
+    } catch (err) {
+      console.error('[Registration] Email Failed:', err.message);
+    }
+
     return {
       success: true,
       user: created,
-      emailOtp: emailOtpResult.otp,
-      emailLinkId: emailLinkResult.id,
-      emailLinkToken: emailLinkResult.token,
       message: 'Account created. Please verify your email address.'
     };
   },
@@ -152,15 +164,31 @@ const AuthSystem = {
   // EMAIL VERIFICATION
   // ═══════════════════════════════════════════════════════
 
-  sendEmailVerification(userId) {
+  async sendEmailVerification(userId) {
     const user = DB.getUserById(userId);
     if (!user) return { success: false, message: 'User not found' };
     if (!user.email) return { success: false, message: 'No email address on file' };
     if (user.emailVerified) return { success: false, message: 'Email already verified' };
 
-    const result = DB.createEmailOtp(userId, user.email);
-    console.log(`[Email Verification] Email: ${user.email} OTP: ${result.otp} (simulated)`);
-    return { success: true, otpId: result.id, otp: result.otp, message: `Verification code sent to ${user.email}` };
+    console.log('[Registration] OTP Generated for:', user.email);
+
+    const dbResult = DB.createEmailOtp(userId, user.email);
+    console.log('[Registration] OTP Stored securely');
+
+    try {
+      console.log('[Registration] Email Sending Started');
+      const emailResult = await EmailService.sendEmailOtp(user.email, 'registration');
+      if (emailResult.success) {
+        console.log('[Registration] Email Sent Successfully');
+        return { success: true, message: `Verification code sent to ${user.email}` };
+      } else {
+        console.error('[Registration] Email Failed:', emailResult.message);
+        return { success: false, message: emailResult.message || 'Failed to send verification email. Please try again.' };
+      }
+    } catch (err) {
+      console.error('[Registration] Email Failed:', err.message);
+      return { success: false, message: 'Failed to send verification email. Please check your connection and try again.' };
+    }
   },
 
   verifyEmail(otp) {
@@ -174,35 +202,57 @@ const AuthSystem = {
     return result;
   },
 
-  resendEmailVerification(email) {
+  async resendEmailVerification(email) {
     const user = DB.getUserByEmail(email);
     if (!user) return { success: false, message: 'यो इमेलमा खाता छैन / No account found with this email' };
     if (user.emailVerified) return { success: false, message: 'Email already verified' };
 
-    // Invalidate old tokens and create new ones
-    const otpResult = DB.createEmailOtp(user.id, email);
-    const linkResult = DB.createEmailVerificationLink(user.id, email);
+    console.log('[Resend Email Verification] Regenerating OTP for:', email);
 
-    console.log(`[Resend Email Verification] Email: ${email} OTP: ${otpResult.otp} (simulated)`);
-    return {
-      success: true,
-      userId: user.id,
-      otp: otpResult.otp,
-      linkToken: linkResult.token,
-      message: `Verification code sent to ${email}`
-    };
+    DB.createEmailOtp(user.id, email);
+    DB.createEmailVerificationLink(user.id, email);
+    console.log('[Resend Email Verification] OTP Stored');
+
+    try {
+      console.log('[Resend Email Verification] Email Sending Started');
+      const emailResult = await EmailService.resendOtp(email, 'registration');
+      if (emailResult.success) {
+        console.log('[Resend Email Verification] Email Sent Successfully');
+        return {
+          success: true,
+          userId: user.id,
+          message: `Verification code sent to ${email}`
+        };
+      } else {
+        console.error('[Resend Email Verification] Email Failed:', emailResult.message);
+        return { success: false, message: emailResult.message || 'Failed to resend verification email.' };
+      }
+    } catch (err) {
+      console.error('[Resend Email Verification] Email Failed:', err.message);
+      return { success: false, message: 'Failed to resend verification email.' };
+    }
   },
 
   // ═══════════════════════════════════════════════════════
   // OTP VERIFICATION (Phone - Reserved for Future SMS OTP)
   // ═══════════════════════════════════════════════════════
 
-  sendPhoneOtp(userId) {
+  async sendPhoneOtp(userId) {
     const user = DB.getUserById(userId);
     if (!user) return { success: false, message: 'User not found' };
-    const result = DB.createPhoneOtp(userId, user.phone);
-    console.log(`[OTP] Phone: ${user.phone} OTP: ${result.otp} (simulated SMS - reserved for future use)`);
-    return { success: true, otpId: result.id, otp: result.otp, message: `OTP sent to ${user.phone}` };
+
+    const dbResult = DB.createPhoneOtp(userId, user.phone);
+
+    try {
+      const phoneResult = await EmailService.sendPhoneOtp(user.phone, 'phone_verification');
+      if (phoneResult.success) {
+        return { success: true, message: `OTP sent to ${user.phone}` };
+      } else {
+        return { success: false, message: phoneResult.message || 'Failed to send OTP.' };
+      }
+    } catch (err) {
+      return { success: false, message: 'Failed to send OTP. Please try again.' };
+    }
   },
 
   verifyPhone(otp) {
@@ -216,12 +266,22 @@ const AuthSystem = {
     return result;
   },
 
-  sendPasswordResetOtp(phone) {
+  async sendPasswordResetOtp(phone) {
     const user = DB.getUserByPhone(phone.replace(/\s/g, ''));
     if (!user) return { success: false, message: 'यो फोन नम्बरमा खाता छैन / No account found with this phone number' };
-    const result = DB.createPasswordReset(user.id, phone);
-    console.log(`[Password Reset] Phone: ${phone} OTP: ${result.otp} (simulated SMS)`);
-    return { success: true, userId: user.id, otp: result.otp, message: `OTP sent to ${phone}` };
+
+    DB.createPasswordReset(user.id, phone);
+
+    try {
+      const phoneResult = await EmailService.sendPhoneOtp(phone, 'password_reset');
+      if (phoneResult.success) {
+        return { success: true, userId: user.id, message: `OTP sent to ${phone}` };
+      } else {
+        return { success: false, message: phoneResult.message || 'Failed to send OTP.' };
+      }
+    } catch (err) {
+      return { success: false, message: 'Failed to send OTP. Please try again.' };
+    }
   },
 
   verifyPasswordResetOtp(userId, otp) {

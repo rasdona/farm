@@ -70,7 +70,7 @@
     </div>
   </main>
   <footer id="footer" class="footer"></footer>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="js/email-service.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
   <script>
     let adminUser = null;
     let admin2faOtp = null;
@@ -98,7 +98,7 @@
 
       adminUser = result.user;
       admin2faOtp = String(Math.floor(100000 + Math.random() * 900000));
-      console.log(`[Admin 2FA] OTP: ${admin2faOtp} (simulated)`);
+      console.log(`[Admin 2FA] 2FA code generated for: ${result.user.phone}`);
       showAdminSuccess(`2FA कोड ${result.user.phone} मा पठाइयो`);
       document.getElementById('adminStep1').classList.remove('active');
       document.getElementById('adminStep2').classList.add('active');

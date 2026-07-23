@@ -97,12 +97,6 @@
             </button>
           </div>
 
-          <div class="demo-box" id="demoBox">
-            <strong>🧪 डेमो:</strong>
-            <div>Console मा OTP हेर्नुहोस् (F12 थिच्नुहोस्)</div>
-            <div class="demo-otp" id="demoOtpDisplay">OTP: ---</div>
-          </div>
-
           <div style="text-align:center;margin-top:20px">
             <a href="login.html" class="auth-link" style="font-size:14px">← लगइन पेजमा फर्कनुहोस्</a>
           </div>
@@ -123,6 +117,7 @@
 
   <script src="js/data.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/email-service.js"></script>
   <script src="js/auth-system.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
@@ -149,11 +144,6 @@
 
       setupOtpInputs();
       startResendTimer();
-
-      // Show demo OTP from console
-      setTimeout(() => {
-        console.log('[Email Verification] If OTP was sent, check console for the code.');
-      }, 500);
     });
 
     function setupOtpInputs() {
@@ -224,24 +214,18 @@
       }, 800);
     }
 
-    function resendEmailOtp() {
+    async function resendEmailOtp() {
       if (!pendingEmail) return;
       showVerifyLoading(true);
-      setTimeout(() => {
-        const result = AuthSystem.sendEmailVerification(
-          DB.getUserByEmail(pendingEmail)?.id
-        );
-        showVerifyLoading(false);
+      const result = await AuthSystem.resendEmailVerification(pendingEmail);
+      showVerifyLoading(false);
 
-        if (result && result.success) {
-          showVerifySuccess('नयाँ सत्यापन कोड पठाइयो!');
-          startResendTimer();
-          console.log('[Email Verification] OTP:', result.otp);
-          document.getElementById('demoOtpDisplay').textContent = 'OTP: ' + result.otp;
-        } else {
-          showVerifyError(result?.message || 'कोड पठाउन असफल');
-        }
-      }, 500);
+      if (result && result.success) {
+        showVerifySuccess('नयाँ सत्यापन कोड पठाइयो!');
+        startResendTimer();
+      } else {
+        showVerifyError(result?.message || 'कोड पठाउन असफल');
+      }
     }
 
     function startResendTimer() {
