@@ -9,27 +9,29 @@
 <body>
   <header id="navbar" class="navbar"></header>
 
-  <!-- Hero Title -->
+  <!-- Hero Section with Background Image -->
   <section class="hero">
-    <div class="container">
-      <div class="hero-content animate-fadeInUp">
-        <h1>Connecting Nepal's Farms<br>With <span style="color:var(--accent-light)">Skilled Workers</span></h1>
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-container">
+      <div class="hero-content">
+        <h1>Connecting Nepal's Farms<br>With <span class="hero-highlight">Skilled Workers</span></h1>
         <p>The #1 platform for agricultural hiring in Nepal. Find the right workers for your farm or discover rewarding farm jobs near you.</p>
+        <div class="hero-cta">
+          <a href="register.html?role=farmer" class="btn btn-primary btn-lg">Post a Job</a>
+          <a href="jobs.html" class="btn btn-outline-light btn-lg">Find Work</a>
+        </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Search Card -->
-  <section style="margin-top:-40px;position:relative;z-index:10">
-    <div class="container">
-      <div class="card p-6" style="max-width:800px;margin:0 auto;box-shadow:var(--shadow-xl)">
-        <div class="flex gap-3 flex-wrap items-center">
-          <input type="text" placeholder="What job are you looking for?" id="heroSearchJobs" class="form-input flex-1" style="min-width:200px">
-          <select id="heroSearchLocation" class="form-select" style="min-width:160px;max-width:200px">
+      <!-- Search Card -->
+      <div class="hero-search-card">
+        <div class="hero-search-inner">
+          <input type="text" placeholder="What job are you looking for?" id="heroSearchJobs" class="hero-search-input">
+          <select id="heroSearchLocation" class="hero-search-select">
             <option value="">All Locations</option>
             <option>Kathmandu</option><option>Chitwan</option><option>Pokhara</option><option>Ilam</option><option>Bara</option><option>Jhapa</option><option>Morang</option><option>Sunsari</option>
           </select>
-          <button class="btn btn-primary btn-lg" onclick="heroSearch()">Search Jobs</button>
+          <button class="btn btn-primary btn-lg hero-search-btn" onclick="heroSearch()">Search Jobs</button>
         </div>
       </div>
     </div>

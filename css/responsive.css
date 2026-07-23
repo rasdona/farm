@@ -59,8 +59,8 @@ a, button { touch-action: manipulation; }
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .container { padding: 0 20px; }
-  .hero { min-height: 70vh; }
-  .hero h1 { font-size: 2.4rem; }
+  .hero { height: 75vh; }
+  .hero h1 { font-size: 2.6rem; }
   .hero p { font-size: 1.1rem; }
   .hero-stats { gap: 28px; }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
@@ -121,17 +121,16 @@ a, button { touch-action: manipulation; }
   .mobile-menu .mobile-menu-header { margin-bottom: 20px; }
 
   /* ── Hero ───────────────────────────────────────────── */
-  .hero { min-height: 56vh; }
-  .hero h1 { font-size: 1.5rem; margin-bottom: 12px; }
-  .hero p { font-size: 0.95rem; margin-bottom: 24px; }
-  .hero-content { max-width: 100%; }
-  .hero-search {
-    flex-direction: column; gap: 0; padding: 8px;
-    border-radius: var(--radius-md);
-  }
-  .hero-search input,
-  .hero-search select { padding: 14px 16px; border-radius: var(--radius); font-size: 0.95rem; }
-  .hero-search .btn { width: 100%; padding: 14px; border-radius: var(--radius); }
+  .hero { height: 65vh; }
+  .hero h1 { font-size: 1.8rem; margin-bottom: 12px; }
+  .hero p { font-size: 1rem; margin-bottom: 24px; }
+  .hero-content { max-width: 100%; text-align: center; }
+  .hero-cta { justify-content: center; }
+  .hero-search-card { max-width: 100%; }
+  .hero-search-inner { flex-direction: column; }
+  .hero-search-input { min-width: 100%; }
+  .hero-search-select { min-width: 100%; }
+  .hero-search-btn { width: 100%; }
   .hero-stats {
     display: grid; grid-template-columns: 1fr 1fr;
     gap: 12px; margin-top: 28px;
@@ -308,11 +307,11 @@ a, button { touch-action: manipulation; }
   h3 { font-size: 1.05rem; }
 
   /* ── Hero ───────────────────────────────────────────── */
-  .hero { min-height: 50vh; }
-  .hero h1 { font-size: 1.3rem; }
-  .hero p { font-size: 0.88rem; margin-bottom: 20px; }
-  .hero-search { padding: 6px; }
-  .hero-search .btn { padding: 12px; font-size: 0.88rem; }
+  .hero { height: 65vh; }
+  .hero h1 { font-size: 1.4rem; }
+  .hero p { font-size: 0.9rem; margin-bottom: 20px; }
+  .hero-search-card { padding: 6px; }
+  .hero-search-btn { padding: 12px; font-size: 0.9rem; }
   .hero-stat .number { font-size: 1.2rem; }
 
   /* ── Container ──────────────────────────────────────── */
@@ -359,8 +358,8 @@ a, button { touch-action: manipulation; }
   p { font-size: 0.88rem; }
 
   /* ── Hero ───────────────────────────────────────────── */
-  .hero { min-height: 48vh; padding: 48px 0 32px; }
-  .hero h1 { font-size: 1.2rem; line-height: 1.25; }
+  .hero { height: 65vh; padding: 48px 0 32px; }
+  .hero h1 { font-size: 1.3rem; line-height: 1.25; }
   .hero-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
   .hero-stat { padding: 10px 6px; }
   .hero-stat .number { font-size: 1.1rem; }
@@ -435,15 +434,15 @@ a, button { touch-action: manipulation; }
 @media (max-width: 375px) {
   html { font-size: 14px; }
   .container { padding: 0 12px; }
-  .hero { min-height: 44vh; }
-  .hero h1 { font-size: 1.15rem; }
+  .hero { height: 65vh; }
+  .hero h1 { font-size: 1.2rem; }
   .hero p { font-size: 0.82rem; margin-bottom: 16px; }
   .hero-stats { gap: 6px; }
   .hero-stat { padding: 8px 4px; }
   .hero-stat .number { font-size: 1rem; }
-  .hero-search { padding: 4px; }
-  .hero-search input, .hero-search select { padding: 12px; font-size: 0.88rem; }
-  .hero-search .btn { padding: 12px; font-size: 0.82rem; }
+  .hero-search-card { padding: 4px; }
+  .hero-search-input, .hero-search-select { padding: 12px; font-size: 0.88rem; }
+  .hero-search-btn { padding: 12px; font-size: 0.82rem; }
   .section { padding: 28px 0; }
   .section-header { margin-bottom: 16px; }
   .navbar-brand { font-size: 1.05rem; }
@@ -474,11 +473,11 @@ a, button { touch-action: manipulation; }
 @media (max-width: 320px) {
   html { font-size: 13px; }
   .container { padding: 0 10px; }
-  .hero { min-height: 42vh; }
-  .hero h1 { font-size: 1.05rem; }
-  .hero p { font-size: 0.78rem; }
-  .hero-search input, .hero-search select { padding: 10px; font-size: 0.82rem; }
-  .hero-search .btn { padding: 10px; font-size: 0.78rem; }
+  .hero { height: 65vh; }
+  .hero h1 { font-size: 1.1rem; }
+  .hero p { font-size: 0.82rem; }
+  .hero-search-input, .hero-search-select { padding: 10px; font-size: 0.82rem; }
+  .hero-search-btn { padding: 10px; font-size: 0.78rem; }
   .hero-stat .number { font-size: 0.95rem; }
   .hero-stat .label { font-size: 0.68rem; }
   .section { padding: 24px 0; }
