@@ -5,7 +5,7 @@ const App = {
     Auth.init();
     this.renderNavbar();
     this.renderFooter();
-    Utils.initTheme();
+    this.initLanguage();
     Utils.initBackToTop();
     Utils.animateOnScroll();
     this.initScrollEffects();
@@ -37,7 +37,17 @@ const App = {
           <input type="text" placeholder="Search jobs, workers..." id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
         </div>
         <div class="navbar-actions">
-          <button class="navbar-btn tooltip" data-tooltip="Theme" onclick="Utils.toggleTheme();location.reload()">🌓</button>
+          <div class="lang-switcher" id="navLangSwitcher">
+            <button class="navbar-btn lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
+              <span class="lang-flag" id="langFlag">🇳🇵</span>
+              <span class="lang-label" id="langLabel">नेपाली</span>
+              <span class="lang-arrow">▾</span>
+            </button>
+            <div class="lang-dropdown" id="langDropdown">
+              <button class="lang-option" onclick="App.setLanguage('ne')">🇳🇵 नेपाली</button>
+              <button class="lang-option" onclick="App.setLanguage('en')">🇬🇧 English</button>
+            </div>
+          </div>
           ${user ? `
             ${AuthSystem.requiresPhotoUpload(user) ? `<a href="photo-gate.html" class="navbar-btn tooltip" data-tooltip="Upload Photo" style="color:#f59e0b;font-size:1.1rem">⚠️📸</a>` : ''}
             <div style="position:relative">
@@ -278,7 +288,7 @@ const App = {
       }, 100));
     }
     document.addEventListener('click', (e) => {
-      document.querySelectorAll('.navbar-dropdown.show').forEach(d => {
+      document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show').forEach(d => {
         if (!d.parentElement.contains(e.target)) d.classList.remove('show');
       });
     });
@@ -379,5 +389,36 @@ const App = {
       el.innerHTML = '❤️ Saved';
       Utils.toast('Worker saved!');
     }
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // LANGUAGE SWITCHER
+  // ═══════════════════════════════════════════════════════
+
+  initLanguage() {
+    const lang = localStorage.getItem('agri_lang') || 'ne';
+    this.applyLanguage(lang);
+  },
+
+  setLanguage(lang) {
+    localStorage.setItem('agri_lang', lang);
+    this.applyLanguage(lang);
+    document.getElementById('langDropdown').classList.remove('show');
+  },
+
+  applyLanguage(lang) {
+    const flagEl = document.getElementById('langFlag');
+    const labelEl = document.getElementById('langLabel');
+    if (flagEl) flagEl.textContent = lang === 'ne' ? '🇳🇵' : '🇬🇧';
+    if (labelEl) labelEl.textContent = lang === 'ne' ? 'नेपाली' : 'English';
+
+    // Update all elements with data-ne / data-en attributes
+    document.querySelectorAll('[data-ne]').forEach(el => {
+      const text = el.getAttribute('data-' + lang);
+      if (text) el.textContent = text;
+    });
+
+    // Update html lang attribute
+    document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
   }
 };

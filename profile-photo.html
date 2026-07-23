@@ -15,22 +15,13 @@
   --input-bg:#f9fafb;--input-border:#d1d5db;
   --shadow:0 4px 24px rgba(0,0,0,0.08);--radius:12px;
 }
-[data-theme="dark"]{
-  --bg:#0a1a0f;--card:#1a2e1f;--text:#e8f5e9;--muted:#9ca3af;--border:#2d4a35;
-  --primary:#4ade80;--primary-dark:#22c55e;--primary-light:#14532d;
-  --error:#f87171;--error-bg:#450a0a;--success:#4ade80;--success-bg:#14532d;
-  --input-bg:#0f2618;--input-border:#2d4a35;
-  --shadow:0 4px 24px rgba(0,0,0,0.3);
-}
 html{font-size:16px}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background .3s,color .3s}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .container{width:100%;max-width:480px}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:background .3s}
 .header{background:linear-gradient(135deg,#16a34a,#22c55e);padding:28px 24px;text-align:center;position:relative}
-[data-theme="dark"] .header{background:linear-gradient(135deg,#15803d,#166534)}
 .header h1{color:#fff;font-size:20px;font-weight:700;margin-bottom:4px}
 .header p{color:rgba(255,255,255,.8);font-size:13px}
-.theme-toggle{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#fff;font-size:16px}
 .body{padding:28px 24px}
 .info-banner{background:var(--primary-light);border:1px solid var(--primary);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;line-height:1.5;color:var(--text)}
 .info-banner strong{color:var(--primary)}
@@ -89,7 +80,6 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 <div class="container">
   <div class="card">
     <div class="header">
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
       <h1>Profile Photo</h1>
       <p>Upload a clear photo to build trust</p>
     </div>
@@ -177,23 +167,11 @@ const ANON_KEY = 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u';
 let currentFile = null;
 let rotationDeg = 0;
 let rawImageData = null;
-let theme = localStorage.getItem('kc_theme') || 'light';
 
 document.addEventListener('DOMContentLoaded', () => {
-  applyTheme(theme);
   loadStatus();
   setupDragDrop();
 });
-
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
-}
-function toggleTheme() {
-  theme = theme === 'light' ? 'dark' : 'light';
-  applyTheme(theme);
-  localStorage.setItem('kc_theme', theme);
-}
 
 function setupDragDrop() {
   const zone = document.getElementById('uploadZone');

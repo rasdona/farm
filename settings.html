@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Settings - AgriConnect Nepal</title>
@@ -77,7 +77,12 @@
             <h3>Appearance</h3>
             <p class="subtitle">Customize how AgriConnect looks</p>
             <div class="settings-group">
-              <div class="settings-row"><div><div class="settings-row-label">Dark Mode</div><div class="settings-row-desc">Switch between light and dark theme</div></div><label class="toggle"><input type="checkbox" id="darkModeToggle" onchange="Utils.toggleTheme()"><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label">Language</div><div class="settings-row-desc">Choose your preferred language</div></div>
+                <select id="langSelect" onchange="App.setLanguage(this.value)" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+                  <option value="ne">🇳🇵 नेपाली</option>
+                  <option value="en">🇬🇧 English</option>
+                </select>
+              </div>
             </div>
           </div>
           <div id="settingsDanger" class="settings-section hidden">
@@ -113,7 +118,7 @@
       document.getElementById('setExp').value = u.experience || '';
       document.getElementById('setDailyWage').value = u.expectedWage?.daily || '';
     }
-    document.getElementById('darkModeToggle').checked = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.getElementById('langSelect').value = localStorage.getItem('agri_lang') || 'ne';
     const emailRow = document.getElementById('emailVerifiedRow');
     const phoneRow = document.getElementById('phoneVerifiedRow');
     if (emailRow) emailRow.querySelector('div').insertAdjacentHTML('beforeend', u.emailVerified ? '<span class="badge badge-success">✅ Verified</span>' : '<button class="btn btn-outline btn-sm">Verify Email</button>');

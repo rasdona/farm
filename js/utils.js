@@ -156,18 +156,6 @@ const Utils = {
     btn.addEventListener('click', this.scrollToTop);
   },
 
-  initTheme() {
-    const saved = localStorage.getItem('agri_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', saved);
-  },
-
-  toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('agri_theme', next);
-  },
-
   copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => this.toast('Copied to clipboard'));
   },

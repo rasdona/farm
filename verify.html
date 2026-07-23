@@ -18,23 +18,13 @@
   --input-bg:#f9fafb;--input-border:#d1d5db;--input-focus:#16a34a;
   --shadow:0 4px 24px rgba(0,0,0,0.08);--radius:12px;
 }
-[data-theme="dark"]{
-  --bg:#0a1a0f;--card:#1a2e1f;--text:#e8f5e9;--muted:#9ca3af;--border:#2d4a35;
-  --primary:#4ade80;--primary-dark:#22c55e;--primary-light:#14532d;
-  --error:#f87171;--error-bg:#450a0a;--success:#4ade80;--success-bg:#14532d;
-  --input-bg:#0f2618;--input-border:#2d4a35;--input-focus:#4ade80;
-  --shadow:0 4px 24px rgba(0,0,0,0.3);
-}
 html{font-size:16px;-webkit-text-size-adjust:100%}
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;transition:background .3s,color .3s}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
 .container{width:100%;max-width:420px}
 .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:background .3s}
 .header{background:linear-gradient(135deg,#16a34a,#22c55e);padding:32px 24px;text-align:center;position:relative}
-[data-theme="dark"] .header{background:linear-gradient(135deg,#15803d,#166534)}
 .header h1{color:#fff;font-size:22px;font-weight:700;margin-bottom:4px}
 .header p{color:rgba(255,255,255,.8);font-size:14px}
-.theme-toggle{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.2);border:none;border-radius:8px;padding:8px;cursor:pointer;color:#fff;font-size:16px;transition:background .2s}
-.theme-toggle:hover{background:rgba(255,255,255,.3)}
 .body{padding:28px 24px}
 .method-tabs{display:flex;gap:8px;margin-bottom:24px}
 .method-tab{flex:1;padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
@@ -99,7 +89,6 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
   <div class="card">
     <div class="header">
       <button class="lang-toggle" onclick="toggleLang()" id="langBtn">नेपाली</button>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙</button>
       <h1>KrishiConnect Nepal</h1>
       <p id="headerSub">Account Verification</p>
     </div>
@@ -213,14 +202,12 @@ let timerSeconds = 300;
 let resendCooldown = 60;
 let resendTimer = null;
 let lang = localStorage.getItem('kc_lang') || 'en';
-let theme = localStorage.getItem('kc_theme') || 'light';
 let otpId = null;
 
 // ============================================
 // INIT
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-  applyTheme(theme);
   applyLang(lang);
 
   const params = new URLSearchParams(window.location.search);
@@ -250,19 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================
-// THEME
-// ============================================
-function toggleTheme() {
-  theme = theme === 'light' ? 'dark' : 'light';
-  applyTheme(theme);
-  localStorage.setItem('kc_theme', theme);
-}
-
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
-}
-
 // ============================================
 // LANGUAGE
 // ============================================

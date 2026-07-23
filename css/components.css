@@ -5,7 +5,6 @@
   border-bottom: 1px solid var(--border-light);
   z-index: var(--z-sticky); transition: var(--transition);
 }
-[data-theme="dark"] .navbar { background: rgba(15,23,42,0.95); }
 .navbar.scrolled { box-shadow: var(--shadow-md); }
 .navbar .container { display: flex; align-items: center; height: 100%; gap: 24px; }
 .navbar-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-heading); font-weight: 800; font-size: 1.35rem; color: var(--primary); text-decoration: none; flex-shrink: 0; }

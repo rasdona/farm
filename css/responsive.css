@@ -110,6 +110,9 @@ a, button { touch-action: manipulation; }
   .navbar-profile .name { display: none; }
   .navbar-btn { width: 36px; height: 36px; font-size: 1.1rem; }
   .navbar-dropdown { width: calc(100vw - 24px); right: -8px; min-width: auto; }
+  .lang-label { display: none; }
+  .lang-btn { padding: 6px 8px; }
+  .lang-dropdown { right: 0; min-width: 130px; }
 
   /* ── Mobile Bottom Nav ──────────────────────────────── */
   .mobile-bottom-nav { display: block; }
