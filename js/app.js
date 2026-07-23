@@ -1,6 +1,7 @@
 const App = {
   init() {
     DB.init();
+    if (typeof SupabaseAuth !== 'undefined' && SupabaseAuth.init) SupabaseAuth.init();
     Auth.init();
     this.renderNavbar();
     this.renderFooter();

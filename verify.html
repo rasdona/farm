@@ -196,6 +196,11 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
   </div>
 </div>
 
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="js/supabase-auth.js"></script>
+<script src="js/auth-system.js"></script>
 <script>
 const SUPABASE_URL = 'https://yutjmviwwikvwousgtjy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u';
@@ -372,6 +377,21 @@ function clearOTP() {
 // SEND OTP
 // ============================================
 async function sendOTP() {
+  if (currentMethod === 'email') {
+    // Email verification via Supabase Auth
+    if (currentIdentifier) {
+      const result = await AuthSystem.resendEmailVerification(currentIdentifier);
+      if (result.success) {
+        showMessage('msgBox', lang === 'np' ? 'सत्यापन लिंक इमेलमा पठाइयो!' : 'Verification link sent to email!', 'success');
+      } else {
+        showMessage('msgBox', result.message || 'Failed to send verification email', 'error');
+      }
+    }
+    startResendCooldown(60);
+    return;
+  }
+
+  // Phone OTP via Supabase Edge Functions (existing)
   try {
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-otp`, {
       method: 'POST',
@@ -401,6 +421,12 @@ async function sendOTP() {
 async function verifyOTP() {
   const otp = getOTPValue();
   if (otp.length !== 6) return;
+
+  if (currentMethod === 'email') {
+    // Email verification now uses link-based flow via Supabase Auth
+    showMessage('msgBox', lang === 'np' ? 'इमेल सत्यापन अब लिंकमार्फत हुन्छ। कृपया इमेल इनबक्स जाँच गर्नुहोस्।' : 'Email verification now uses a link. Please check your email inbox.', 'success');
+    return;
+  }
 
   const btn = document.getElementById('verifyBtn');
   btn.classList.add('loading');

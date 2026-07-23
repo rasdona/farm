@@ -65,12 +65,19 @@ function showRegError(msg, focusId) {
 
 function updatePasswordStrength() {
   const pwd = document.getElementById('regPassword').value;
-  const result = AuthSystem.validatePasswordStrength(pwd);
   const fill = document.getElementById('pwdStrengthFill');
   const label = document.getElementById('pwdStrengthLabel');
-  fill.style.width = result.percentage + '%';
-  fill.style.background = result.percentage >= 80 ? '#059669' : result.percentage >= 60 ? '#2563eb' : result.percentage >= 40 ? '#f59e0b' : '#ef4444';
-  label.textContent = pwd ? result.label : '';
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
+  const percentage = score * 20;
+  fill.style.width = percentage + '%';
+  fill.style.background = percentage >= 80 ? '#059669' : percentage >= 60 ? '#2563eb' : percentage >= 40 ? '#f59e0b' : '#ef4444';
+  const labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Excellent'];
+  label.textContent = pwd ? labels[score] : '';
   document.getElementById('reqLength').classList.toggle('done', pwd.length >= 8);
   document.getElementById('reqUpper').classList.toggle('done', /[A-Z]/.test(pwd));
   document.getElementById('reqLower').classList.toggle('done', /[a-z]/.test(pwd));
@@ -134,8 +141,6 @@ async function handleRegister() {
   try {
     const result = await AuthSystem.register(data);
     if (result.success) {
-      Auth.currentUser = result.user;
-      localStorage.setItem('agri_currentUser', result.user.id);
       sessionStorage.setItem('agri_pendingEmail', data.email.trim().toLowerCase());
 
       if (regPhotoDataUrl) {
@@ -144,7 +149,6 @@ async function handleRegister() {
           profilePhotoVerified: true,
           requiresPhotoUpload: false
         });
-        Auth.currentUser = DB.getUserById(result.user.id);
       }
 
       Utils.toast('दर्ता सफल भयो! इमेल सत्यापन पठाइँदैछ...');

@@ -26,8 +26,8 @@ function handleLogin(e) {
 
     if (result.success) {
       showLoginSuccess('लगइन सफल भयो! / Login successful!');
-      Auth.currentUser = result.user;
       localStorage.setItem('agri_currentUser', result.user.id);
+      Auth.init();
       const redirect = new URLSearchParams(window.location.search).get('redirect');
       if (AuthSystem.requiresPhotoUpload(result.user)) {
         setTimeout(() => { window.location.href = 'photo-gate.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : ''); }, 800);
@@ -48,7 +48,7 @@ function handleLogin(e) {
 function showEmailVerificationRequired(email) {
   const el = document.getElementById('emailVerificationRequired');
   const msg = document.getElementById('verificationEmailMsg');
-  msg.textContent = `"${email}" को इमेल सत्यापन भएको छैन। कृपया इमेलमा पठाइएको सत्यापन कोड प्रयोग गर्नुहोस्।`;
+  msg.textContent = `"${email}" को इमेल सत्यापन भएको छैन। कृपया इमेलमा पठाइएको सत्यापन लिंकमा क्लिक गर्नुहोस्।`;
   el.style.display = 'block';
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   document.getElementById('resendVerificationSuccess').classList.add('hidden');

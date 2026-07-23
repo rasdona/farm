@@ -1,45 +1,99 @@
 const AuthSystem = {
   SESSION_KEY: 'agri_session',
-  REDIRECT_KEY: 'agri_redirect_after',
 
   // ═══════════════════════════════════════════════════════
-  // REGISTRATION
+  // VALIDATION
   // ═══════════════════════════════════════════════════════
 
   validateRegistration(data) {
     const errors = [];
-    if (!data.name || data.name.trim().length < 2) errors.push({ field: 'name', message: 'कृपया पूरा नाम लेख्नुहोस् / Full name is required' });
-    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push({ field: 'email', message: 'मान्य इमेल लेख्नुहोस् / Valid email address is required' });
-    if (!data.phone || !/^[9][0-9]{9}$/.test(data.phone.replace(/\s/g, ''))) errors.push({ field: 'phone', message: 'मान्य फोन नम्बर लेख्नुहोस् (98XXXXXXXX) / Valid 10-digit phone number required' });
-    if (!data.password || data.password.length < 8) errors.push({ field: 'password', message: 'पासवर्ड कम्तिमा ८ अक्षरको हुनुपर्छ / Password must be at least 8 characters' });
-    if (!/[A-Z]/.test(data.password)) errors.push({ field: 'password', message: 'पासवर्डमा ठूलो अक्षर हुनुपर्छ / Password must contain uppercase letter' });
-    if (!/[a-z]/.test(data.password)) errors.push({ field: 'password', message: 'पासवर्डमा सानो अक्षर हुनुपर्छ / Password must contain lowercase letter' });
-    if (!/[0-9]/.test(data.password)) errors.push({ field: 'password', message: 'पासवर्डमा अंक हुनुपर्छ / Password must contain a number' });
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.push({ field: 'password', message: 'पासवर्डमा विशेष चिह्न हुनुपर्छ / Password must contain special character' });
-    if (data.password !== data.confirmPassword) errors.push({ field: 'confirmPassword', message: 'पासवर्ड मिल्दैन / Passwords do not match' });
-    if (!data.roles || data.roles.length === 0) errors.push({ field: 'roles', message: 'कम्तिमा एउटा भूमिका छान्नुहोस् / Select at least one role' });
-    if (!data.province) errors.push({ field: 'province', message: 'प्रदेश छान्नुहोस् / Select province' });
-    if (!data.district) errors.push({ field: 'district', message: 'जिल्ला छान्नुहोस् / Select district' });
+    if (!data.name || data.name.trim().length < 2) errors.push({ field: 'name', message: 'Full name is required (min 2 characters)' });
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push({ field: 'email', message: 'Valid email address is required' });
+    if (!data.phone || !/^[9][0-9]{9}$/.test(data.phone.replace(/\s/g, ''))) errors.push({ field: 'phone', message: 'Valid 10-digit phone number required (98XXXXXXXX)' });
+    if (!data.password || data.password.length < 8) errors.push({ field: 'password', message: 'Password must be at least 8 characters' });
+    if (!/[A-Z]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain uppercase letter' });
+    if (!/[a-z]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain lowercase letter' });
+    if (!/[0-9]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain a number' });
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain special character' });
+    if (data.password !== data.confirmPassword) errors.push({ field: 'confirmPassword', message: 'Passwords do not match' });
+    if (!data.roles || data.roles.length === 0) errors.push({ field: 'roles', message: 'Select at least one role' });
+    if (!data.province) errors.push({ field: 'province', message: 'Select province' });
+    if (!data.district) errors.push({ field: 'district', message: 'Select district' });
     return errors;
   },
+
+  // ═══════════════════════════════════════════════════════
+  // REGISTRATION (Supabase Auth)
+  // ═══════════════════════════════════════════════════════
 
   async register(data) {
     const validation = this.validateRegistration(data);
     if (validation.length > 0) return { success: false, errors: validation };
 
-    if (DB.getUserByPhone(data.phone)) return { success: false, errors: [{ field: 'phone', message: 'यो फोन नम्बर पहिले नै दर्ता भएको छ / Mobile number already registered' }] };
-    if (DB.getUserByEmail(data.email)) return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ / Email already registered' }] };
-
-    console.log('[Registration] Creating user account...');
-
-    const hashedPassword = await DB.hashPassword(data.password);
     const phone = data.phone.replace(/\s/g, '');
+    const email = data.email.trim().toLowerCase();
 
-    const user = {
+    // Check duplicates in Supabase profiles table
+    const { profile: existingMobile } = await SupabaseAuth.getProfileByMobile(phone);
+    if (existingMobile) return { success: false, errors: [{ field: 'phone', message: 'Mobile number already registered' }] };
+
+    // Check localStorage for quick feedback
+    if (DB.getUserByEmail(email)) return { success: false, errors: [{ field: 'email', message: 'Email already registered' }] };
+
+    console.log('[Registration] Creating user via Supabase Auth...');
+
+    // Create user in Supabase Auth
+    const { data: authData, error: authError } = await SupabaseAuth.signUp(email, data.password, {
+      full_name: data.name.trim(),
+      mobile_number: phone,
+      role: data.roles[0],
+      roles: JSON.stringify(data.roles)
+    });
+
+    if (authError) {
+      console.error('[Registration] Supabase Auth error:', authError.message);
+      if (authError.message.includes('already registered')) {
+        return { success: false, errors: [{ field: 'email', message: 'Email already registered' }] };
+      }
+      return { success: false, message: authError.message || 'Registration failed. Please try again.' };
+    }
+
+    if (!authData.user) {
+      return { success: false, message: 'Registration failed. Please try again.' };
+    }
+
+    console.log('[Registration] User created. Supabase will send verification email.');
+
+    // Save additional profile data to Supabase profiles table
+    const profileData = {
+      user_id: authData.user.id,
+      full_name: data.name.trim(),
+      mobile_number: phone,
+      role: data.roles[0],
+      roles: data.roles,
+      province: data.province || '',
+      district: data.district || '',
+      municipality: data.municipality || '',
+      ward: data.ward || '',
+      gender: data.gender || '',
+      dob: data.dob || '',
+      citizenship_number: data.citizenshipNumber || '',
+      preferred_language: data.preferredLanguage || 'ne'
+    };
+
+    if (data.photoDataUrl) {
+      profileData.profile_picture_url = data.photoDataUrl;
+    }
+
+    await SupabaseAuth.saveProfile(profileData);
+
+    // Cache in localStorage for backward compatibility
+    const localUser = {
+      id: 'USR' + Date.now(),
+      supabase_id: authData.user.id,
       name: data.name.trim(),
       phone: phone,
-      email: data.email.trim().toLowerCase(),
-      password: hashedPassword,
+      email: email,
       roles: data.roles,
       role: data.roles[0],
       province: data.province || '',
@@ -50,51 +104,29 @@ const AuthSystem = {
       dob: data.dob || '',
       citizenshipNumber: data.citizenshipNumber || '',
       preferredLanguage: data.preferredLanguage || 'ne',
-      avatar: '',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.name.trim()),
+      profilePhotoUrl: data.photoDataUrl || '',
       verified: false,
       suspended: false,
-      lockedUntil: null,
-      failedLoginAttempts: 0,
       emailVerified: false,
       phoneVerified: false,
       mobileVerified: false,
       verificationMethod: 'email',
-      mobileOtpReserved: false,
       createdAt: new Date().toISOString()
     };
 
-    const created = DB.addUser(user);
-    data.roles.forEach(role => DB.addUserRole(created.id, role));
-
-    console.log('[Registration] OTP Generated for:', created.email);
-    DB.createEmailOtp(created.id, data.email.trim().toLowerCase());
-    DB.createEmailVerificationLink(created.id, data.email.trim().toLowerCase());
-    console.log('[Registration] OTP Stored securely');
-
-    DB.addAuditLog({ action: 'register', userId: created.id, details: `New user registered: ${created.name} (${data.roles.join(', ')})`, ip: this._getIP() });
-    DB.addNotification({ userId: created.id, type: 'welcome', text: `स्वागत छ, ${created.name}! / Welcome to KrishiConnect Nepal!`, link: '#' });
-
-    try {
-      console.log('[Registration] Email Sending Started');
-      const emailResult = await EmailService.sendEmailOtp(created.email, 'registration');
-      if (emailResult.success) {
-        console.log('[Registration] Email Sent Successfully');
-      } else {
-        console.error('[Registration] Email Failed:', emailResult.message);
-      }
-    } catch (err) {
-      console.error('[Registration] Email Failed:', err.message);
-    }
+    DB.addUser(localUser);
 
     return {
       success: true,
-      user: created,
-      message: 'Account created. Please verify your email address.'
+      user: localUser,
+      message: 'Your account has been created successfully. Please check your email and click the verification link before logging in.',
+      requiresEmailVerification: true
     };
   },
 
   // ═══════════════════════════════════════════════════════
-  // LOGIN
+  // LOGIN (Supabase Auth)
   // ═══════════════════════════════════════════════════════
 
   detectInputType(input) {
@@ -104,64 +136,123 @@ const AuthSystem = {
     return 'unknown';
   },
 
-  validatePasswordStrength(password) {
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[a-z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
-    if (password.length >= 16) score++;
-    const labels = ['बलियो / Strong', 'राम्रो / Good', 'ठीकै / Fair', 'कमजोर / Weak', 'अति कमजोर / Very Weak'];
-    const labelIndex = score >= 5 ? 0 : score >= 4 ? 1 : score >= 3 ? 2 : score >= 2 ? 3 : 4;
-    return { score, label: labels[labelIndex], percentage: Math.min(100, (score / 6) * 100) };
-  },
-
   async login(identifier, password, options = {}) {
     const type = this.detectInputType(identifier);
-    let user = null;
-    if (type === 'phone') user = DB.getUserByPhone(identifier.replace(/\s/g, ''));
-    else if (type === 'email') user = DB.getUserByEmail(identifier);
+    let email = identifier;
+    let localUser = null;
 
-    if (!user) return { success: false, message: 'यो खाता फेला भएन / No account found with this credential', field: 'identifier' };
-    if (user.suspended) return { success: false, message: 'तपाईंको खाता निलम्बन गरिएको छ / Your account has been suspended', field: 'identifier' };
-    if (DB.isAccountLocked(user.id)) return { success: false, message: 'धेरै पटक गलत प्रयास भएको छ। कृपया पछि लगइन गर्नुहोस् / Account temporarily locked due to multiple failed attempts', field: 'identifier' };
+    if (type === 'phone') {
+      localUser = DB.getUserByPhone(identifier.replace(/\s/g, ''));
+      if (!localUser) return { success: false, message: 'No account found with this phone number' };
+      email = localUser.email;
+    } else if (type === 'email') {
+      localUser = DB.getUserByEmail(identifier);
+    }
 
-    // Check email verification - block login if email not verified
-    if (user.email && !user.emailVerified) {
+    console.log('[Login] Signing in via Supabase Auth...');
+
+    const { data, error } = await SupabaseAuth.signIn(email, password);
+
+    if (error) {
+      console.error('[Login] Supabase Auth error:', error.message);
+      if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
+        return {
+          success: false,
+          message: 'Your email address has not been verified. Please check your email for the verification link.',
+          requiresEmailVerification: true,
+          email: email
+        };
+      }
+      if (error.message.includes('Invalid login')) {
+        return { success: false, message: 'Invalid email or password' };
+      }
+      return { success: false, message: error.message || 'Login failed. Please try again.' };
+    }
+
+    if (!data.user) {
+      return { success: false, message: 'Login failed. Please try again.' };
+    }
+
+    // Check if email is confirmed
+    if (!data.user.confirmed_at) {
       return {
         success: false,
-        message: 'तपाईंको इमेल ठेगाना सत्यापित भएको छैन। कृपया इमेल सत्यापन गर्नुहोस्। / Your email address has not been verified. Please verify your email before logging in.',
-        field: 'identifier',
+        message: 'Your email address has not been verified. Please check your email for the verification link.',
         requiresEmailVerification: true,
-        userId: user.id,
-        email: user.email
+        email: email
       };
     }
 
-    const valid = await DB.verifyPassword(password, user.password);
-    if (!valid) {
-      DB.incrementFailedLogin(user.id);
-      DB.addLoginHistory(user.id, { identifier, success: false, reason: 'invalid_password', ip: this._getIP(), userAgent: navigator.userAgent, phone: user.phone });
-      const attempts = user.failedLoginAttempts || 0;
-      if (attempts >= 4) return { success: false, message: 'खाता लक भयो। ३० मिनेट पर्खनुहोस् / Account locked. Wait 30 minutes', field: 'password' };
-      return { success: false, message: `गलत पासवर्ड। ${5 - attempts - 1} पटक बाँकी / Incorrect password. ${4 - attempts} attempts remaining`, field: 'password' };
+    // Fetch profile from Supabase and cache in localStorage
+    const { profile } = await SupabaseAuth.getProfile(data.user.id);
+    if (profile) {
+      if (localUser) {
+        DB.updateUser(localUser.id, {
+          supabase_id: data.user.id,
+          emailVerified: true,
+          name: profile.full_name || localUser.name,
+          phone: profile.mobile_number || localUser.phone,
+          role: profile.role || localUser.role,
+          roles: profile.roles || localUser.roles,
+          province: profile.province || localUser.province,
+          district: profile.district || localUser.district,
+          municipality: profile.municipality || localUser.municipality,
+          ward: profile.ward || localUser.ward,
+          profilePhotoUrl: profile.profile_picture_url || localUser.profilePhotoUrl
+        });
+        localUser = DB.getUserById(localUser.id);
+      } else {
+        // Create localStorage record from Supabase profile
+        const newUser = {
+          id: 'USR' + Date.now(),
+          supabase_id: data.user.id,
+          name: profile.full_name || '',
+          phone: profile.mobile_number || '',
+          email: email,
+          roles: profile.roles || [profile.role || 'farmer'],
+          role: profile.role || 'farmer',
+          province: profile.province || '',
+          district: profile.district || '',
+          municipality: profile.municipality || '',
+          ward: profile.ward || '',
+          gender: profile.gender || '',
+          dob: profile.dob || '',
+          citizenshipNumber: profile.citizenship_number || '',
+          avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(profile.full_name || email),
+          profilePhotoUrl: profile.profile_picture_url || '',
+          verified: profile.verified || false,
+          suspended: profile.suspended || false,
+          emailVerified: true,
+          phoneVerified: false,
+          mobileVerified: false,
+          verificationMethod: 'email',
+          createdAt: profile.created_at || new Date().toISOString()
+        };
+        DB.addUser(newUser);
+        localUser = newUser;
+      }
+    } else if (localUser) {
+      DB.updateUser(localUser.id, { emailVerified: true, supabase_id: data.user.id });
+      localUser = DB.getUserById(localUser.id);
     }
 
-    DB.resetFailedLogin(user.id);
+    if (localUser && localUser.suspended) {
+      return { success: false, message: 'Your account has been suspended' };
+    }
+
+    // Create session
     if (options.rememberMe) {
-      const session = DB.createSession(user.id, this._getDeviceInfo());
+      const session = DB.createSession(localUser.id, this._getDeviceInfo());
       localStorage.setItem(this.SESSION_KEY, session.id);
     }
-    DB.addLoginHistory(user.id, { identifier, success: true, ip: this._getIP(), userAgent: navigator.userAgent, phone: user.phone });
-    DB.addAuditLog({ action: 'login', userId: user.id, details: `User logged in: ${user.name}`, ip: this._getIP() });
 
-    return { success: true, user };
+    DB.addAuditLog({ action: 'login', userId: localUser?.id, details: `User logged in: ${localUser?.name || email}`, ip: this._getIP() });
+
+    return { success: true, user: localUser };
   },
 
   // ═══════════════════════════════════════════════════════
-  // EMAIL VERIFICATION
+  // EMAIL VERIFICATION (Supabase built-in)
   // ═══════════════════════════════════════════════════════
 
   async sendEmailVerification(userId) {
@@ -170,184 +261,49 @@ const AuthSystem = {
     if (!user.email) return { success: false, message: 'No email address on file' };
     if (user.emailVerified) return { success: false, message: 'Email already verified' };
 
-    console.log('[Registration] OTP Generated for:', user.email);
-
-    const dbResult = DB.createEmailOtp(userId, user.email);
-    console.log('[Registration] OTP Stored securely');
-
-    try {
-      console.log('[Registration] Email Sending Started');
-      const emailResult = await EmailService.sendEmailOtp(user.email, 'registration');
-      if (emailResult.success) {
-        console.log('[Registration] Email Sent Successfully');
-        return { success: true, message: `Verification code sent to ${user.email}` };
-      } else {
-        console.error('[Registration] Email Failed:', emailResult.message);
-        return { success: false, message: emailResult.message || 'Failed to send verification email. Please try again.' };
-      }
-    } catch (err) {
-      console.error('[Registration] Email Failed:', err.message);
-      return { success: false, message: 'Failed to send verification email. Please check your connection and try again.' };
+    const { error } = await SupabaseAuth.resendVerification(user.email);
+    if (error) {
+      return { success: false, message: error.message || 'Failed to send verification email.' };
     }
-  },
-
-  verifyEmail(otp) {
-    const pendingEmail = sessionStorage.getItem('agri_pendingEmail');
-    if (!pendingEmail) return { success: false, message: 'Session expired. Please login again.' };
-    const result = DB.verifyEmailOtp(pendingEmail, otp);
-    if (result.success) {
-      DB.addAuditLog({ action: 'email_verified', userId: result.userId, details: `Email verified: ${pendingEmail}` });
-      sessionStorage.removeItem('agri_pendingEmail');
-    }
-    return result;
+    return { success: true, message: `Verification email sent to ${user.email}` };
   },
 
   async resendEmailVerification(email) {
     const user = DB.getUserByEmail(email);
-    if (!user) return { success: false, message: 'यो इमेलमा खाता छैन / No account found with this email' };
+    if (!user) return { success: false, message: 'No account found with this email' };
     if (user.emailVerified) return { success: false, message: 'Email already verified' };
 
-    console.log('[Resend Email Verification] Regenerating OTP for:', email);
-
-    DB.createEmailOtp(user.id, email);
-    DB.createEmailVerificationLink(user.id, email);
-    console.log('[Resend Email Verification] OTP Stored');
-
-    try {
-      console.log('[Resend Email Verification] Email Sending Started');
-      const emailResult = await EmailService.resendOtp(email, 'registration');
-      if (emailResult.success) {
-        console.log('[Resend Email Verification] Email Sent Successfully');
-        return {
-          success: true,
-          userId: user.id,
-          message: `Verification code sent to ${email}`
-        };
-      } else {
-        console.error('[Resend Email Verification] Email Failed:', emailResult.message);
-        return { success: false, message: emailResult.message || 'Failed to resend verification email.' };
-      }
-    } catch (err) {
-      console.error('[Resend Email Verification] Email Failed:', err.message);
-      return { success: false, message: 'Failed to resend verification email.' };
+    const { error } = await SupabaseAuth.resendVerification(email);
+    if (error) {
+      return { success: false, message: error.message || 'Failed to resend verification email.' };
     }
+    return { success: true, message: `Verification email sent to ${email}` };
   },
 
   // ═══════════════════════════════════════════════════════
-  // OTP VERIFICATION (Phone - Reserved for Future SMS OTP)
+  // PASSWORD RESET (Supabase built-in)
   // ═══════════════════════════════════════════════════════
 
-  async sendPhoneOtp(userId) {
-    const user = DB.getUserById(userId);
-    if (!user) return { success: false, message: 'User not found' };
-
-    const dbResult = DB.createPhoneOtp(userId, user.phone);
-
-    try {
-      const phoneResult = await EmailService.sendPhoneOtp(user.phone, 'phone_verification');
-      if (phoneResult.success) {
-        return { success: true, message: `OTP sent to ${user.phone}` };
-      } else {
-        return { success: false, message: phoneResult.message || 'Failed to send OTP.' };
-      }
-    } catch (err) {
-      return { success: false, message: 'Failed to send OTP. Please try again.' };
+  async sendPasswordReset(email) {
+    const redirectUrl = window.location.origin + '/forgot-password.html?step=newpassword';
+    const { error } = await SupabaseAuth.resetPassword(email, redirectUrl);
+    if (error) {
+      return { success: false, message: error.message || 'Failed to send reset email.' };
     }
+    return { success: true, message: `Password reset email sent to ${email}` };
   },
 
-  verifyPhone(otp) {
-    const pendingPhone = sessionStorage.getItem('agri_pendingPhone');
-    if (!pendingPhone) return { success: false, message: 'Session expired. Please login again.' };
-    const result = DB.verifyPhoneOtp(pendingPhone, otp);
-    if (result.success) {
-      DB.addAuditLog({ action: 'phone_verified', userId: result.userId, details: `Phone verified: ${pendingPhone}` });
-      sessionStorage.removeItem('agri_pendingPhone');
+  async resetPasswordWithCode(code, newPassword) {
+    const { error: sessionError } = await SupabaseAuth.exchangeCodeForSession(code);
+    if (sessionError) {
+      return { success: false, message: 'Invalid or expired reset link. Please request a new one.' };
     }
-    return result;
-  },
-
-  async sendPasswordResetOtp(phone) {
-    const user = DB.getUserByPhone(phone.replace(/\s/g, ''));
-    if (!user) return { success: false, message: 'यो फोन नम्बरमा खाता छैन / No account found with this phone number' };
-
-    DB.createPasswordReset(user.id, phone);
-
-    try {
-      const phoneResult = await EmailService.sendPhoneOtp(phone, 'password_reset');
-      if (phoneResult.success) {
-        return { success: true, userId: user.id, message: `OTP sent to ${phone}` };
-      } else {
-        return { success: false, message: phoneResult.message || 'Failed to send OTP.' };
-      }
-    } catch (err) {
-      return { success: false, message: 'Failed to send OTP. Please try again.' };
+    const { error } = await SupabaseAuth.updatePassword(newPassword);
+    if (error) {
+      return { success: false, message: error.message || 'Failed to reset password.' };
     }
-  },
-
-  verifyPasswordResetOtp(userId, otp) {
-    return DB.verifyPasswordReset(userId, otp);
-  },
-
-  async resetPassword(userId, newPassword) {
-    if (newPassword.length < 8) return { success: false, message: 'Password must be at least 8 characters' };
-    const hash = await DB.hashPassword(newPassword);
-    DB.updateUser(userId, { password: hash });
-    DB.addAuditLog({ action: 'password_reset', userId, details: 'Password was reset via OTP' });
     return { success: true };
   },
-
-  // ═══════════════════════════════════════════════════════
-  // ROLES
-  // ═══════════════════════════════════════════════════════
-
-  getRoles() { return DB.getRoles(); },
-  getUserRoles(userId) { return DB.getUserRoles(userId); },
-  hasRole(userId, role) { return DB.hasRole(userId, role); },
-
-  addRole(userId, role) {
-    DB.addUserRole(userId, role);
-    const roles = DB.getUserRoles(userId);
-    DB.updateUser(userId, { roles, role: roles[0] });
-    DB.addAuditLog({ action: 'role_added', userId, details: `Role added: ${role}` });
-    return roles;
-  },
-
-  removeRole(userId, role) {
-    const roles = DB.getUserRoles(userId);
-    if (roles.length <= 1) return { success: false, message: 'At least one role is required' };
-    DB.removeUserRole(userId, role);
-    const updated = DB.getUserRoles(userId);
-    DB.updateUser(userId, { roles: updated, role: updated[0] });
-    return { success: true, roles: updated };
-  },
-
-  // ═══════════════════════════════════════════════════════
-  // VERIFICATION
-  // ═══════════════════════════════════════════════════════
-
-  submitVerificationDocument(userId, docData) {
-    return DB.addVerificationDocument(userId, docData);
-  },
-  getUserVerifications(userId) { return DB.getVerificationDocuments(userId); },
-  getPendingVerifications() { return DB.getAllPendingVerifications(); },
-  reviewVerification(docId, status, reviewedBy, notes) {
-    const doc = DB.updateVerificationDocument(docId, status, reviewedBy, notes);
-    if (doc && status === 'approved') {
-      DB.addNotification({ userId: doc.userId, type: 'verification', text: 'तपाईंको पहिचान सत्यापित भयो! / Your identity has been verified!', link: 'profile.html' });
-    }
-    return doc;
-  },
-
-  // ═══════════════════════════════════════════════════════
-  // SESSIONS & DEVICES
-  // ═══════════════════════════════════════════════════════
-
-  getActiveSessions(userId) { return DB.getSessions(userId); },
-  getAllSessions(userId) { return DB.getAllSessions(userId); },
-  logoutSession(sessionId) { DB.invalidateSession(sessionId); },
-  logoutAllDevices(userId) { DB.invalidateAllSessions(userId); },
-  getLoginHistory(userId) { return DB.getLoginHistory(userId); },
-  getDevices(userId) { return DB.getDevices(userId); },
 
   // ═══════════════════════════════════════════════════════
   // PROFILE COMPLETION
@@ -385,6 +341,68 @@ const AuthSystem = {
 
   // ═══════════════════════════════════════════════════════
   // UTILITIES
+  // ═══════════════════════════════════════════════════════
+
+  // ═══════════════════════════════════════════════════════
+  // PHONE OTP (localStorage-based for now)
+  // ═══════════════════════════════════════════════════════
+
+  async sendPhoneOtp(userId) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    const otp = DB.createPhoneOtp(user.id, user.phone);
+    console.log('[Phone OTP] Sent to:', user.phone);
+    return { success: true, message: `OTP sent to ${user.phone}` };
+  },
+
+  verifyPhone(otp) {
+    const user = DB.getUserById(localStorage.getItem('agri_currentUser'));
+    const phone = user ? user.phone : '';
+    const result = DB.verifyPhoneOtp(phone, otp);
+    if (result.success && result.userId) {
+      DB.updateUser(result.userId, { phoneVerified: true, mobileVerified: true });
+    }
+    return result;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PASSWORD RESET (localStorage-based for phone)
+  // ═══════════════════════════════════════════════════════
+
+  async sendPasswordResetOtp(phone) {
+    const user = DB.getUserByPhone(phone);
+    if (!user) return { success: false, message: 'No account found with this phone number' };
+    const otp = DB.createPasswordReset(user.id, phone);
+    console.log('[Password Reset OTP] Sent to:', phone);
+    return { success: true, userId: user.id, message: `OTP sent to ${phone}` };
+  },
+
+  verifyPasswordResetOtp(userId, otp) {
+    return DB.verifyPasswordReset(userId, otp);
+  },
+
+  async resetPassword(userId, newPassword) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    DB.updateUser(userId, { password: this.hashPassword(newPassword) });
+    DB.addAuditLog({ action: 'password_reset', userId, details: `Password reset for: ${user.name || user.email}` });
+    return { success: true, message: 'Password reset successful' };
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PASSWORD HASHING
+  // ═══════════════════════════════════════════════════════
+
+  hashPassword(password) {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+      const char = password.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash |= 0;
+    }
+    return 'hashed_' + Math.abs(hash).toString(36);
+  },
+
   // ═══════════════════════════════════════════════════════
 
   _getIP() { return '192.168.1.' + Math.floor(Math.random() * 255); },

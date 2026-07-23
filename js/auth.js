@@ -2,6 +2,19 @@ const Auth = {
   currentUser: null,
 
   init() {
+    // Check Supabase session first
+    if (SupabaseAuth && SupabaseAuth.client) {
+      SupabaseAuth.getSession().then(({ data: { session } }) => {
+        if (session && session.user) {
+          const localUser = DB.getUserByEmail(session.user.email);
+          if (localUser && !localUser.suspended) {
+            this.currentUser = localUser;
+          }
+        }
+      }).catch(() => {});
+    }
+
+    // Also check localStorage for logged-out persistence
     const uid = localStorage.getItem('agri_currentUser');
     if (uid) {
       this.currentUser = DB.getUserById(uid);
@@ -25,6 +38,9 @@ const Auth = {
     this.currentUser = null;
     localStorage.removeItem('agri_currentUser');
     localStorage.removeItem(AuthSystem.SESSION_KEY);
+    if (SupabaseAuth && SupabaseAuth.client) {
+      SupabaseAuth.signOut().catch(() => {});
+    }
     window.location.href = 'index.html';
   },
 
