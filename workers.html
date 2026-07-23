@@ -9,25 +9,25 @@
   <header id="navbar" class="navbar"></header>
   <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh">
     <div class="container">
-      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Find Workers</span></div>
+      <div class="breadcrumb mb-4"><a href="index.html" data-en="Home" data-ne="गृह">Home</a><span class="separator">/</span><span class="current" data-en="Find Workers" data-ne="श्रमिक खोज्नुहोस्">Find Workers</span></div>
       <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <div><h1 style="font-size:1.6rem">Find Agricultural Workers</h1><p class="text-muted" id="workerCount"></p></div>
+        <div><h1 style="font-size:1.6rem" data-en="Find Agricultural Workers" data-ne="कृषि श्रमिक खोज्नुहोस्">Find Agricultural Workers</h1><p class="text-muted" id="workerCount"></p></div>
         <div class="flex gap-2">
           <select class="form-select" id="workerSort" style="width:auto" onchange="applyWorkerFilters()">
-            <option value="">Newest</option><option value="rating">Top Rated</option><option value="experience">Most Experienced</option><option value="wage-low">Lowest Wage</option><option value="wage-high">Highest Wage</option>
+            <option value="" data-en="Newest" data-ne="नवीनतम">Newest</option><option value="rating" data-en="Top Rated" data-ne="सर्वोच्च रेटिङ">Top Rated</option><option value="experience" data-en="Most Experienced" data-ne="सबैभन्दा अनुभवी">Most Experienced</option><option value="wage-low" data-en="Lowest Wage" data-ne="सबैभन्दा कम ज्याला">Lowest Wage</option><option value="wage-high" data-en="Highest Wage" data-ne="सबैभन्दा बढी ज्याला">Highest Wage</option>
           </select>
-          <button class="btn btn-outline" onclick="document.querySelector('.filter-sidebar').classList.toggle('show')">🔧 Filters</button>
+          <button class="btn btn-outline" onclick="document.querySelector('.filter-sidebar').classList.toggle('show')">🔧 <span data-en="Filters" data-ne="फिल्टर">Filters</span></button>
         </div>
       </div>
       <div class="flex gap-6" style="align-items:flex-start">
         <aside class="filter-sidebar" style="width:280px;flex-shrink:0;position:sticky;top:calc(var(--navbar-height)+16px)">
-          <div class="flex justify-between items-center mb-4"><h4 style="margin:0">Filters</h4><span class="filter-clear" onclick="clearWorkerFilters()">Clear All</span></div>
-          <div class="filter-group"><label>Search</label><input type="text" id="wFilterQ" placeholder="Name or skill..." oninput="applyWorkerFilters()"></div>
-          <div class="filter-group"><label>District</label><select id="wFilterDistrict" onchange="applyWorkerFilters()"></select></div>
-          <div class="filter-group"><label>Min Experience (years)</label><input type="number" id="wFilterExp" placeholder="e.g. 3" min="0" oninput="applyWorkerFilters()"></div>
-          <div class="filter-group"><label>Max Daily Wage (NPR)</label><input type="number" id="wFilterWage" placeholder="e.g. 1500" oninput="applyWorkerFilters()"></div>
+          <div class="flex justify-between items-center mb-4"><h4 style="margin:0" data-en="Filters" data-ne="फिल्टर">Filters</h4><span class="filter-clear" onclick="clearWorkerFilters()" data-en="Clear All" data-ne="सबै मेटाउनुहोस्">Clear All</span></div>
+          <div class="filter-group"><label data-en="Search" data-ne="खोज्नुहोस्">Search</label><input type="text" id="wFilterQ" placeholder="Name or skill..." data-en-placeholder="Name or skill..." data-ne-placeholder="नाम वा सीप..." oninput="applyWorkerFilters()"></div>
+          <div class="filter-group"><label data-en="District" data-ne="जिल्ला">District</label><select id="wFilterDistrict" onchange="applyWorkerFilters()"></select></div>
+          <div class="filter-group"><label data-en="Min Experience (years)" data-ne="न्यूनतम अनुभव (वर्ष)">Min Experience (years)</label><input type="number" id="wFilterExp" placeholder="e.g. 3" min="0" oninput="applyWorkerFilters()"></div>
+          <div class="filter-group"><label data-en="Max Daily Wage (NPR)" data-ne="अधिकतम दैनिक ज्याला (रु.)">Max Daily Wage (NPR)</label><input type="number" id="wFilterWage" placeholder="e.g. 1500" oninput="applyWorkerFilters()"></div>
           <div class="filter-group">
-            <label class="form-check"><input type="checkbox" id="wFilterVerified" onchange="applyWorkerFilters()"><span>✅ Verified Only</span></label>
+            <label class="form-check"><input type="checkbox" id="wFilterVerified" onchange="applyWorkerFilters()"><span data-en="✅ Verified Only" data-ne="✅ सत्यापित मात्र">✅ Verified Only</span></label>
           </div>
         </aside>
         <div style="flex:1;min-width:0">
@@ -38,7 +38,7 @@
   </main>
   <footer id="footer" class="footer"></footer>
   <div class="back-to-top">↑</div>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/workers.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/workers.js"></script>
   <script>
     App.init();
     document.getElementById('wFilterDistrict').innerHTML = Jobs.getDistrictOptions();

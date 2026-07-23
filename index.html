@@ -15,23 +15,23 @@
     <div class="hero-overlay"></div>
     <div class="container hero-container">
       <div class="hero-content">
-        <h1>Connecting Nepal's Farms<br>With <span class="hero-highlight">Skilled Workers</span></h1>
-        <p>The #1 platform for agricultural hiring in Nepal. Find the right workers for your farm or discover rewarding farm jobs near you.</p>
+        <h1 data-en="Connecting Nepal's Farms With Skilled Workers" data-ne="नेपालका खेतहरूलाई दक्ष श्रमिकहरूसँग जोड्दै">Connecting Nepal's Farms<br>With <span class="hero-highlight">Skilled Workers</span></h1>
+        <p data-en="The #1 platform for agricultural hiring in Nepal. Find the right workers for your farm or discover rewarding farm jobs near you." data-ne="नेपालमा कृषि रोजगारीको #१ प्लेटफर्म। आफ्नो खेतका लागि सही श्रमिक खोज्नुहोस् वा नजिकै कृषि रोजगारी पाउनुहोस्।">The #1 platform for agricultural hiring in Nepal. Find the right workers for your farm or discover rewarding farm jobs near you.</p>
         <div class="hero-cta">
-          <a href="register.html?role=farmer" class="btn btn-primary btn-lg">Post a Job</a>
-          <a href="jobs.html" class="btn btn-outline-light btn-lg">Find Work</a>
+          <a href="register.html?role=farmer" class="btn btn-primary btn-lg" data-en="Post a Job" data-ne="रोजगारी पोस्ट गर्नुहोस्">Post a Job</a>
+          <a href="jobs.html" class="btn btn-outline-light btn-lg" data-en="Find Work" data-ne="काम खोज्नुहोस्">Find Work</a>
         </div>
       </div>
 
       <!-- Search Card -->
       <div class="hero-search-card">
         <div class="hero-search-inner">
-          <input type="text" placeholder="What job are you looking for?" id="heroSearchJobs" class="hero-search-input">
+          <input type="text" placeholder="What job are you looking for?" data-en-placeholder="What job are you looking for?" data-ne-placeholder="कुन काम खोजिरहनुभएको छ?" id="heroSearchJobs" class="hero-search-input">
           <select id="heroSearchLocation" class="hero-search-select">
-            <option value="">All Locations</option>
+            <option value="" data-en="All Locations" data-ne="सबै ठाउँहरू">All Locations</option>
             <option>Kathmandu</option><option>Chitwan</option><option>Pokhara</option><option>Ilam</option><option>Bara</option><option>Jhapa</option><option>Morang</option><option>Sunsari</option>
           </select>
-          <button class="btn btn-primary btn-lg hero-search-btn" onclick="heroSearch()">Search Jobs</button>
+          <button class="btn btn-primary btn-lg hero-search-btn" onclick="heroSearch()" data-en="Search Jobs" data-ne="रोजगारी खोज्नुहोस्">Search Jobs</button>
         </div>
       </div>
     </div>
@@ -43,19 +43,19 @@
       <div class="grid grid-4 gap-4" style="max-width:800px;margin:0 auto">
         <a href="workers.html" class="card text-center p-6 hover-lift" style="text-decoration:none">
           <div style="font-size:2.5rem;margin-bottom:8px">🌾</div>
-          <h4 style="margin:0">Find Workers</h4>
+          <h4 style="margin:0" data-en="Find Workers" data-ne="श्रमिक खोज्नुहोस्">Find Workers</h4>
         </a>
         <a href="jobs.html" class="card text-center p-6 hover-lift" style="text-decoration:none">
           <div style="font-size:2.5rem;margin-bottom:8px">👨‍🌾</div>
-          <h4 style="margin:0">Find Farmers</h4>
+          <h4 style="margin:0" data-en="Find Farmers" data-ne="किसान खोज्नुहोस्">Find Farmers</h4>
         </a>
         <a href="marketplace.html" class="card text-center p-6 hover-lift" style="text-decoration:none">
           <div style="font-size:2.5rem;margin-bottom:8px">🛒</div>
-          <h4 style="margin:0">Marketplace</h4>
+          <h4 style="margin:0" data-en="Marketplace" data-ne="बजार">Marketplace</h4>
         </a>
         <a href="community.html" class="card text-center p-6 hover-lift" style="text-decoration:none">
           <div style="font-size:2.5rem;margin-bottom:8px">🤝</div>
-          <h4 style="margin:0">Arma Parma</h4>
+          <h4 style="margin:0" data-en="Arma Parma" data-ne="अर्मा पर्मा">Arma Parma</h4>
         </a>
       </div>
     </div>
@@ -67,19 +67,19 @@
       <div class="grid grid-2 gap-6" style="max-width:600px;margin:0 auto" id="heroStats">
         <div class="card text-center p-8">
           <div class="number" data-target="2500" style="font-size:2.5rem;font-weight:800;color:var(--primary);font-family:var(--font-heading)">0</div>
-          <div class="text-muted" style="font-size:1rem">Workers</div>
+          <div class="text-muted" style="font-size:1rem" data-en="Workers" data-ne="श्रमिक">Workers</div>
         </div>
         <div class="card text-center p-8">
           <div class="number" data-target="850" style="font-size:2.5rem;font-weight:800;color:var(--primary);font-family:var(--font-heading)">0</div>
-          <div class="text-muted" style="font-size:1rem">Farmers</div>
+          <div class="text-muted" style="font-size:1rem" data-en="Farmers" data-ne="किसान">Farmers</div>
         </div>
         <div class="card text-center p-8">
           <div class="number" data-target="1200" style="font-size:2.5rem;font-weight:800;color:var(--primary);font-family:var(--font-heading)">0</div>
-          <div class="text-muted" style="font-size:1rem">Jobs Posted</div>
+          <div class="text-muted" style="font-size:1rem" data-en="Jobs Posted" data-ne="पोस्ट गरिएका रोजगारी">Jobs Posted</div>
         </div>
         <div class="card text-center p-8">
           <div class="number" data-target="77" style="font-size:2.5rem;font-weight:800;color:var(--primary);font-family:var(--font-heading)">0</div>
-          <div class="text-muted" style="font-size:1rem">Districts</div>
+          <div class="text-muted" style="font-size:1rem" data-en="Districts" data-ne="जिल्लाहरू">Districts</div>
         </div>
       </div>
     </div>
@@ -89,24 +89,24 @@
   <section class="section">
     <div class="container">
       <div class="section-header">
-        <h2>How It Works</h2>
-        <p>Get started in three simple steps</p>
+        <h2 data-en="How It Works" data-ne="कसरी काम गर्छ">How It Works</h2>
+        <p data-en="Get started in three simple steps" data-ne="तीन सजिलो चरणमा सुरु गर्नुहोस्">Get started in three simple steps</p>
       </div>
       <div class="grid grid-3 gap-8">
         <div class="card text-center p-8 hover-lift" data-animate="fadeUp">
           <div style="font-size:3rem;margin-bottom:16px">📝</div>
-          <h3>Create Account</h3>
-          <p class="text-muted mt-2">Register as a farmer or worker. Complete your profile to get started.</p>
+          <h3 data-en="Create Account" data-ne="खाता बनाउनुहोस्">Create Account</h3>
+          <p class="text-muted mt-2" data-en="Register as a farmer or worker. Complete your profile to get started." data-ne="किसान वा श्रमिकको रूपमा दर्ता गर्नुहोस्। सुरु गर्न प्रोफाइल पूरा गर्नुहोस्।">Register as a farmer or worker. Complete your profile to get started.</p>
         </div>
         <div class="card text-center p-8 hover-lift" data-animate="fadeUp" style="animation-delay:0.1s">
           <div style="font-size:3rem;margin-bottom:16px">🔍</div>
-          <h3>Search & Connect</h3>
-          <p class="text-muted mt-2">Browse jobs or workers. Use advanced filters to find the perfect match.</p>
+          <h3 data-en="Search & Connect" data-ne="खोज्नुहोस् र जोडिनुहोस्">Search & Connect</h3>
+          <p class="text-muted mt-2" data-en="Browse jobs or workers. Use advanced filters to find the perfect match." data-ne="रोजगारी वा श्रमिकहरू खोज्नुहोस्। सही जोडी पत्ता लगाउन फिल्टर प्रयोग गर्नुहोस्।">Browse jobs or workers. Use advanced filters to find the perfect match.</p>
         </div>
         <div class="card text-center p-8 hover-lift" data-animate="fadeUp" style="animation-delay:0.2s">
           <div style="font-size:3rem;margin-bottom:16px">🤝</div>
-          <h3>Hire & Work</h3>
-          <p class="text-muted mt-2">Apply, accept, and start working together. Build trust through reviews.</p>
+          <h3 data-en="Hire & Work" data-ne="भाडामा लिनुहोस् र काम गर्नुहोस्">Hire & Work</h3>
+          <p class="text-muted mt-2" data-en="Apply, accept, and start working together. Build trust through reviews." data-ne="आवेदन दिनुहोस्, स्वीकार गर्नुहोस्, र सँगै काम गर्न सुरु गर्नुहोस्। समीक्षामार्फत विश्वास बनाउनुहोस्।">Apply, accept, and start working together. Build trust through reviews.</p>
         </div>
       </div>
     </div>
@@ -116,11 +116,11 @@
   <section class="section" style="background:var(--bg-alt)">
     <div class="container">
       <div class="section-header">
-        <h2>Recent Work Requests</h2>
-        <p>Latest opportunities from farms across Nepal</p>
+        <h2 data-en="Recent Work Requests" data-ne="हालका काम अनुरोधहरू">Recent Work Requests</h2>
+        <p data-en="Latest opportunities from farms across Nepal" data-ne="नेपालभरका खेतबाट नवीनतम अवसरहरू">Latest opportunities from farms across Nepal</p>
       </div>
       <div class="grid grid-auto gap-6" id="featuredJobs"></div>
-      <div class="text-center mt-8"><a href="jobs.html" class="btn btn-primary btn-lg">View All Jobs →</a></div>
+      <div class="text-center mt-8"><a href="jobs.html" class="btn btn-primary btn-lg" data-en="View All Jobs →" data-ne="सबै रोजगारी हेर्नुहोस् →">View All Jobs →</a></div>
     </div>
   </section>
 
@@ -128,11 +128,11 @@
   <section class="section">
     <div class="container">
       <div class="section-header">
-        <h2>Featured Workers</h2>
-        <p>Skilled agricultural professionals ready to work</p>
+        <h2 data-en="Featured Workers" data-ne="विशेष श्रमिकहरू">Featured Workers</h2>
+        <p data-en="Skilled agricultural professionals ready to work" data-ne="काम गर्न तयार दक्ष कृषि व्यावसायिकहरू">Skilled agricultural professionals ready to work</p>
       </div>
       <div class="grid grid-auto gap-6" id="featuredWorkers"></div>
-      <div class="text-center mt-8"><a href="workers.html" class="btn btn-outline btn-lg">View All Workers →</a></div>
+      <div class="text-center mt-8"><a href="workers.html" class="btn btn-outline btn-lg" data-en="View All Workers →" data-ne="सबै श्रमिकहरू हेर्नुहोस् →">View All Workers →</a></div>
     </div>
   </section>
 
@@ -140,11 +140,11 @@
   <section class="section" style="background:var(--bg-alt)">
     <div class="container">
       <div class="section-header">
-        <h2>Latest Products</h2>
-        <p>Fresh produce and farming supplies from our marketplace</p>
+        <h2 data-en="Latest Products" data-ne="नवीनतम उत्पादनहरू">Latest Products</h2>
+        <p data-en="Fresh produce and farming supplies from our marketplace" data-ne="हाम्रो बजारबाट ताजा उत्पादन र कृषि सामग्रीहरू">Fresh produce and farming supplies from our marketplace</p>
       </div>
       <div class="grid grid-auto gap-6" id="latestProducts"></div>
-      <div class="text-center mt-8"><a href="marketplace.html" class="btn btn-primary btn-lg">Browse Marketplace →</a></div>
+      <div class="text-center mt-8"><a href="marketplace.html" class="btn btn-primary btn-lg" data-en="Browse Marketplace →" data-ne="बजार हेर्नुहोस् →">Browse Marketplace →</a></div>
     </div>
   </section>
 
@@ -154,15 +154,15 @@
   <!-- Bottom Navigation (Mobile) -->
   <nav class="bottom-nav" id="bottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:var(--z-fixed);padding:8px 0">
     <div class="flex justify-around items-center">
-      <a href="index.html" class="text-center" style="text-decoration:none;color:var(--primary)"><div style="font-size:1.4rem">🏠</div><div style="font-size:0.7rem;font-weight:600">Home</div></a>
-      <a href="jobs.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">💼</div><div style="font-size:0.7rem;font-weight:600">Jobs</div></a>
-      <a href="workers.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👷</div><div style="font-size:0.7rem;font-weight:600">Workers</div></a>
-      <a href="marketplace.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">🛒</div><div style="font-size:0.7rem;font-weight:600">Market</div></a>
-      <a href="profile.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👤</div><div style="font-size:0.7rem;font-weight:600">Profile</div></a>
+      <a href="index.html" class="text-center" style="text-decoration:none;color:var(--primary)"><div style="font-size:1.4rem">🏠</div><div style="font-size:0.7rem;font-weight:600" data-en="Home" data-ne="गृह">Home</div></a>
+      <a href="jobs.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">💼</div><div style="font-size:0.7rem;font-weight:600" data-en="Jobs" data-ne="रोजगारी">Jobs</div></a>
+      <a href="workers.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👷</div><div style="font-size:0.7rem;font-weight:600" data-en="Workers" data-ne="श्रमिक">Workers</div></a>
+      <a href="marketplace.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">🛒</div><div style="font-size:0.7rem;font-weight:600" data-en="Market" data-ne="बजार">Market</div></a>
+      <a href="profile.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👤</div><div style="font-size:0.7rem;font-weight:600" data-en="Profile" data-ne="प्रोफाइल">Profile</div></a>
     </div>
   </nav>
 
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script>
     App.init();
     const featuredJobs = DB.getJobs().filter(j => j.status === 'active').slice(0, 6);

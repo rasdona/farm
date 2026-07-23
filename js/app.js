@@ -18,6 +18,8 @@ const App = {
     const user = Auth.currentUser;
     const unreadNotifs = user ? DB.getNotifications(user.id).filter(n => !n.read).length : 0;
     const unreadChats = 2;
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
 
     nav.innerHTML = `
       <div class="container">
@@ -26,21 +28,21 @@ const App = {
           AgriConnect
         </a>
         <nav class="navbar-nav">
-          <a href="index.html" class="${this.isActive('index')}">Home</a>
-          <a href="jobs.html" class="${this.isActive('jobs')}">Find Jobs</a>
-          <a href="workers.html" class="${this.isActive('workers')}">Find Workers</a>
-          <a href="community.html" class="${this.isActive('community')}">Community</a>
-          <a href="about.html" class="${this.isActive('about')}">About</a>
+          <a href="index.html" class="${this.isActive('index')}">${t('nav.home')}</a>
+          <a href="jobs.html" class="${this.isActive('jobs')}">${t('nav.findJobs')}</a>
+          <a href="workers.html" class="${this.isActive('workers')}">${t('nav.findWorkers')}</a>
+          <a href="community.html" class="${this.isActive('community')}">${t('nav.community')}</a>
+          <a href="about.html" class="${this.isActive('about')}">${t('nav.about')}</a>
         </nav>
         <div class="navbar-search">
           <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Search jobs, workers..." id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
+          <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
         </div>
         <div class="navbar-actions">
           <div class="lang-switcher" id="navLangSwitcher">
             <button class="navbar-btn lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
-              <span class="lang-flag" id="langFlag">🇳🇵</span>
-              <span class="lang-label" id="langLabel">नेपाली</span>
+              <span class="lang-flag" id="langFlag">${T ? (T.lang === 'ne' ? '🇳🇵' : '🇬🇧') : '🇳🇵'}</span>
+              <span class="lang-label" id="langLabel">${T ? (T.lang === 'ne' ? 'नेपाली' : 'English') : 'नेपाली'}</span>
               <span class="lang-arrow">▾</span>
             </button>
             <div class="lang-dropdown" id="langDropdown">
@@ -55,7 +57,7 @@ const App = {
                 🔔${unreadNotifs > 0 ? `<span class="badge-count">${unreadNotifs}</span>` : ''}
               </button>
               <div class="notification-dropdown" id="notifDropdown">
-                <div class="notification-dropdown-header"><h4>Notifications</h4><button class="btn btn-ghost btn-sm" onclick="App.markAllRead()">Mark all read</button></div>
+                <div class="notification-dropdown-header"><h4>${t('nav.notifTitle')}</h4><button class="btn btn-ghost btn-sm" onclick="App.markAllRead()">${t('nav.markAllRead')}</button></div>
                 <div id="notifList">${this.renderNotifications(user.id)}</div>
               </div>
             </div>
@@ -68,19 +70,19 @@ const App = {
                 <span class="name">${user.name.split(' ')[0]}</span>
               </div>
               <div class="navbar-dropdown" id="profileDropdown">
-                <a href="${Auth.getDashboardUrl()}">📊 Dashboard</a>
-                <a href="profile.html?id=${user.id}">👤 My Profile</a>
-                <a href="photo-gate.html">📸 Profile Photo</a>
-                <a href="jobs.html?mode=arma-parma">🤝 Arma Parma</a>
-                <a href="verify-identity.html">🪪 Verify Identity</a>
-                <a href="settings.html">⚙️ Settings</a>
+                <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
+                <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
+                <a href="photo-gate.html">📸 ${t('nav.profilePhoto')}</a>
+                <a href="jobs.html?mode=arma-parma">🤝 ${t('nav.armacarma')}</a>
+                <a href="verify-identity.html">🪪 ${t('nav.verifyId')}</a>
+                <a href="settings.html">⚙️ ${t('nav.settings')}</a>
                 <div class="divider"></div>
-                <button class="danger" onclick="Auth.logout()">🚪 Logout</button>
+                <button class="danger" onclick="Auth.logout()">🚪 ${t('nav.logout')}</button>
               </div>
             </div>
           ` : `
-            <a href="login.html" class="btn btn-outline btn-sm">Log In</a>
-            <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+            <a href="login.html" class="btn btn-outline btn-sm">${t('nav.login')}</a>
+            <a href="register.html" class="btn btn-primary btn-sm">${t('nav.signup')}</a>
           `}
           <div class="hamburger" onclick="App.toggleMobileMenu()">
             <span></span>
@@ -104,20 +106,20 @@ const App = {
           ` : ''}
         </div>
         <nav>
-          <a href="index.html">🏠 Home</a>
-          <a href="jobs.html">💼 Find Jobs</a>
-          <a href="workers.html">👷 Find Workers</a>
-          <a href="community.html">💬 Community</a>
+          <a href="index.html">🏠 ${t('nav.home')}</a>
+          <a href="jobs.html">💼 ${t('nav.findJobs')}</a>
+          <a href="workers.html">👷 ${t('nav.findWorkers')}</a>
+          <a href="community.html">💬 ${t('nav.community')}</a>
           ${user ? `
-            <a href="${Auth.getDashboardUrl()}">📊 Dashboard</a>
-            <a href="chat.html">💬 Messages</a>
-            <a href="profile.html?id=${user.id}">👤 My Profile</a>
-            <a href="settings.html">⚙️ Settings</a>
+            <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
+            <a href="chat.html">💬 ${t('nav.msgs')}</a>
+            <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
+            <a href="settings.html">⚙️ ${t('nav.settings')}</a>
             <hr class="divider" style="margin:8px 0">
-            <button onclick="Auth.logout()" style="display:flex;align-items:center;gap:10px;padding:12px 16px;width:100%;text-align:left;color:var(--danger);font-weight:600;border-radius:var(--radius);transition:var(--transition)" onmouseover="this.style.background='var(--bg-alt)'" onmouseout="this.style.background='transparent'">🚪 Logout</button>
+            <button onclick="Auth.logout()" style="display:flex;align-items:center;gap:10px;padding:12px 16px;width:100%;text-align:left;color:var(--danger);font-weight:600;border-radius:var(--radius);transition:var(--transition)" onmouseover="this.style.background='var(--bg-alt)'" onmouseout="this.style.background='transparent'">🚪 ${t('nav.logout')}</button>
           ` : `
-            <a href="login.html">🔑 Log In</a>
-            <a href="register.html">📝 Sign Up</a>
+            <a href="login.html">🔑 ${t('nav.login')}</a>
+            <a href="register.html">📝 ${t('nav.signup')}</a>
           `}
         </nav>
       </div>
@@ -128,7 +130,8 @@ const App = {
 
   renderNotifications(userId) {
     const notifs = DB.getNotifications(userId).slice(0, 8);
-    if (!notifs.length) return '<div style="padding:40px;text-align:center;color:var(--text-tertiary)">No notifications</div>';
+    const noNotifText = typeof I18N !== 'undefined' ? I18N.get('nav.noNotifs') : 'No notifications';
+    if (!notifs.length) return `<div style="padding:40px;text-align:center;color:var(--text-tertiary)">${noNotifText}</div>`;
     return notifs.map(n => `
       <a href="${n.link || '#'}" class="notification-item ${n.read ? '' : 'unread'}" onclick="event.stopPropagation()">
         <div class="icon ${this.getNotifIconClass(n.type)}">${this.getNotifIcon(n.type)}</div>
@@ -173,6 +176,8 @@ const App = {
   renderFooter() {
     const footer = document.getElementById('footer');
     if (!footer) return;
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
     footer.innerHTML = `
       <div class="container">
         <div class="footer-grid">
@@ -181,7 +186,7 @@ const App = {
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
               AgriConnect Nepal
             </div>
-            <p class="footer-about">Connecting Nepal's farmers with skilled agricultural workers. Building a stronger agricultural community through technology and trust.</p>
+            <p class="footer-about">${t('footer.aboutText')}</p>
             <div class="footer-social">
               <a href="#" title="Facebook">📘</a>
               <a href="#" title="Twitter">🐦</a>
@@ -190,34 +195,34 @@ const App = {
             </div>
           </div>
           <div class="footer-col">
-            <h4>Quick Links</h4>
-            <a href="jobs.html">Find Jobs</a>
-            <a href="workers.html">Find Workers</a>
-            <a href="register.html">Sign Up</a>
-            <a href="about.html">About Us</a>
-            <a href="contact.html">Contact</a>
+            <h4>${t('footer.quickLinks')}</h4>
+            <a href="jobs.html">${t('cat.findWorkers')}</a>
+            <a href="workers.html">${t('cat.findFarmers')}</a>
+            <a href="register.html">${t('footer.signup')}</a>
+            <a href="about.html">${t('nav.about')}</a>
+            <a href="contact.html">${t('footer.help')}</a>
           </div>
           <div class="footer-col">
-            <h4>For Farmers</h4>
-            <a href="register.html?role=farmer">Register as Farmer</a>
-            <a href="post-job.html">Post a Job</a>
-            <a href="dashboard-farmer.html">Farmer Dashboard</a>
-            <a href="workers.html">Browse Workers</a>
+            <h4>${t('footer.forFarmers')}</h4>
+            <a href="register.html?role=farmer">${t('footer.regFarmer')}</a>
+            <a href="post-job.html">${t('footer.postJob')}</a>
+            <a href="dashboard-farmer.html">${t('footer.farmerDash')}</a>
+            <a href="workers.html">${t('footer.browseWorkers')}</a>
           </div>
           <div class="footer-col">
-            <h4>For Workers</h4>
-            <a href="register.html?role=worker">Register as Worker</a>
-            <a href="jobs.html">Browse Jobs</a>
-            <a href="dashboard-worker.html">Worker Dashboard</a>
-            <a href="about.html#how-it-works">How It Works</a>
+            <h4>${t('footer.forWorkers')}</h4>
+            <a href="register.html?role=worker">${t('footer.regWorker')}</a>
+            <a href="jobs.html">${t('footer.browseJobs')}</a>
+            <a href="dashboard-worker.html">${t('footer.workerDash')}</a>
+            <a href="about.html#how-it-works">${t('footer.howItWorks')}</a>
           </div>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 AgriConnect Nepal. All rights reserved.</span>
+          <span>${t('footer.copyright')}</span>
           <div class="footer-bottom-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Help Center</a>
+            <a href="#">${t('footer.privacy')}</a>
+            <a href="#">${t('footer.terms')}</a>
+            <a href="#">${t('footer.help')}</a>
           </div>
         </div>
       </div>
@@ -239,33 +244,35 @@ const App = {
     }
     const user = Auth.currentUser;
     const current = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
     bottomNav.innerHTML = `
       <div class="mobile-bottom-nav-inner">
         <a href="index.html" class="${current === 'index' ? 'active' : ''}">
           <span class="nav-icon">🏠</span>
-          <span>Home</span>
+          <span>${t('bottomNav.home')}</span>
         </a>
         <a href="jobs.html" class="${current === 'jobs' ? 'active' : ''}">
           <span class="nav-icon">💼</span>
-          <span>Jobs</span>
+          <span>${t('bottomNav.jobs')}</span>
         </a>
         <a href="workers.html" class="${current === 'workers' ? 'active' : ''}">
           <span class="nav-icon">👷</span>
-          <span>Workers</span>
+          <span>${t('bottomNav.workers')}</span>
         </a>
         <a href="community.html" class="${current === 'community' ? 'active' : ''}">
           <span class="nav-icon">💬</span>
-          <span>Community</span>
+          <span>${t('nav.community')}</span>
         </a>
         ${user ? `
           <a href="chat.html" class="${current === 'chat' ? 'active' : ''}">
             <span class="nav-icon">✉️</span>
-            <span>Chat</span>
+            <span>${t('nav.msgs')}</span>
           </a>
         ` : `
           <a href="login.html" class="${current === 'login' ? 'active' : ''}">
             <span class="nav-icon">🔑</span>
-            <span>Login</span>
+            <span>${t('nav.login')}</span>
           </a>
         `}
       </div>
@@ -397,16 +404,23 @@ const App = {
 
   initLanguage() {
     const lang = localStorage.getItem('agri_lang') || 'ne';
+    if (typeof I18N !== 'undefined') I18N.lang = lang;
     this.applyLanguage(lang);
   },
 
   setLanguage(lang) {
     localStorage.setItem('agri_lang', lang);
+    if (typeof I18N !== 'undefined') I18N.lang = lang;
     this.applyLanguage(lang);
-    document.getElementById('langDropdown').classList.remove('show');
+    this.renderNavbar();
+    this.renderFooter();
+    this.renderMobileBottomNav();
+    const dropdown = document.getElementById('langDropdown');
+    if (dropdown) dropdown.classList.remove('show');
   },
 
   applyLanguage(lang) {
+    if (typeof I18N !== 'undefined') I18N.lang = lang;
     const flagEl = document.getElementById('langFlag');
     const labelEl = document.getElementById('langLabel');
     if (flagEl) flagEl.textContent = lang === 'ne' ? '🇳🇵' : '🇬🇧';
@@ -418,7 +432,17 @@ const App = {
       if (text) el.textContent = text;
     });
 
+    // Update placeholder attributes
+    document.querySelectorAll('[data-ne-placeholder]').forEach(el => {
+      const ph = el.getAttribute('data-' + lang + '-placeholder');
+      if (ph) el.placeholder = ph;
+    });
+
     // Update html lang attribute
     document.documentElement.lang = lang === 'ne' ? 'ne' : 'en';
+
+    // Sync settings page language dropdown if present
+    const langSelect = document.getElementById('langSelect');
+    if (langSelect && langSelect.value !== lang) langSelect.value = lang;
   }
 };

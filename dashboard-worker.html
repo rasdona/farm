@@ -10,30 +10,30 @@
   <div class="dashboard">
     <button class="dashboard-sidebar-toggle" onclick="document.querySelector('.dashboard-sidebar').classList.toggle('open')" aria-label="Toggle menu">☰</button>
     <aside class="dashboard-sidebar">
-      <div class="dashboard-sidebar-header"><h3>Worker Panel</h3><p id="sidebarName"></p></div>
-      <div class="dashboard-sidebar-section">Menu</div>
+      <div class="dashboard-sidebar-header"><h3 data-en="Worker Panel" data-ne="श्रमिक प्यानल">Worker Panel</h3><p id="sidebarName"></p></div>
+      <div class="dashboard-sidebar-section" data-en="Menu" data-ne="मेनु">Menu</div>
       <div class="dashboard-sidebar-nav" id="dashNav">
-        <a href="dashboard-worker.html" class="active"><span class="icon">📊</span><span class="nav-text">Dashboard</span></a>
-        <a href="jobs.html"><span class="icon">🔍</span><span class="nav-text">Find Jobs</span></a>
-        <a href="jobs.html?mode=arma-parma"><span class="icon">🤝</span><span class="nav-text">Arma Parma</span></a>
-        <a href="community.html"><span class="icon">👥</span><span class="nav-text">Community</span></a>
-        <a href="calendar.html"><span class="icon">📅</span><span class="nav-text">Calendar</span></a>
-        <a href="verify-identity.html"><span class="icon">🪪</span><span class="nav-text">Verify Identity</span></a>
-        <a href="chat.html"><span class="icon">💬</span><span class="nav-text">Messages</span></a>
-        <a href="profile.html" id="profileLink"><span class="icon">👤</span><span class="nav-text">My Profile</span></a>
-        <a href="settings.html"><span class="icon">⚙️</span><span class="nav-text">Settings</span></a>
+        <a href="dashboard-worker.html" class="active"><span class="icon">📊</span><span class="nav-text" data-en="Dashboard" data-ne="ड्यासबोर्ड">Dashboard</span></a>
+        <a href="jobs.html"><span class="icon">🔍</span><span class="nav-text" data-en="Find Jobs" data-ne="रोजगारी खोज्नुहोस्">Find Jobs</span></a>
+        <a href="jobs.html?mode=arma-parma"><span class="icon">🤝</span><span class="nav-text" data-en="Arma Parma" data-ne="अर्मा पर्मा">Arma Parma</span></a>
+        <a href="community.html"><span class="icon">👥</span><span class="nav-text" data-en="Community" data-ne="समुदाय">Community</span></a>
+        <a href="calendar.html"><span class="icon">📅</span><span class="nav-text" data-en="Calendar" data-ne="क्यालेन्डर">Calendar</span></a>
+        <a href="verify-identity.html"><span class="icon">🪪</span><span class="nav-text" data-en="Verify Identity" data-ne="पहिचान सत्यापन">Verify Identity</span></a>
+        <a href="chat.html"><span class="icon">💬</span><span class="nav-text" data-en="Messages" data-ne="सन्देश">Messages</span></a>
+        <a href="profile.html" id="profileLink"><span class="icon">👤</span><span class="nav-text" data-en="My Profile" data-ne="मेरो प्रोफाइल">My Profile</span></a>
+        <a href="settings.html"><span class="icon">⚙️</span><span class="nav-text" data-en="Settings" data-ne="सेटिङ्स">Settings</span></a>
       </div>
-      <div class="dashboard-sidebar-section">Account</div>
+      <div class="dashboard-sidebar-section" data-en="Account" data-ne="खाता">Account</div>
       <div class="dashboard-sidebar-nav">
-        <a href="index.html"><span class="icon">🏠</span><span class="nav-text">Back to Home</span></a>
-        <a href="#" onclick="Auth.logout()"><span class="icon">🚪</span><span class="nav-text">Logout</span></a>
+        <a href="index.html"><span class="icon">🏠</span><span class="nav-text" data-en="Back to Home" data-ne="गृहमा फर्कनुहोस्">Back to Home</span></a>
+        <a href="#" onclick="Auth.logout()"><span class="icon">🚪</span><span class="nav-text" data-en="Logout" data-ne="लगआउट">Logout</span></a>
       </div>
     </aside>
     <main class="dashboard-main" id="dashboardContent"></main>
   </div>
   <footer id="footer" class="footer"></footer>
   <div class="back-to-top">↑</div>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/dashboard.js"></script><script src="js/notifications.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/jobs.js"></script><script src="js/dashboard.js"></script><script src="js/notifications.js"></script>
   <script>
     App.init();
     if (!Auth.requireProfilePhoto()) { /* redirected */ }

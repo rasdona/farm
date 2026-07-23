@@ -16,8 +16,8 @@
             <span class="auth-brand-icon">🌱</span>
             <span>KrishiConnect</span>
           </a>
-          <h1 class="auth-title">लगइन गर्नुहोस्</h1>
-          <p class="auth-subtitle">इमेल र पासवर्ड प्रयोग गरेर लगइन गर्नुहोस्</p>
+          <h1 class="auth-title" data-en="Log In" data-ne="लगइन गर्नुहोस्">लगइन गर्नुहोस्</h1>
+          <p class="auth-subtitle" data-en="Sign in with your email and password" data-ne="इमेल र पासवर्ड प्रयोग गरेर लगइन गर्नुहोस्">इमेल र पासवर्ड प्रयोग गरेर लगइन गर्नुहोस्</p>
         </div>
 
         <div id="loginError" class="auth-alert auth-alert-error hidden"></div>
@@ -36,19 +36,19 @@
 
         <form id="loginForm" class="auth-form" onsubmit="return handleLogin(event)">
           <div class="auth-input-group">
-            <label class="auth-label" for="loginIdentifier">इमेल ठेगाना <span class="required">*</span></label>
+            <label class="auth-label" for="loginIdentifier" data-en="Email Address *" data-ne="इमेल ठेगाना *">इमेल ठेगाना <span class="required">*</span></label>
             <div class="auth-input-wrapper">
               <span class="auth-input-icon" id="inputTypeIcon">📧</span>
-              <input type="email" class="auth-input" id="loginIdentifier" placeholder="तपाईंको इमेल ठेगाना" required autocomplete="email" autofocus>
+              <input type="email" class="auth-input" id="loginIdentifier" placeholder="तपाईंको इमेल ठेगाना" data-en-placeholder="Your email address" data-ne-placeholder="तपाईंको इमेल ठेगाना" required autocomplete="email" autofocus>
             </div>
-            <div class="auth-input-hint" id="inputHint">केवल इमेल र पासवर्ड लगइन</div>
+            <div class="auth-input-hint" id="inputHint" data-en="Email and password login only" data-ne="केवल इमेल र पासवर्ड लगइन">केवल इमेल र पासवर्ड लगइन</div>
           </div>
 
           <div class="auth-input-group">
-            <label class="auth-label" for="loginPassword">पासवर्ड <span class="required">*</span></label>
+            <label class="auth-label" for="loginPassword" data-en="Password *" data-ne="पासवर्ड *">पासवर्ड <span class="required">*</span></label>
             <div class="auth-input-wrapper">
               <span class="auth-input-icon">🔒</span>
-              <input type="password" class="auth-input" id="loginPassword" placeholder="तपाईंको पासवर्ड" required autocomplete="current-password">
+              <input type="password" class="auth-input" id="loginPassword" placeholder="तपाईंको पासवर्ड" data-en-placeholder="Your password" data-ne-placeholder="तपाईंको पासवर्ड" required autocomplete="current-password">
               <button type="button" class="auth-toggle-pwd" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show password">👁️</button>
             </div>
           </div>
@@ -56,22 +56,22 @@
           <div class="auth-row auth-mb-4">
             <label class="auth-check">
               <input type="checkbox" id="rememberMe">
-              <span>मलाई सम्झनुहोस् / Remember me</span>
+              <span data-en="Remember me" data-ne="मलाई सम्झनुहोस्">मलाई सम्झनुहोस्</span>
             </label>
-            <a href="forgot-password.html" class="auth-link">पासवर्ड बिर्सनुभयो?</a>
+            <a href="forgot-password.html" class="auth-link" data-en="Forgot password?" data-ne="पासवर्ड बिर्सनुभयो?">पासवर्ड बिर्सनुभयो?</a>
           </div>
 
           <button type="submit" class="auth-btn auth-btn-primary auth-btn-lg" id="loginBtn">
-            <span id="loginBtnText">लगइन गर्नुहोस्</span>
+            <span id="loginBtnText" data-en="Log In" data-ne="लगइन गर्नुहोस्">लगइन गर्नुहोस्</span>
             <span id="loginBtnLoader" class="auth-spinner hidden"></span>
           </button>
         </form>
 
-        <div class="auth-divider"><span>वा</span></div>
+        <div class="auth-divider"><span data-en="or" data-ne="वा">वा</span></div>
 
         <div class="auth-footer-links">
-          <p class="auth-text-center">खाता छैन? <a href="register.html" class="auth-link-bold">दर्ता गर्नुहोस्</a></p>
-          <p class="auth-text-center auth-mt-2"><a href="forgot-password.html" class="auth-link">पासवर्ड रिसेट गर्नुहोस्</a></p>
+          <p class="auth-text-center"><span data-en="Don't have an account?" data-ne="खाता छैन?">खाता छैन?</span> <a href="register.html" class="auth-link-bold" data-en="Sign Up" data-ne="दर्ता गर्नुहोस्">दर्ता गर्नुहोस्</a></p>
+          <p class="auth-text-center auth-mt-2"><a href="forgot-password.html" class="auth-link" data-en="Reset password" data-ne="पासवर्ड रिसेट गर्नुहोस्">पासवर्ड रिसेट गर्नुहोस्</a></p>
         </div>
 
         <div class="auth-demo-box">
@@ -85,7 +85,7 @@
       </div>
     </div>
   </main>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script src="js/login.js"></script>
 </body>
 </html>

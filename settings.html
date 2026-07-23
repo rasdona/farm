@@ -9,75 +9,75 @@
   <header id="navbar" class="navbar"></header>
   <main style="margin-top:var(--navbar-height);padding:24px 0;min-height:80vh">
     <div class="container">
-      <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Settings</span></div>
-      <h1 style="font-size:1.6rem;margin-bottom:24px">Account Settings</h1>
+      <div class="breadcrumb mb-4"><a href="index.html" data-en="Home" data-ne="गृह">Home</a><span class="separator">/</span><span class="current" data-en="Settings" data-ne="सेटिङ्स">Settings</span></div>
+      <h1 style="font-size:1.6rem;margin-bottom:24px" data-en="Account Settings" data-ne="खाता सेटिङ्स">Account Settings</h1>
       <div class="settings-layout">
         <div class="settings-sidebar">
-          <a href="#profile" class="active" onclick="showSettingsSection('profile',this)">👤 Profile</a>
-          <a href="#account" onclick="showSettingsSection('account',this)">🔐 Account</a>
-          <a href="#notifications" onclick="showSettingsSection('notifications',this)">🔔 Notifications</a>
-          <a href="#appearance" onclick="showSettingsSection('appearance',this)">🎨 Appearance</a>
-          <a href="#danger" onclick="showSettingsSection('danger',this)">⚠️ Danger Zone</a>
+          <a href="#profile" class="active" onclick="showSettingsSection('profile',this)">👤 <span data-en="Profile" data-ne="प्रोफाइल">Profile</span></a>
+          <a href="#account" onclick="showSettingsSection('account',this)">🔐 <span data-en="Account" data-ne="खाता">Account</span></a>
+          <a href="#notifications" onclick="showSettingsSection('notifications',this)">🔔 <span data-en="Notifications" data-ne="सूचनाहरू">Notifications</span></a>
+          <a href="#appearance" onclick="showSettingsSection('appearance',this)">🎨 <span data-en="Appearance" data-ne="बाह्य रूप">Appearance</span></a>
+          <a href="#danger" onclick="showSettingsSection('danger',this)">⚠️ <span data-en="Danger Zone" data-ne="खतरा क्षेत्र">Danger Zone</span></a>
         </div>
         <div>
           <div id="settingsProfile" class="settings-section">
-            <h3>Edit Profile</h3>
-            <p class="subtitle">Update your personal information</p>
+            <h3 data-en="Edit Profile" data-ne="प्रोफाइल सम्पादन">Edit Profile</h3>
+            <p class="subtitle" data-en="Update your personal information" data-ne="आफ्नो व्यक्तिगत जानकारी अपडेट गर्नुहोस्">Update your personal information</p>
             <div class="settings-group">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="setName"></div>
-                <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="setPhone"></div>
+                <div class="form-group"><label class="form-label" data-en="Full Name" data-ne="पूरा नाम">Full Name</label><input class="form-input" id="setName"></div>
+                <div class="form-group"><label class="form-label" data-en="Phone" data-ne="फोन">Phone</label><input class="form-input" id="setPhone"></div>
               </div>
-              <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="setEmail" type="email"></div>
-              <div class="form-group"><label class="form-label">Bio / Description</label><textarea class="form-textarea" id="setBio" rows="3"></textarea></div>
+              <div class="form-group"><label class="form-label" data-en="Email" data-ne="इमेल">Email</label><input class="form-input" id="setEmail" type="email"></div>
+              <div class="form-group"><label class="form-label" data-en="Bio / Description" data-ne="बायो / विवरण">Bio / Description</label><textarea class="form-textarea" id="setBio" rows="3"></textarea></div>
               <div id="farmerSettings" class="hidden">
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Farm Name</label><input class="form-input" id="setFarmName"></div>
-                  <div class="form-group"><label class="form-label">Farm Size</label><input class="form-input" id="setFarmSize"></div>
+                  <div class="form-group"><label class="form-label" data-en="Farm Name" data-ne="खेतको नाम">Farm Name</label><input class="form-input" id="setFarmName"></div>
+                  <div class="form-group"><label class="form-label" data-en="Farm Size" data-ne="खेतको आकार">Farm Size</label><input class="form-input" id="setFarmSize"></div>
                 </div>
-                <div class="form-group"><label class="form-label">Crops (comma separated)</label><input class="form-input" id="setCrops"></div>
+                <div class="form-group"><label class="form-label" data-en="Crops (comma separated)" data-ne="बालीहरू (अल्पविरामले छुट्याउनुहोस्)">Crops (comma separated)</label><input class="form-input" id="setCrops"></div>
               </div>
               <div id="workerSettings" class="hidden">
-                <div class="form-group"><label class="form-label">Skills (comma separated)</label><input class="form-input" id="setSkills"></div>
+                <div class="form-group"><label class="form-label" data-en="Skills (comma separated)" data-ne="सीपहरू (अल्पविरामले छुट्याउनुहोस्)">Skills (comma separated)</label><input class="form-input" id="setSkills"></div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Experience (years)</label><input type="number" class="form-input" id="setExp"></div>
-                  <div class="form-group"><label class="form-label">Expected Daily Wage</label><input type="number" class="form-input" id="setDailyWage"></div>
+                  <div class="form-group"><label class="form-label" data-en="Experience (years)" data-ne="अनुभव (वर्ष)">Experience (years)</label><input type="number" class="form-input" id="setExp"></div>
+                  <div class="form-group"><label class="form-label" data-en="Expected Daily Wage" data-ne="अपेक्षित दैनिक ज्याला">Expected Daily Wage</label><input type="number" class="form-input" id="setDailyWage"></div>
                 </div>
               </div>
-              <button class="btn btn-primary" onclick="saveSettings()">Save Changes</button>
+              <button class="btn btn-primary" onclick="saveSettings()" data-en="Save Changes" data-ne="परिवर्तन सुरक्षित गर्नुहोस्">Save Changes</button>
             </div>
           </div>
           <div id="settingsAccount" class="settings-section hidden">
-            <h3>Account Security</h3>
-            <p class="subtitle">Manage your password and security settings</p>
+            <h3 data-en="Account Security" data-ne="खाता सुरक्षा">Account Security</h3>
+            <p class="subtitle" data-en="Manage your password and security settings" data-ne="आफ्नो पासवर्ड र सुरक्षा सेटिङ्स व्यवस्थापन गर्नुहोस्">Manage your password and security settings</p>
             <div class="settings-group">
-              <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" type="password" id="setCurrPwd"></div>
+              <div class="form-group"><label class="form-label" data-en="Current Password" data-ne="हालको पासवर्ड">Current Password</label><input class="form-input" type="password" id="setCurrPwd"></div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" id="setNewPwd"></div>
-                <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" type="password" id="setConfirmPwd"></div>
+                <div class="form-group"><label class="form-label" data-en="New Password" data-ne="नयाँ पासवर्ड">New Password</label><input class="form-input" type="password" id="setNewPwd"></div>
+                <div class="form-group"><label class="form-label" data-en="Confirm New Password" data-ne="नयाँ पासवर्ड पुष्टि गर्नुहोस्">Confirm New Password</label><input class="form-input" type="password" id="setConfirmPwd"></div>
               </div>
-              <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+              <button class="btn btn-primary" onclick="changePassword()" data-en="Update Password" data-ne="पासवर्ड अपडेट गर्नुहोस्">Update Password</button>
             </div>
             <div class="settings-group">
-              <div class="settings-row" id="emailVerifiedRow"><div><div class="settings-row-label">Email Verified</div><div class="settings-row-desc">Your email verification status</div></div></div>
-              <div class="settings-row" id="phoneVerifiedRow"><div><div class="settings-row-label">Phone Verified</div><div class="settings-row-desc">Your phone number verification status</div></div></div>
+              <div class="settings-row" id="emailVerifiedRow"><div><div class="settings-row-label" data-en="Email Verified" data-ne="इमेल सत्यापित">Email Verified</div><div class="settings-row-desc" data-en="Your email verification status" data-ne="तपाईंको इमेल सत्यापन स्थिति">Your email verification status</div></div></div>
+              <div class="settings-row" id="phoneVerifiedRow"><div><div class="settings-row-label" data-en="Phone Verified" data-ne="फोन सत्यापित">Phone Verified</div><div class="settings-row-desc" data-en="Your phone number verification status" data-ne="तपाईंको फोन नम्बर सत्यापन स्थिति">Your phone number verification status</div></div></div>
             </div>
           </div>
           <div id="settingsNotifications" class="settings-section hidden">
-            <h3>Notification Preferences</h3>
-            <p class="subtitle">Control what notifications you receive</p>
+            <h3 data-en="Notification Preferences" data-ne="सूचना प्राथमिकताहरू">Notification Preferences</h3>
+            <p class="subtitle" data-en="Control what notifications you receive" data-ne="कुन सूचना पाउनुहुन्छ नियन्त्रण गर्नुहोस्">Control what notifications you receive</p>
             <div class="settings-group">
-              <div class="settings-row"><div><div class="settings-row-label">Email Notifications</div><div class="settings-row-desc">Receive notifications via email</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-              <div class="settings-row"><div><div class="settings-row-label">Application Alerts</div><div class="settings-row-desc">Get notified when someone applies</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-              <div class="settings-row"><div><div class="settings-row-label">Message Notifications</div><div class="settings-row-desc">Get notified for new messages</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-              <div class="settings-row"><div><div class="settings-row-label">Marketing Emails</div><div class="settings-row-desc">Receive tips and platform updates</div></div><label class="toggle"><input type="checkbox"><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Email Notifications" data-ne="इमेल सूचनाहरू">Email Notifications</div><div class="settings-row-desc" data-en="Receive notifications via email" data-ne="इमेलमार्फत सूचना पाउनुहोस्">Receive notifications via email</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Application Alerts" data-ne="आवेदन सूचनाहरू">Application Alerts</div><div class="settings-row-desc" data-en="Get notified when someone applies" data-ne="कसैले आवेदन दिएमा सूचना पाउनुहोस्">Get notified when someone applies</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Message Notifications" data-ne="सन्देश सूचनाहरू">Message Notifications</div><div class="settings-row-desc" data-en="Get notified for new messages" data-ne="नयाँ सन्देशका लागि सूचना पाउनुहोस्">Get notified for new messages</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Marketing Emails" data-ne="मार्केटिङ इमेलहरू">Marketing Emails</div><div class="settings-row-desc" data-en="Receive tips and platform updates" data-ne="सुझाव र प्लेटफर्म अपडेटहरू पाउनुहोस्">Receive tips and platform updates</div></div><label class="toggle"><input type="checkbox"><span class="slider"></span></label></div>
             </div>
           </div>
           <div id="settingsAppearance" class="settings-section hidden">
-            <h3>Appearance</h3>
-            <p class="subtitle">Customize how AgriConnect looks</p>
+            <h3 data-en="Appearance" data-ne="बाह्य रूप">Appearance</h3>
+            <p class="subtitle" data-en="Customize how AgriConnect looks" data-ne="AgriConnect को बाह्य रूप अनुकूलन गर्नुहोस्">Customize how AgriConnect looks</p>
             <div class="settings-group">
-              <div class="settings-row"><div><div class="settings-row-label">Language</div><div class="settings-row-desc">Choose your preferred language</div></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Language" data-ne="भाषा">Language</div><div class="settings-row-desc" data-en="Choose your preferred language" data-ne="तपाईंको मनपर्ने भाषा छान्नुहोस्">Choose your preferred language</div></div>
                 <select id="langSelect" onchange="App.setLanguage(this.value)" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
                   <option value="ne">🇳🇵 नेपाली</option>
                   <option value="en">🇬🇧 English</option>
@@ -86,10 +86,10 @@
             </div>
           </div>
           <div id="settingsDanger" class="settings-section hidden">
-            <h3 style="color:var(--danger)">Danger Zone</h3>
-            <p class="subtitle">Irreversible actions</p>
+            <h3 style="color:var(--danger)" data-en="Danger Zone" data-ne="खतरा क्षेत्र">Danger Zone</h3>
+            <p class="subtitle" data-en="Irreversible actions" data-ne="अपरिवर्तनीय कार्यहरू">Irreversible actions</p>
             <div class="settings-group" style="border-color:var(--danger)">
-              <div class="settings-row"><div><div class="settings-row-label">Delete Account</div><div class="settings-row-desc">Permanently delete your account and all data</div></div><button class="btn btn-danger btn-sm" onclick="if(confirm('Are you sure? This cannot be undone.')){DB.deleteUser(Auth.currentUser.id);Auth.logout()}">Delete Account</button></div>
+              <div class="settings-row"><div><div class="settings-row-label" data-en="Delete Account" data-ne="खाता मेटाउनुहोस्">Delete Account</div><div class="settings-row-desc" data-en="Permanently delete your account and all data" data-ne="आफ्नो खाता र सबै डाटा स्थायी रूपमा मेटाउनुहोस्">Permanently delete your account and all data</div></div><button class="btn btn-danger btn-sm" onclick="if(confirm('Are you sure? This cannot be undone.')){DB.deleteUser(Auth.currentUser.id);Auth.logout()}" data-en="Delete Account" data-ne="खाता मेटाउनुहोस्">Delete Account</button></div>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@
     </div>
   </main>
   <footer id="footer" class="footer"></footer>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script>
     App.init();
     if (!Auth.requireProfilePhoto()) throw new Error('Photo required');
