@@ -706,38 +706,33 @@ const App = {
     const isSaved = Auth.currentUser && DB.isJobSaved(Auth.currentUser.id, job.id);
     const isArmaParma = job.workMode === 'arma-parma';
     return `
-      <div class="job-card hover-lift" data-animate="fadeUp">
-        <div class="job-card-image">
-          <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=300&fit=crop" alt="${job.title}" loading="lazy">
-          <div class="job-card-status">
+      <div class="job-card-premium hover-lift" data-animate="fadeUp">
+        <div class="card-image">
+          <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=300&fit=crop" alt="${Utils.escapeHtml(job.title)}" loading="lazy">
+          <div class="overlay-badges">
             ${isArmaParma ? '<span class="badge badge-arma">🤝 Arma Parma</span>' : '<span class="badge badge-paid">💰 Paid</span>'}
             ${job.urgent ? '<span class="badge badge-danger">🔥 Urgent</span>' : ''}
-            <span class="badge badge-${job.status === 'active' ? 'success' : job.status === 'filled' ? 'info' : 'secondary'}">${Utils.capitalize(job.status)}</span>
           </div>
-          <div class="job-card-save ${isSaved ? 'saved' : ''}" onclick="event.preventDefault();event.stopPropagation();App.toggleSaveJob('${job.id}',this)">
+          <button class="save-btn ${isSaved ? 'saved' : ''}" onclick="event.preventDefault();event.stopPropagation();App.toggleSaveJob('${job.id}',this)" aria-label="${isSaved ? 'Unsave' : 'Save'} job">
             ${isSaved ? '❤️' : '🤍'}
-          </div>
+          </button>
         </div>
-        <div class="job-card-body">
-          <div class="job-card-title"><a href="job-detail.html?id=${job.id}${isArmaParma ? '&type=arma-parma' : ''}">${Utils.escapeHtml(job.title)}</a></div>
-          <div class="job-card-company">
-            ${farmer ? Utils.avatarHTML(Utils.getUserPhoto(farmer), farmer.name, 'sm') : ''}
-            <span>${farmer ? farmer.farmName || farmer.name : 'Unknown Farm'}</span>
-          </div>
-          <div class="job-card-meta">
-            <span>📍 ${job.district}${job.municipality ? ', ' + job.municipality : ''}</span>
+        <div class="card-body">
+          <div class="card-title"><a href="job-detail.html?id=${job.id}${isArmaParma ? '&type=arma-parma' : ''}">${Utils.escapeHtml(job.title)}</a></div>
+          <div class="card-meta">
+            <span>📍 ${Utils.escapeHtml(job.district)}${job.municipality ? ', ' + Utils.escapeHtml(job.municipality) : ''}</span>
             <span>👥 ${job.workersNeeded || job.helpersNeeded} ${isArmaParma ? 'helpers' : 'workers'}</span>
             <span>📅 ${Utils.formatDateShort(job.startDate || job.date)}</span>
           </div>
-          <div class="job-card-tags">
-            ${(job.requiredSkills || []).slice(0, 3).map(s => `<span class="badge badge-primary">${s}</span>`).join('') || ''}
+          <div class="card-skills">
+            ${(job.requiredSkills || []).slice(0, 3).map(s => `<span class="badge badge-primary">${Utils.escapeHtml(s)}</span>`).join('') || ''}
             ${job.foodProvided ? '<span class="badge badge-success">🍽️ Food</span>' : ''}
             ${job.accommodationProvided ? '<span class="badge badge-info">🏠 Stay</span>' : ''}
             ${job.teaSnacksProvided ? '<span class="badge badge-warning">🍵 Tea</span>' : ''}
             ${job.equipmentProvided ? '<span class="badge badge-info">🔧 Tools</span>' : ''}
           </div>
-          <div class="job-card-footer">
-            ${isArmaParma ? `<div class="job-card-wage"><span class="arma-credit-badge">🤝 Labor Exchange</span></div>` : `<div class="job-card-wage">${Utils.formatCurrency(job.wage?.daily || 0)}<small>/day</small></div>`}
+          <div class="card-footer">
+            ${isArmaParma ? `<div class="wage"><span class="arma-credit-badge">🤝 Labor Exchange</span></div>` : `<div class="wage">${Utils.formatCurrency(job.wage?.daily || 0)}<small>/day</small></div>`}
             <span class="text-sm text-muted">${Utils.formatTime(job.createdAt)}</span>
           </div>
         </div>
@@ -750,17 +745,19 @@ const App = {
     const reviewCount = DB.getReviews(worker.id).length;
     const isSaved = Auth.currentUser && DB.isWorkerSaved(Auth.currentUser.id, worker.id);
     return `
-      <div class="worker-card hover-lift" data-animate="fadeUp">
-        ${worker.verified ? '<div class="worker-card-verified" title="Verified">✅</div>' : ''}
-        <img src="${Utils.getUserPhoto(worker) || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(worker.name)}" alt="${worker.name}" class="worker-card-avatar">
-        <div class="worker-card-name"><a href="worker-profile.html?id=${worker.id}">${worker.name}</a></div>
-        <div class="worker-card-location">📍 ${worker.district || 'Nepal'}</div>
-        ${rating > 0 ? `<div class="worker-card-rating">${Utils.ratingHTML(rating, reviewCount)}</div>` : ''}
-        <div class="worker-card-skills">
-          ${(worker.skills || []).slice(0, 3).map(s => `<span class="badge badge-primary">${s}</span>`).join('')}
+      <div class="worker-card-premium hover-lift" data-animate="fadeUp">
+        <div class="avatar-wrap">
+          <img src="${Utils.getUserPhoto(worker) || 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(worker.name)}" alt="${Utils.escapeHtml(worker.name)}">
+          ${worker.verified ? '<div class="verify-badge">✓</div>' : ''}
         </div>
-        <div class="worker-card-wage">NPR ${(worker.expectedWage?.daily || 0).toLocaleString()}/day</div>
-        <div class="worker-card-actions">
+        <div class="name"><a href="worker-profile.html?id=${worker.id}">${Utils.escapeHtml(worker.name)}</a></div>
+        <div class="location">📍 ${Utils.escapeHtml(worker.district || 'Nepal')}</div>
+        ${rating > 0 ? `<div class="rating-row">${Utils.ratingHTML(rating, reviewCount)}</div>` : ''}
+        <div class="skills">
+          ${(worker.skills || []).slice(0, 3).map(s => `<span class="badge badge-primary">${Utils.escapeHtml(s)}</span>`).join('')}
+        </div>
+        <div class="wage">NPR ${(worker.expectedWage?.daily || 0).toLocaleString()}/day</div>
+        <div class="actions">
           <a href="worker-profile.html?id=${worker.id}" class="btn btn-outline btn-sm">View Profile</a>
           <button class="btn btn-sm ${isSaved ? 'btn-primary' : 'btn-outline'}" onclick="App.toggleSaveWorker('${worker.id}',this)">${isSaved ? '❤️ Saved' : '🤍 Save'}</button>
         </div>

@@ -14,7 +14,7 @@ const Chat = {
     const list = document.getElementById('chatContacts');
     if (!list) return;
     const chats = DB.getChatsByUser(this.currentUserId);
-    if (!chats.length) { list.innerHTML = '<div class="empty-state" style="padding:40px 20px"><div class="icon">💬</div><h3>No conversations yet</h3><p>Start a conversation by messaging a worker or farmer.</p></div>'; return; }
+    if (!chats.length) { list.innerHTML = '<div class="empty-state-premium" style="padding:40px 20px"><div class="icon">💬</div><h3>No conversations yet</h3><p>Start a conversation by messaging a worker or farmer.</p><a href="workers.html" class="btn btn-primary btn-sm">Find Workers</a></div>'; return; }
     list.innerHTML = chats.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)).map(chat => {
       const otherId = chat.participants.find(p => p !== this.currentUserId);
       const other = DB.getUserById(otherId);
@@ -70,7 +70,7 @@ const Chat = {
     if (!container || !this.currentChat) return;
     const messages = DB.getMessagesByChat(this.currentChat.id);
     if (!messages.length) {
-      container.innerHTML = '<div class="empty-state" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="icon">👋</div><h3>Start the conversation</h3><p>Say hello!</p></div>';
+      container.innerHTML = '<div class="empty-state-premium" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="icon">👋</div><h3>Start the conversation</h3><p>Say hello and connect!</p></div>';
       return;
     }
     let html = '';

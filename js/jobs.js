@@ -25,7 +25,7 @@ const Jobs = {
     const el = document.getElementById(containerId);
     if (!el) return;
     if (!jobs.length) {
-      el.innerHTML = `<div class="empty-state"><div class="icon">💼</div><h3>${emptyMsg}</h3><p>Try adjusting your search filters or check back later.</p></div>`;
+      el.innerHTML = `<div class="empty-state-premium"><div class="icon">💼</div><h3>${emptyMsg}</h3><p>Try adjusting your search filters or check back later.</p><a href="post-job.html" class="btn btn-primary">📝 Post a Job</a></div>`;
       return;
     }
     el.innerHTML = jobs.map(j => App.renderJobCard(j)).join('');

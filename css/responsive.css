@@ -9,6 +9,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 img { display: block; }
 a, button { touch-action: manipulation; }
 
+/* ── Sidebar Backdrop & Toggle (hidden on desktop) ─────── */
+.dashboard-sidebar-backdrop { display: none; }
+.dashboard-sidebar-toggle { display: none; }
+
 /* ── Mobile Bottom Nav (new) ────────────────────────── */
 .mobile-bottom-nav {
   display: none;
@@ -328,7 +332,7 @@ a, button { touch-action: manipulation; }
   .toast { min-width: auto; width: 100%; }
 
   /* ── Notification Dropdown ──────────────────────────── */
-  .notification-dropdown { width: calc(100vw - 24px); right: -60px; }
+  .notification-dropdown { width: calc(100vw - 24px); right: 0; max-width: 380px; }
 
   /* ── Empty State ────────────────────────────────────── */
   .empty-state { padding: 40px 16px; }
@@ -486,7 +490,7 @@ a, button { touch-action: manipulation; }
   .modal-footer .btn { width: 100%; }
 
   /* ── Notification Dropdown ──────────────────────────── */
-  .notification-dropdown { width: calc(100vw - 16px); right: -50px; }
+  .notification-dropdown { width: calc(100vw - 16px); right: 0; max-width: 360px; }
   .notification-item { padding: 12px 14px; }
   .notification-item .icon { width: 36px; height: 36px; }
 
@@ -651,4 +655,378 @@ a, button { touch-action: manipulation; }
   .fab-container { display: none !important; }
   .dashboard-main, .admin-main { margin-left: 0 !important; padding: 0 !important; }
   body { background: white; padding-bottom: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PREMIUM RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════ */
+
+/* Quick Stats */
+@media (max-width: 1024px) {
+  .quick-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 425px) {
+  .quick-stats { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quick-stat { padding: 14px; }
+  .quick-stat .value { font-size: 1.3rem; }
+  .quick-stat .label { font-size: 0.75rem; }
+}
+
+/* Dashboard Welcome */
+@media (max-width: 768px) {
+  .dashboard-welcome { padding: 24px 20px; border-radius: var(--radius-md); }
+  .dashboard-welcome h1 { font-size: 1.3rem; }
+  .dashboard-welcome .quick-actions-row { flex-direction: column; gap: 8px; }
+  .dashboard-welcome .quick-action-btn { width: 100%; justify-content: center; }
+}
+
+/* Profile Completion */
+@media (max-width: 425px) {
+  .profile-completion { padding: 12px 14px; }
+}
+
+/* Calendar Premium */
+@media (max-width: 768px) {
+  .calendar-premium .cal-day { min-height: 48px; padding: 4px; }
+  .calendar-premium .cal-event { font-size: 0.55rem; padding: 1px 3px; }
+}
+
+/* Chat Premium */
+@media (max-width: 768px) {
+  .chat-layout-premium { flex-direction: column; height: auto; }
+  .chat-sidebar-premium { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+/* Tabs Premium */
+@media (max-width: 768px) {
+  .tabs-premium { padding: 0 4px; }
+  .tabs-premium .tab-premium { padding: 12px 14px; font-size: 0.82rem; }
+}
+
+/* Premium Cards */
+@media (max-width: 768px) {
+  .worker-card-premium { padding: 20px 16px; }
+  .worker-card-premium .avatar-wrap { width: 72px; height: 72px; }
+  .worker-card-premium .avatar-wrap img { width: 72px; height: 72px; }
+  .job-card-premium .card-image { height: 140px; }
+}
+
+@media (max-width: 425px) {
+  .worker-card-premium .avatar-wrap { width: 64px; height: 64px; }
+  .worker-card-premium .avatar-wrap img { width: 64px; height: 64px; }
+  .worker-card-premium .actions { flex-direction: column; gap: 6px; }
+  .worker-card-premium .actions .btn { width: 100%; }
+  .job-card-premium .card-image { height: 120px; }
+  .job-card-premium .card-body { padding: 14px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   COMPREHENSIVE DASHBOARD MOBILE FIXES
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Prevent grid children from overflowing ────────────── */
+.dashboard-grid-2 > *,
+.dashboard-grid-3 > *,
+.dashboard-grid-sidebar > *,
+.dashboard-grid-sidebar-reverse > *,
+.quick-stats > *,
+.stats-grid > *,
+.farmer-stats > *,
+.worker-stats > *,
+.admin-stats > * { min-width: 0; }
+
+/* ── Fix inline grid styles in dashboard cards ─────────── */
+.stats-grid { width: 100%; overflow: hidden; }
+
+/* Override inline style="grid-template-columns:repeat(N,1fr)" on mobile */
+@media (max-width: 1024px) {
+  .stats-grid[style*="repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 768px) {
+  .stats-grid[style*="repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid[style*="repeat(3"] { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 576px) {
+  .stats-grid[style*="repeat(4"] { grid-template-columns: 1fr !important; }
+  .stats-grid[style*="repeat(3"] { grid-template-columns: 1fr !important; }
+  .stats-grid[style*="repeat(2"] { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 425px) {
+  .stats-grid[style] { grid-template-columns: 1fr !important; gap: 10px !important; }
+}
+
+/* ── Quick Stats — ensure proper collapse ──────────────── */
+@media (max-width: 320px) {
+  .quick-stats { grid-template-columns: 1fr; gap: 10px; }
+  .quick-stat { padding: 14px; }
+  .quick-stat .value { font-size: 1.2rem; }
+  .quick-stat .label { font-size: 0.72rem; }
+}
+
+/* ── Quick Actions overflow fix ────────────────────────── */
+@media (max-width: 375px) {
+  .quick-actions { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .quick-action { padding: 12px 6px; }
+  .quick-action .icon { font-size: 1.2rem; }
+  .quick-action .label { font-size: 0.72rem; }
+}
+
+/* ── Dashboard Welcome — prevent text overflow ─────────── */
+@media (max-width: 425px) {
+  .dashboard-welcome { padding: 20px 16px; }
+  .dashboard-welcome h1 { font-size: 1.2rem; }
+  .dashboard-welcome p { font-size: 0.85rem; }
+  .dashboard-welcome .quick-actions-row { gap: 8px; }
+  .dashboard-welcome .quick-action-btn { padding: 8px 14px; font-size: 0.78rem; }
+}
+
+/* ── Dashboard Cards — full width on mobile ────────────── */
+@media (max-width: 768px) {
+  .dashboard-card { margin-bottom: 12px; border-radius: var(--radius); }
+  .dashboard-card-header h3 { font-size: 0.95rem; word-break: break-word; }
+  .dashboard-card-body { overflow-wrap: break-word; }
+  .stats-card-premium { padding: 16px; }
+  .stats-card-premium .value { font-size: 1.5rem; }
+  .stats-card-premium .label { font-size: 0.8rem; }
+}
+
+@media (max-width: 425px) {
+  .stats-card-premium { padding: 14px; }
+  .stats-card-premium .value { font-size: 1.3rem; }
+  .stats-card-premium .icon-wrap { width: 40px; height: 40px; font-size: 1.1rem; margin-bottom: 12px; }
+}
+
+/* ── Dashboard Header Actions — wrap properly ──────────── */
+@media (max-width: 425px) {
+  .dashboard-header-actions { width: 100%; }
+  .dashboard-header-actions .btn { flex: 1; min-width: 0; }
+}
+
+/* ── Community Post Premium — mobile padding ───────────── */
+@media (max-width: 425px) {
+  .community-post-premium { padding: 16px; margin-bottom: 12px; }
+  .community-post-premium .post-header { gap: 10px; }
+  .community-post-premium .post-actions { gap: 2px; }
+  .community-post-premium .post-action { padding: 8px 4px; font-size: 0.8rem; }
+}
+
+/* ── Community Post Standard — mobile ──────────────────── */
+@media (max-width: 425px) {
+  .community-post { padding: 14px; }
+}
+
+/* ── Activity Premium — fix wrapping ───────────────────── */
+@media (max-width: 425px) {
+  .activity-premium .activity-item { gap: 10px; padding: 12px 0; }
+  .activity-premium .activity-icon { width: 34px; height: 34px; font-size: 0.9rem; }
+  .activity-premium .activity-text { font-size: 0.82rem; }
+}
+
+/* ── Calendar Premium — mobile sizing ──────────────────── */
+@media (max-width: 425px) {
+  .calendar-premium .cal-header { padding: 12px 14px; }
+  .calendar-premium .cal-day { min-height: 40px; padding: 3px 4px; }
+  .calendar-premium .cal-event { font-size: 0.5rem; padding: 1px 2px; }
+  .calendar-premium .cal-day-num { font-size: 0.72rem; }
+}
+
+/* ── Dashboard Sidebar — full hide + drawer on mobile ──── */
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    position: fixed;
+    left: -300px;
+    top: var(--navbar-height);
+    bottom: 0;
+    width: 280px;
+    z-index: var(--z-modal);
+    transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: none;
+  }
+  .dashboard-sidebar.open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+  .dashboard-sidebar-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: calc(var(--navbar-height) + 8px);
+    left: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    z-index: calc(var(--z-sticky) + 1);
+    font-size: 1.2rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .dashboard-sidebar-toggle:hover { background: var(--bg-alt); }
+  .dashboard-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: calc(var(--z-modal) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .dashboard-sidebar-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .dashboard-main { margin-left: 0; padding: 12px 10px 80px 56px; }
+}
+
+@media (max-width: 425px) {
+  .dashboard-sidebar { width: 260px; }
+  .dashboard-main { padding: 10px 8px 80px 50px; }
+}
+
+/* ── Admin Sidebar — full hide + drawer on mobile ──────── */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed;
+    left: -280px;
+    top: var(--navbar-height);
+    bottom: 0;
+    width: 260px;
+    z-index: var(--z-modal);
+    transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: none;
+  }
+  .admin-sidebar.open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+  }
+  .admin-main { margin-left: 0; padding: 12px 10px 80px 50px; }
+}
+
+/* ── Tables — horizontal scroll wrapper ────────────────── */
+@media (max-width: 768px) {
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius);
+    max-width: 100%;
+  }
+  .table-wrapper table { min-width: 600px; }
+  .admin-table { min-width: 600px; }
+}
+
+/* ── Profile — prevent content overflow ────────────────── */
+@media (max-width: 425px) {
+  .profile-header-content { flex-direction: column; gap: 8px; }
+  .profile-actions { width: 100%; }
+  .profile-actions .btn { flex: 1; }
+  .profile-stats { gap: 8px; padding: 12px 16px; }
+  .profile-stat .number { font-size: 1rem; }
+}
+
+/* ── Weather Widget — prevent overflow ─────────────────── */
+@media (max-width: 425px) {
+  .weather-current { padding: 14px; flex-direction: column; align-items: flex-start; }
+  .weather-details { flex-wrap: wrap; gap: 8px; }
+  .weather-forecast-grid { gap: 6px; }
+  .weather-forecast-day { min-width: 56px; padding: 8px 10px; }
+}
+
+/* ── Chat — prevent input area overflow ────────────────── */
+@media (max-width: 425px) {
+  .chat-input-area { padding: 10px 12px; gap: 8px; }
+  .chat-input-area input { padding: 10px 14px; font-size: 0.85rem; }
+  .chat-send-btn { width: 40px; height: 40px; }
+  .chat-attach-btn { width: 36px; height: 36px; }
+  .chat-header { padding: 12px 14px; }
+  .chat-header-info img { width: 36px; height: 36px; }
+}
+
+/* ── Application / Invitation cards — prevent overflow ─── */
+@media (max-width: 425px) {
+  .application-card { padding: 14px; gap: 12px; }
+  .application-card .actions { flex-wrap: wrap; }
+  .invitation-card { padding: 14px; gap: 12px; }
+  .invitation-card .info { min-width: 0; }
+  .invitation-card .title { font-size: 0.9rem; word-break: break-word; }
+}
+
+/* ── Modals — prevent overflow on small screens ────────── */
+@media (max-width: 375px) {
+  .modal { margin: 4px; max-height: 95vh; }
+  .modal-body { padding: 14px; }
+}
+
+/* ── Form rows — stack on mobile ───────────────────────── */
+@media (max-width: 425px) {
+  .form-row { grid-template-columns: 1fr; gap: 10px; }
+  .dashboard-welcome .quick-actions-row .quick-action-btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    justify-content: center;
+  }
+}
+
+/* ── Ensure footer doesn't cause overflow ──────────────── */
+@media (max-width: 425px) {
+  .footer-bottom { flex-direction: column; text-align: center; gap: 8px; }
+  .footer-bottom-links { flex-wrap: wrap; justify-content: center; gap: 12px; }
+}
+
+/* ── Mini Calendar sidebar widget ──────────────────────── */
+@media (max-width: 425px) {
+  .work-calendar-mini { padding: 12px; }
+  .work-calendar-mini .day { width: 24px; height: 24px; font-size: 0.72rem; }
+}
+
+/* ── Charts — responsive containers ────────────────────── */
+@media (max-width: 768px) {
+  .chart-container { width: 100%; }
+  .chart-placeholder { min-height: 200px; font-size: 0.8rem; }
+}
+
+/* ── Empty state premium — mobile ──────────────────────── */
+@media (max-width: 425px) {
+  .empty-state-premium { padding: 40px 16px; }
+  .empty-state-premium .icon { width: 64px; height: 64px; font-size: 2rem; }
+}
+
+/* ── Notification dropdown item — prevent overflow ─────── */
+@media (max-width: 425px) {
+  .notification-dropdown { max-width: calc(100vw - 16px); }
+  .notification-item { padding: 10px 12px; gap: 10px; }
+  .notification-item .text { font-size: 0.82rem; }
+}
+
+/* ── Search compact on dashboard pages ─────────────────── */
+@media (max-width: 425px) {
+  .search-compact { padding: 6px; gap: 6px; }
+  .search-compact input { padding: 8px 10px; font-size: 0.85rem; }
+}
+
+/* ── Tabs premium — scroll on mobile ───────────────────── */
+@media (max-width: 425px) {
+  .tabs-premium { gap: 0; padding: 0 2px; }
+  .tabs-premium .tab-premium { padding: 10px 12px; font-size: 0.78rem; }
+}
+
+/* ── Worker card premium — prevent button overflow ─────── */
+@media (max-width: 375px) {
+  .worker-card-premium { padding: 16px 12px; }
+  .worker-card-premium .name { font-size: 0.95rem; }
+  .worker-card-premium .wage { font-size: 0.9rem; }
+  .worker-card-premium .actions { flex-direction: column; }
+  .worker-card-premium .actions .btn { width: 100%; }
+}
+
+/* ── Job card premium — prevent text overflow ──────────── */
+@media (max-width: 375px) {
+  .job-card-premium .card-title { font-size: 0.95rem; }
+  .job-card-premium .card-meta { gap: 8px; font-size: 0.8rem; }
+  .job-card-premium .card-footer { flex-direction: column; gap: 8px; align-items: flex-start; }
 }

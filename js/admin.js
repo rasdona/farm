@@ -12,11 +12,23 @@ const Admin = {
     if (!nav) return;
     const adminLayout = document.querySelector('.admin-layout');
     if (adminLayout && !adminLayout.querySelector('.dashboard-sidebar-toggle')) {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'dashboard-sidebar-backdrop';
+      backdrop.id = 'adminSidebarBackdrop';
+      backdrop.onclick = () => {
+        document.getElementById('adminNav').classList.remove('open');
+        backdrop.classList.remove('active');
+      };
+      adminLayout.appendChild(backdrop);
+
       const toggle = document.createElement('button');
       toggle.className = 'dashboard-sidebar-toggle';
       toggle.setAttribute('aria-label', 'Toggle menu');
       toggle.textContent = '☰';
-      toggle.onclick = () => document.getElementById('adminNav').classList.toggle('open');
+      toggle.onclick = () => {
+        const isOpen = document.getElementById('adminNav').classList.toggle('open');
+        backdrop.classList.toggle('active', isOpen);
+      };
       adminLayout.insertBefore(toggle, nav);
     }
     const stats = DB.getStats();
@@ -48,11 +60,11 @@ const Admin = {
     const content = document.getElementById('adminContent');
     content.innerHTML = `
       <div class="dashboard-header"><h1>Admin Dashboard</h1></div>
-      <div class="admin-stats">
-        <div class="stat-card hover-lift"><div class="icon green">👥</div><div><div class="number">${stats.totalUsers}</div><div class="label">Total Users</div></div></div>
-        <div class="stat-card hover-lift"><div class="icon blue">💼</div><div><div class="number">${stats.totalJobs}</div><div class="label">Total Jobs</div></div></div>
-        <div class="stat-card hover-lift"><div class="icon amber">📋</div><div><div class="number">${stats.totalApplications}</div><div class="label">Applications</div></div></div>
-        <div class="stat-card hover-lift"><div class="icon red">✅</div><div><div class="number">${stats.verifiedUsers}</div><div class="label">Verified Users</div></div></div>
+      <div class="quick-stats">
+        <div class="stats-card-premium" data-animate="fadeUp"><div class="stats-icon green">👥</div><div class="stats-info"><div class="stats-value">${stats.totalUsers}</div><div class="stats-label">Total Users</div></div></div>
+        <div class="stats-card-premium" data-animate="fadeUp"><div class="stats-icon blue">💼</div><div class="stats-info"><div class="stats-value">${stats.totalJobs}</div><div class="stats-label">Total Jobs</div></div></div>
+        <div class="stats-card-premium" data-animate="fadeUp"><div class="stats-icon amber">📋</div><div class="stats-info"><div class="stats-value">${stats.totalApplications}</div><div class="stats-label">Applications</div></div></div>
+        <div class="stats-card-premium" data-animate="fadeUp"><div class="stats-icon green">✅</div><div class="stats-info"><div class="stats-value">${stats.verifiedUsers}</div><div class="stats-label">Verified Users</div></div></div>
       </div>
       <div class="dashboard-grid-2">
         <div class="dashboard-card">

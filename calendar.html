@@ -18,24 +18,24 @@
           <button class="btn btn-outline" onclick="CalendarView.nextMonth()">Next →</button>
         </div>
       </div>
-      <div class="flex gap-6" style="align-items:flex-start">
-        <div style="flex:1;min-width:0">
+      <div class="dashboard-grid-sidebar" style="gap:24px;align-items:flex-start">
+        <div>
           <div class="card">
-            <div class="card-header flex justify-between items-center">
+            <div class="card-header flex justify-between items-center" style="flex-wrap:wrap;gap:8px">
               <h3 id="calendarMonthYear" style="margin:0"></h3>
-              <div class="flex gap-2" id="calendarFilters">
+              <div class="flex gap-2" id="calendarFilters" style="flex-wrap:wrap">
                 <span class="badge badge-info calendar-filter active" data-type="all" onclick="CalendarView.toggleType('all',this)" style="cursor:pointer;padding:6px 12px">All</span>
                 <span class="badge calendar-filter" data-type="paid" onclick="CalendarView.toggleType('paid',this)" style="cursor:pointer;padding:6px 12px;background:#2563eb;color:white">💰 Paid</span>
                 <span class="badge calendar-filter" data-type="arma" onclick="CalendarView.toggleType('arma',this)" style="cursor:pointer;padding:6px 12px;background:#059669;color:white">🤝 Arma Parma</span>
                 <span class="badge calendar-filter" data-type="season" onclick="CalendarView.toggleType('season',this)" style="cursor:pointer;padding:6px 12px;background:#d97706;color:white">🌱 Seasons</span>
               </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0" style="overflow-x:auto">
               <div id="calendarGrid" class="calendar-grid"></div>
             </div>
           </div>
         </div>
-        <aside style="width:300px;flex-shrink:0">
+        <aside>
           <div class="card mb-4">
             <div class="card-header"><h4 style="margin:0">📅 Events This Month</h4></div>
             <div class="card-body" id="monthEvents"></div>

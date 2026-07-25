@@ -346,6 +346,49 @@ const I18N = {
     'home.findJobs': { en: 'Find Jobs', ne: 'रोजगारी खोज्नुहोस्' },
     'home.findWorkers': { en: 'Find Workers', ne: 'श्रमिक खोज्नुहोस्' },
 
+    // ── Dashboard Premium ────────────────────
+    'dash.welcomeBack': { en: 'Welcome back', ne: 'फेरि स्वागत छ' },
+    'dash.quickStats': { en: 'Quick Stats', ne: 'छिटो तथ्यांक' },
+    'dash.recentActivity': { en: 'Recent Activity', ne: 'हालैको गतिविधि' },
+    'dash.upcomingJobs': { en: 'Upcoming Jobs', ne: 'आगामी रोजगारी' },
+    'dash.calendar': { en: 'Calendar', ne: 'पात्रो' },
+    'dash.profileCompletion': { en: 'Profile Complete', ne: 'प्रोफाइल पूरा' },
+
+    // ── Trust & Verification ─────────────────
+    'trust.high': { en: 'Trusted', ne: 'विश्वसनीय' },
+    'trust.medium': { en: 'Growing', ne: 'बढ्दो' },
+    'trust.low': { en: 'New', ne: 'नयाँ' },
+    'verified.badge': { en: 'Verified', ne: 'सत्यापित' },
+    'unverified.badge': { en: 'Unverified', ne: 'असत्यापित' },
+
+    // ── Chat ─────────────────────────────────
+    'chat.searchPlaceholder': { en: 'Search conversations...', ne: 'कुराकानी खोज्नुहोस्...' },
+    'chat.typeMessage': { en: 'Type a message...', ne: 'सन्देश लेख्नुहोस्...' },
+    'chat.noMessages': { en: 'No messages yet', ne: 'अझै सन्देश छैन' },
+    'chat.online': { en: 'Online', ne: 'अनलाइन' },
+    'chat.offline': { en: 'Offline', ne: 'अफलाइन' },
+
+    // ── Community ────────────────────────────
+    'community.writePost': { en: 'Write a post...', ne: 'पोस्ट लेख्नुहोस्...' },
+    'community.like': { en: 'Like', ne: 'मन पराउनुहोस्' },
+    'community.comment': { en: 'Comment', ne: 'टिप्पणी' },
+    'community.share': { en: 'Share', ne: 'साझा गर्नुहोस्' },
+
+    // ── Search & Filter ──────────────────────
+    'search.filter': { en: 'Filter', ne: 'फिल्टर' },
+    'search.clearAll': { en: 'Clear All', ne: 'सबै मेटाउनुहोस्' },
+    'search.noResults': { en: 'No results found', ne: 'कुनै परिणाम भेटिएन' },
+    'search.results': { en: 'results', ne: 'परिणामहरू' },
+
+    // ── Profile ──────────────────────────────
+    'profile.editProfile': { en: 'Edit Profile', ne: 'प्रोफाइल सम्पादन' },
+    'profile.viewAll': { en: 'View All', ne: 'सबै हेर्नुहोस्' },
+    'profile.followers': { en: 'Followers', ne: 'अनुसरणकर्ता' },
+    'profile.following': { en: 'Following', ne: 'अनुसरण गरिएका' },
+
+    // ── Notifications ────────────────────────
+    'notif.empty': { en: 'You\'re all caught up!', ne: 'सबै सूचना पढिएको छ!' },
+
     // ── FAB (Floating Action Button) ────────
     'fab.requestWork': { en: 'Request Work', ne: 'काम अनुरोध' },
     'fab.offerWork': { en: 'Offer Work', ne: 'काम प्रस्ताव' },

@@ -52,7 +52,7 @@ const Community = {
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     if (!posts.length) {
-      el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><h3>No posts yet</h3><p>Be the first to share something with the community!</p></div>';
+      el.innerHTML = '<div class="empty-state-premium"><div class="icon">👥</div><h3>No posts yet</h3><p>Be the first to share something with the community!</p></div>';
       return;
     }
 
@@ -62,25 +62,28 @@ const Community = {
       const typeIcons = { tip: '💡', question: '❓', event: '📅', celebration: '🎉' };
       const typeColors = { tip: 'var(--primary)', question: 'var(--info)', event: 'var(--accent)', celebration: '#ef4444' };
       return `
-        <div class="community-post" data-animate="fadeUp">
-          <div class="community-post-header">
-            ${Utils.avatarHTML(Utils.getUserPhoto(author), author?.name || '?', 'lg')}
-            <div class="flex-1">
-              <div class="font-semibold"><a href="worker-profile.html?id=${p.userId}">${author?.name || 'Unknown'}</a></div>
-              <div class="text-xs text-muted">${Utils.formatTime(p.createdAt)} • <span style="color:${typeColors[p.type] || 'var(--text-secondary)'}">${typeIcons[p.type] || ''} ${Utils.capitalize(p.type || 'post')}</span></div>
+        <div class="community-post-premium" data-animate="fadeUp">
+          <div class="post-header">
+            ${Utils.avatarHTML(Utils.getUserPhoto(author), author?.name || '?', 'md')}
+            <div class="post-author">
+              <div class="post-author-name"><a href="worker-profile.html?id=${p.userId}">${Utils.escapeHtml(author?.name || 'Unknown')}</a></div>
+              <div class="post-author-meta">${Utils.formatTime(p.createdAt)} · <span style="color:${typeColors[p.type] || 'var(--text-secondary)'}">${typeIcons[p.type] || ''} ${Utils.capitalize(p.type || 'post')}</span></div>
             </div>
-            ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')">🗑️</button>` : ''}
+            ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')" aria-label="Delete post">🗑️</button>` : ''}
           </div>
-          ${p.title ? `<h3 style="margin:0 0 8px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
-          <div class="community-post-content">${Utils.escapeHtml(p.content)}</div>
-          ${p.tags?.length ? `<div class="community-post-tags">${p.tags.map(t => `<span class="badge badge-primary">${t}</span>`).join('')}</div>` : ''}
-          <div class="community-post-actions">
-            <div class="community-post-action ${isLiked ? 'liked' : ''}" onclick="Community.toggleLike('${p.id}')">
+          ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
+          <div class="post-content">${Utils.escapeHtml(p.content)}</div>
+          ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
+          <div class="post-actions">
+            <button class="post-action ${isLiked ? 'liked' : ''}" onclick="Community.toggleLike('${p.id}')">
               ${isLiked ? '❤️' : '🤍'} <span>${p.likes?.length || 0}</span>
-            </div>
-            <div class="community-post-action" onclick="Community.toggleComments('${p.id}')">
-              💬 <span>${p.comments?.length || 0} Comments</span>
-            </div>
+            </button>
+            <button class="post-action" onclick="Community.toggleComments('${p.id}')">
+              💬 <span>${p.comments?.length || 0}</span>
+            </button>
+            <button class="post-action" onclick="Utils.toast('Share coming soon!','info')">
+              📤 <span>Share</span>
+            </button>
           </div>
           <div id="comments-${p.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)">
             ${(p.comments || []).map(c => {

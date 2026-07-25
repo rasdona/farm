@@ -196,5 +196,134 @@ const Utils = {
       });
     }, { threshold: 0.1 });
     elements.forEach(el => observer.observe(el));
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // TRUST SCORE CALCULATION
+  // ═══════════════════════════════════════════════════════
+
+  calculateTrustScore(user) {
+    if (!user) return 0;
+    let score = 0;
+    if (user.name && user.name.length > 2) score += 10;
+    if (user.phone) score += 15;
+    if (user.profilePhotoUrl || user.avatar) score += 15;
+    if (user.district) score += 10;
+    if (user.bio && user.bio.length > 20) score += 10;
+    if (user.skills && user.skills.length > 0) score += 10;
+    if (user.verified) score += 15;
+    const reviews = typeof DB !== 'undefined' ? DB.getReviews(user.id) : [];
+    if (reviews.length >= 3) score += 10;
+    else if (reviews.length >= 1) score += 5;
+    const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0;
+    if (avgRating >= 4) score += 5;
+    return Math.min(100, score);
+  },
+
+  getTrustLevel(score) {
+    if (score >= 70) return { level: 'high', label: 'Trusted', labelNe: 'विश्वसनीय', color: 'var(--primary)' };
+    if (score >= 40) return { level: 'medium', label: 'Growing', labelNe: 'बढ्दो', color: 'var(--accent)' };
+    return { level: 'low', label: 'New', labelNe: 'नयाँ', color: 'var(--danger)' };
+  },
+
+  trustScoreHTML(user) {
+    const score = this.calculateTrustScore(user);
+    const trust = this.getTrustLevel(score);
+    return `<div class="trust-score ${trust.level}"><span>${trust.label}</span><div class="score-bar"><div class="score-fill" style="width:${score}%"></div></div><span>${score}%</span></div>`;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PROFILE COMPLETION
+  // ═══════════════════════════════════════════════════════
+
+  calculateProfileCompletion(user) {
+    if (!user) return 0;
+    let filled = 0;
+    let total = 10;
+    if (user.name && user.name.length > 2) filled++;
+    if (user.phone) filled++;
+    if (user.profilePhotoUrl || user.avatar) filled++;
+    if (user.district) filled++;
+    if (user.bio && user.bio.length > 10) filled++;
+    if (user.skills && user.skills.length > 0) filled++;
+    if (user.experience) filled++;
+    if (user.education) filled++;
+    if (user.languages && user.languages.length > 0) filled++;
+    if (user.verified) filled++;
+    return Math.round((filled / total) * 100);
+  },
+
+  profileCompletionHTML(user) {
+    const pct = this.calculateProfileCompletion(user);
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const label = T ? (T.lang === 'ne' ? 'प्रोफाइल पूरा' : 'Profile Complete') : 'Profile Complete';
+    return `
+      <div class="profile-completion">
+        <div class="profile-completion-header">
+          <span class="label">${label}</span>
+          <span class="percent">${pct}%</span>
+        </div>
+        <div class="profile-completion-bar">
+          <div class="profile-completion-fill" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // VERIFICATION BADGE
+  // ═══════════════════════════════════════════════════════
+
+  verificationBadgeHTML(user) {
+    if (user.verified) {
+      return `<span class="verification-badge verified"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Verified</span>`;
+    }
+    return `<span class="verification-badge unverified">Unverified</span>`;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // ONLINE STATUS
+  // ═══════════════════════════════════════════════════════
+
+  statusPillHTML(isOnline) {
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    if (isOnline) {
+      const label = T ? (T.lang === 'ne' ? 'अनलाइन' : 'Online') : 'Online';
+      return `<span class="status-pill online"><span class="dot"></span>${label}</span>`;
+    }
+    const label = T ? (T.lang === 'ne' ? 'अफलाइन' : 'Offline') : 'Offline';
+    return `<span class="status-pill offline"><span class="dot"></span>${label}</span>`;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // SECURITY: Input Sanitization
+  // ═══════════════════════════════════════════════════════
+
+  sanitizeInput(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  },
+
+  sanitizeUrl(url) {
+    if (!url) return '#';
+    const trimmed = url.trim().toLowerCase();
+    if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:')) return '#';
+    return url;
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // PREMIUM CARD RENDERERS
+  // ═══════════════════════════════════════════════════════
+
+  statsCardPremium(icon, value, label, trend, trendDir, accentColor) {
+    return `
+      <div class="stats-card-premium">
+        <div class="accent-line" style="background:${accentColor || 'var(--gradient-primary)'}"></div>
+        <div class="icon-wrap" style="background:${accentColor ? accentColor + '15' : 'var(--primary-100)'}; color:${accentColor || 'var(--primary)'}">${icon}</div>
+        <div class="value">${value}</div>
+        <div class="label">${label}</div>
+        ${trend ? `<div class="trend ${trendDir || 'up'}">${trendDir === 'down' ? '↓' : '↑'} ${trend}</div>` : ''}
+      </div>`;
   }
 };

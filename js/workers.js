@@ -24,7 +24,7 @@ const Workers = {
     const el = document.getElementById(containerId);
     if (!el) return;
     if (!workers.length) {
-      el.innerHTML = `<div class="empty-state"><div class="icon">👷</div><h3>${emptyMsg}</h3><p>Try adjusting your search filters or check back later.</p></div>`;
+      el.innerHTML = `<div class="empty-state-premium"><div class="icon">👷</div><h3>${emptyMsg}</h3><p>Try adjusting your search filters or check back later.</p><a href="register.html?role=worker" class="btn btn-primary">👷 Register as Worker</a></div>`;
       return;
     }
     el.innerHTML = workers.map(w => App.renderWorkerCard(w)).join('');
@@ -53,17 +53,19 @@ const Workers = {
           </div>
           <div class="profile-header-content">
             <div>
-              <h1 class="profile-name">${worker.name}</h1>
+              <h1 class="profile-name">${Utils.escapeHtml(worker.name)}</h1>
               <div class="flex flex-wrap gap-2 mt-1">
                 ${userRoles.map(r => { const role = AUTH_ROLES.find(ar => ar.id === r); return role ? `<span class="badge badge-primary" style="font-size:0.75rem">${role.icon} ${role.nameNe}</span>` : ''; }).join('')}
+                ${Utils.verificationBadgeHTML(worker)}
               </div>
               <p class="profile-tagline">${Utils.escapeHtml(worker.bio || 'Agricultural Worker')}</p>
               <div class="profile-meta">
-                <span>📍 ${worker.district || 'Nepal'}</span>
+                <span>📍 ${Utils.escapeHtml(worker.district || 'Nepal')}</span>
                 <span>🔧 ${worker.experience || 0} years experience</span>
                 <span>🌐 ${(worker.languages || ['Nepali']).join(', ')}</span>
                 <span class="badge badge-${worker.availability === 'available' ? 'success' : worker.availability === 'busy' ? 'warning' : 'secondary'}">${Utils.capitalize(worker.availability || 'available')}</span>
               </div>
+              <div class="mt-2">${Utils.trustScoreHTML(worker)}</div>
             </div>
             <div class="profile-actions">
               ${Auth.isFarmer() ? `<a href="chat.html?user=${worker.id}" class="btn btn-primary">💬 Message</a>` : ''}
@@ -80,7 +82,7 @@ const Workers = {
           <div class="profile-stat"><div class="number">${Utils.formatCurrency(worker.expectedWage?.daily || 0)}</div><div class="label">Daily Wage</div></div>
         </div>
       </div>
-      <div class="grid grid-sidebar" style="grid-template-columns:2fr 1fr;gap:24px">
+      <div class="dashboard-grid-sidebar" style="gap:24px">
         <div>
           <div class="card mb-4">
             <div class="card-header"><h3>About</h3></div>
@@ -212,7 +214,7 @@ const Workers = {
           <div class="profile-stat"><div class="number">${completedExchanges}</div><div class="label">Arma Parma</div></div>
         </div>
       </div>
-      <div class="grid grid-sidebar" style="grid-template-columns:2fr 1fr;gap:24px">
+      <div class="dashboard-grid-sidebar" style="gap:24px">
         <div>
           <div class="card mb-4">
             <div class="card-header"><h3>About</h3></div>

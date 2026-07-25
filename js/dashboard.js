@@ -25,24 +25,37 @@ const Dashboard = {
     if (!content) return;
 
     content.innerHTML = `
-      <div class="dashboard-header">
-        <div>
-          <h1 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            Welcome back, ${user.name.split(' ')[0]}!
-            <span style="font-size:0.85rem;font-weight:500;padding:4px 12px;border-radius:16px;background:${trustLevel.color}20;color:${trustLevel.color}">${trustLevel.icon} ${trustLevel.level} — ${trustScore}/100</span>
-          </h1>
-          <div class="breadcrumb mt-2"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Smart Dashboard</span></div>
-        </div>
-        <div class="dashboard-header-actions">
-          <a href="profile.html?id=${user.id}" class="btn btn-outline">👤 Profile</a>
+      <div class="dashboard-welcome">
+        <h1>${t('dash.welcomeBack')}, ${Utils.escapeHtml(user.name.split(' ')[0])}!</h1>
+        <p>${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name} · ${user.district || 'Nepal'}</p>
+        <div class="quick-actions-row">
+          ${activeRole === 'farmer' ? '<a href="post-job.html" class="quick-action-btn">📝 Post Job</a>' : '<a href="jobs.html" class="quick-action-btn">🔍 Find Jobs</a>'}
+          <a href="chat.html" class="quick-action-btn">💬 Messages</a>
+          <a href="calendar.html" class="quick-action-btn">📅 Calendar</a>
         </div>
       </div>
-      ${this.renderProfileCompletion(user)}
-      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
-        ${this._statCard(activeRoleInfo.icon, activeRoleInfo.name, 'var(--primary)', 'var(--primary-bg)')}
-        ${this._statCard('📅', calendarEvents.length + ' today', '#3b82f6', '#dbeafe')}
-        ${this._statCard('💰', 'NPR ' + (creditInfo.balance || 0), '#16a34a', '#dcfce7')}
-        ${this._statCard('⭐', trustScore + '/100', trustLevel.color, trustLevel.color + '15')}
+      ${Utils.profileCompletionHTML(user)}
+      <div class="quick-stats">
+        <div class="quick-stat hover-lift">
+          <div class="icon">${activeRoleInfo.icon}</div>
+          <div class="value">${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</div>
+          <div class="label">Active Role</div>
+        </div>
+        <div class="quick-stat hover-lift">
+          <div class="icon">📅</div>
+          <div class="value">${calendarEvents.length}</div>
+          <div class="label">Today's Events</div>
+        </div>
+        <div class="quick-stat hover-lift">
+          <div class="icon">💰</div>
+          <div class="value">NPR ${(creditInfo.balance || 0).toLocaleString()}</div>
+          <div class="label">Labor Credits</div>
+        </div>
+        <div class="quick-stat hover-lift">
+          <div class="icon">⭐</div>
+          <div class="value">${trustScore}</div>
+          <div class="label">${T ? (T.lang === 'ne' ? 'विश्वास स्कोर' : 'Trust Score') : 'Trust Score'}</div>
+        </div>
       </div>
       <div class="dashboard-grid-sidebar">
         <div>
@@ -95,24 +108,28 @@ const Dashboard = {
           ${notifs.length ? `
           <div class="dashboard-card mb-4">
             <div class="dashboard-card-header"><h3>🔔 ${t('nav.notifTitle')}</h3><button class="btn btn-ghost btn-sm" onclick="App.markAllRead();location.reload()">Mark all read</button></div>
-            <div class="dashboard-card-body">
+            <div class="dashboard-card-body activity-premium">
               ${notifs.map(n => `
                 <div class="activity-item">
-                  <div class="activity-icon" style="background:var(--primary-100);color:var(--primary)">${App.getNotifIcon(n.type)}</div>
-                  <div><div class="activity-text">${n.text}</div><div class="activity-time">${Utils.formatTime(n.createdAt)}</div></div>
+                  <div class="activity-icon" style="background:${n.type === 'accepted' ? '#dcfce7' : n.type === 'rejected' ? '#fee2e2' : '#dbeafe'}; color:${n.type === 'accepted' ? '#16a34a' : n.type === 'rejected' ? '#ef4444' : '#3b82f6'}">${App.getNotifIcon(n.type)}</div>
+                  <div class="activity-content">
+                    <div class="activity-text">${Utils.escapeHtml(n.text)}</div>
+                    <div class="activity-time">${Utils.formatTime(n.createdAt)}</div>
+                  </div>
                 </div>
               `).join('')}
             </div>
           </div>` : ''}
-          <div class="dashboard-card">
+          <div class="dashboard-card mb-4">
             <div class="dashboard-card-header"><h3>📊 ${t('eco.trustScore')}</h3></div>
             <div class="dashboard-card-body">
               <div style="text-align:center;padding:16px">
-                <div style="font-size:3rem;line-height:1">${trustLevel.icon}</div>
-                <div style="font-size:2rem;font-weight:700;color:${trustLevel.color};margin:8px 0">${trustScore}</div>
-                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px">${trustLevel.level} Level</div>
-                <div style="width:100%;height:8px;background:var(--bg-alt);border-radius:4px;overflow:hidden">
-                  <div style="width:${trustScore}%;height:100%;background:${trustLevel.color};border-radius:4px;transition:width 0.5s"></div>
+                ${Utils.trustScoreHTML(user)}
+                <div style="margin-top:12px">
+                  ${Utils.verificationBadgeHTML(user)}
+                </div>
+                <div style="margin-top:16px">
+                  <a href="verify-identity.html" class="btn btn-outline btn-sm">🪪 Verify Identity</a>
                 </div>
               </div>
             </div>
