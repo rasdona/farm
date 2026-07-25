@@ -151,6 +151,9 @@ a, button { touch-action: manipulation; }
   /* ── Ensure all non-dashboard main content starts below fixed header ── */
   main:not(.dashboard-main):not(.admin-main):not(.auth-page) { margin-top: var(--navbar-height) !important; }
 
+  /* ── Dashboard: account for bottom nav on mobile ──────────────────────── */
+  .dashboard, .admin-layout { min-height: calc(100vh - var(--navbar-height)); padding-bottom: 0; }
+
   /* ── Mobile FAB ─────────────────────────────────────── */
   .fab-container { display: block; }
 
@@ -160,8 +163,14 @@ a, button { touch-action: manipulation; }
   /* ── Hide desktop sections on index.html ─────────────── */
   body.index-page .hero,
   body.index-page .section-sm,
-  body.index-page .section { display: none; }
-  body.index-page #mobileHomeContainer { display: block !important; }
+  body.index-page .section { display: none !important; }
+  body.index-page #mobileHomeContainer {
+    display: block !important;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: calc(100vh - var(--navbar-height) - 80px);
+  }
   body.index-page #mobileHomeContainer .mobile-home { display: block !important; }
 
   /* ── Mobile Drawer ──────────────────────────────────── */
@@ -244,7 +253,7 @@ a, button { touch-action: manipulation; }
   .tab { padding: 10px 14px; font-size: 0.82rem; white-space: nowrap; }
 
   /* ── Chat ───────────────────────────────────────────── */
-  .chat-layout { flex-direction: column; height: auto; }
+  .chat-layout { flex-direction: column; height: auto; padding-bottom: 80px; }
   .chat-sidebar {
     width: 100%; height: auto; max-height: 40vh;
     border-right: none; border-bottom: 1px solid var(--border);

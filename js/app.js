@@ -23,6 +23,9 @@ const App = {
   _onDataSynced() {
     this.renderNavbar();
     this.updateNotificationBadge();
+    if (window.innerWidth <= 768) {
+      this.renderMobileHome();
+    }
     const dashboardMain = document.getElementById('dashboardContent');
     if (dashboardMain && typeof Dashboard !== 'undefined') {
       Dashboard.renderSmartDashboard();
@@ -524,9 +527,17 @@ const App = {
       container.id = 'mobileHomeContainer';
       container.className = 'mobile-home';
       const hero = document.querySelector('.hero');
-      const footer = document.querySelector('.footer') || document.getElementById('footer');
       if (hero && hero.nextElementSibling) {
         hero.parentNode.insertBefore(container, hero.nextElementSibling);
+      } else if (hero) {
+        hero.parentNode.insertBefore(container, hero.nextSibling);
+      } else {
+        const footer = document.querySelector('.footer') || document.getElementById('footer');
+        if (footer) {
+          footer.parentNode.insertBefore(container, footer);
+        } else {
+          document.body.appendChild(container);
+        }
       }
     }
     const user = Auth.currentUser;
