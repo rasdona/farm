@@ -91,6 +91,12 @@ a, button { touch-action: manipulation; }
   .nav-link-about { display: none; }
   .navbar-divider { display: none; }
   .hamburger { display: flex; }
+  .nav-profile-info { display: none; }
+  .navbar-profile { padding: 4px; border-radius: 50%; gap: 0; }
+  .navbar-profile:hover { transform: none; border-color: transparent; }
+  .navbar-profile .profile-arrow { display: none; }
+  .nav-profile-avatar { width: 38px; height: 38px; border-width: 2px; }
+  .nav-profile-avatar.online::after { width: 10px; height: 10px; border-width: 2px; bottom: 0; right: 0; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -128,12 +134,13 @@ a, button { touch-action: manipulation; }
   .lang-btn:hover { background: none; transform: none; }
   .lang-dropdown { right: -8px; min-width: 130px; }
   .role-switcher-wrap { display: none; }
-  .navbar-profile .name { display: none; }
-  .navbar-profile .profile-arrow { display: none; }
-  .navbar-profile { padding: 4px; border-radius: 50%; }
+  .nav-profile-info { display: none; }
+  .navbar-profile-wrap { display: none; }
+  .navbar-profile { padding: 4px; border-radius: 50%; gap: 0; }
   .navbar-profile:hover { transform: none; border-color: transparent; }
-  .navbar-profile img { border-color: transparent; }
-  .navbar-profile:hover img { border-color: transparent; }
+  .navbar-profile .profile-arrow { display: none; }
+  .nav-profile-avatar { width: 36px; height: 36px; border-width: 2px; }
+  .nav-profile-avatar.online::after { width: 9px; height: 9px; border-width: 2px; bottom: 0; right: 0; }
   .navbar-auth-btns { display: none; }
   .nav-icon-btn { width: 36px; height: 36px; }
   .nav-icon-btn svg { width: 18px; height: 18px; }

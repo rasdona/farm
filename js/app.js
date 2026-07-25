@@ -130,20 +130,41 @@ const App = {
               </div>
 
               <div class="navbar-profile-wrap" id="profileWrap">
-                <div class="navbar-profile" onclick="App.toggleProfileDropdown()" role="button" aria-haspopup="true" tabindex="0">
-                  ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
-                  <span class="name">${user.name.split(' ')[0]}</span>
+                <div class="navbar-profile" onclick="App.toggleProfileDropdown()" role="button" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleProfileDropdown()}">
+                  <div class="nav-profile-avatar ${user.online ? 'online' : ''}">
+                    ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'md')}
+                  </div>
+                  <div class="nav-profile-info">
+                    <span class="nav-profile-name">${user.name.split(' ')[0]}</span>
+                    <span class="nav-profile-role">${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
+                  </div>
                   <svg class="profile-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-                <div class="navbar-dropdown" id="profileDropdown">
-                  <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
-                  <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
-                  <a href="photo-gate.html">📸 ${t('nav.profilePhoto')}</a>
-                  <a href="jobs.html?mode=arma-parma">🤝 ${t('nav.armacarma')}</a>
-                  <a href="verify-identity.html">🪪 ${t('nav.verifyId')}</a>
-                  <a href="settings.html">⚙️ ${t('nav.settings')}</a>
+                <div class="navbar-dropdown" id="profileDropdown" role="menu">
+                  <div class="navbar-dropdown-user">
+                    <div class="nav-profile-avatar lg ${user.online ? 'online' : ''}">
+                      ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'lg')}
+                    </div>
+                    <div class="nav-profile-detail">
+                      <div class="nav-profile-detail-name">${Utils.escapeHtml(user.name)}</div>
+                      <div class="nav-profile-detail-email">${user.email || ''}</div>
+                      <span class="nav-profile-badge">${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
+                    </div>
+                  </div>
                   <div class="dropdown-divider"></div>
-                  <button class="danger" onclick="Auth.logout()">🚪 ${t('nav.logout')}</button>
+                  <a href="profile.html?id=${user.id}" role="menuitem" tabindex="0">👤 ${t('nav.myProfile')}</a>
+                  <a href="${Auth.getDashboardUrl()}" role="menuitem" tabindex="0">📊 ${t('nav.dashboard')}</a>
+                  <a href="calendar.html" role="menuitem" tabindex="0">📅 ${t('nav.calendar') || 'Calendar'}</a>
+                  <a href="chat.html" role="menuitem" tabindex="0">💬 ${t('nav.msgs')}</a>
+                  <div class="dropdown-divider"></div>
+                  <a href="saved-jobs.html" role="menuitem" tabindex="0">🔖 ${t('nav.savedJobs') || 'Saved Jobs'}</a>
+                  <a href="saved-workers.html" role="menuitem" tabindex="0">👷 ${t('nav.savedWorkers') || 'Saved Workers'}</a>
+                  <div class="dropdown-divider"></div>
+                  <a href="settings.html" role="menuitem" tabindex="0">⚙️ ${t('nav.settings')}</a>
+                  <a href="#" onclick="App.toggleLangDropdown();return false" role="menuitem" tabindex="0">🌐 ${t('nav.language') || 'Language'}</a>
+                  <a href="contact.html" role="menuitem" tabindex="0">❓ ${t('nav.help') || 'Help Center'}</a>
+                  <div class="dropdown-divider"></div>
+                  <button class="danger" onclick="Auth.logout()" role="menuitem" tabindex="0">🚪 ${t('nav.logout')}</button>
                 </div>
               </div>
             ` : `
@@ -710,6 +731,14 @@ const App = {
       if (fab && fab.classList.contains('open') && !fab.contains(e.target)) {
         fab.classList.remove('open');
         document.body.style.overflow = '';
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
+          d.classList.remove('show');
+          if (d.parentElement.classList) d.parentElement.classList.remove('open');
+        });
       }
     });
   },
