@@ -3,6 +3,38 @@ const totalSteps = 5;
 let regPhotoDataUrl = null;
 let regPhotoFile = null;
 
+function compressPhoto(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxWidth || h > maxHeight) {
+          const ratio = Math.min(maxWidth / w, maxHeight / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('Compression failed')); return; }
+          const reader2 = new FileReader();
+          reader2.onload = () => resolve(reader2.result);
+          reader2.onerror = reject;
+          reader2.readAsDataURL(blob);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function goToStep(step) {
   if (step > currentStep && !validateCurrentStep()) return;
   document.querySelectorAll('.auth-form-step').forEach(s => s.classList.remove('active'));
@@ -131,24 +163,35 @@ async function handleRegister() {
     gender: document.getElementById('regGender').value,
     dob: document.getElementById('regDob').value,
     citizenshipNumber: document.getElementById('regCitizenship').value.trim(),
-    preferredLanguage: 'ne'
+    preferredLanguage: 'ne',
+    photoDataUrl: regPhotoDataUrl || null
   };
 
   const btn = document.getElementById('regSubmitBtn');
   btn.disabled = true;
   btn.textContent = 'दर्ता हुँदैछ...';
 
+  let registered = false;
   try {
-    const result = await AuthSystem.register(data);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+    );
+    const result = await Promise.race([AuthSystem.register(data), timeoutPromise]);
+
     if (result.success) {
+      registered = true;
       sessionStorage.setItem('agri_pendingEmail', data.email.trim().toLowerCase());
 
       if (regPhotoDataUrl) {
-        DB.updateUser(result.user.id, {
-          profilePhotoUrl: regPhotoDataUrl,
-          profilePhotoVerified: true,
-          requiresPhotoUpload: false
-        });
+        try {
+          DB.updateUser(result.user.id, {
+            profilePhotoUrl: regPhotoDataUrl,
+            profilePhotoVerified: true,
+            requiresPhotoUpload: false
+          });
+        } catch (photoErr) {
+          console.warn('[Registration] Photo save to localStorage failed:', photoErr.message);
+        }
       }
 
       Utils.toast('दर्ता सफल भयो! इमेल सत्यापन पठाइँदैछ...');
@@ -169,13 +212,20 @@ async function handleRegister() {
       btn.textContent = 'दर्ता गर्नुहोस्';
     }
   } catch (err) {
-    showRegError('एउटा त्रुटि भयो। कृपया फेरि प्रयास गर्नुहोस्');
-    btn.disabled = false;
-    btn.textContent = 'दर्ता गर्नुहोस्';
+    console.error('[Registration] Error:', err);
+    if (err.message === 'TIMEOUT') {
+      showRegError('सर्भरसँग सम्पर्क गर्न असफल भयो। कृपया इन्टरनेट जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।');
+    } else if (!registered) {
+      showRegError('एउटा त्रुटि भयो। कृपया फेरि प्रयास गर्नुहोस्।');
+    }
+    if (!registered) {
+      btn.disabled = false;
+      btn.textContent = 'दर्ता गर्नुहोस्';
+    }
   }
 }
 
-function handleRegPhotoSelect(input) {
+async function handleRegPhotoSelect(input) {
   const file = input.files[0];
   if (!file) return;
 
@@ -189,29 +239,36 @@ function handleRegPhotoSelect(input) {
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
+  try {
+    document.getElementById('regPhotoSuccess').textContent = 'फोटो प्रशोधन हुँदैछ...';
+    document.getElementById('regPhotoSuccess').classList.remove('hidden');
+
+    const compressed = await compressPhoto(file, 400, 400, 0.75);
+
     const img = new Image();
     img.onload = () => {
-      if (img.width < 300 || img.height < 300) {
-        showRegPhotoError('फोटो कम्तिमा 300x300 पिक्सेल हुनुपर्छ।');
+      if (img.width < 100 || img.height < 100) {
+        showRegPhotoError('फोटो कम्तिमा 100x100 पिक्सेल हुनुपर्छ।');
         return;
       }
-      regPhotoDataUrl = e.target.result;
+      regPhotoDataUrl = compressed;
       regPhotoFile = file;
-      document.getElementById('regPhotoPreview').src = e.target.result;
+      document.getElementById('regPhotoPreview').src = compressed;
       document.getElementById('regPhotoPreview').style.display = 'block';
       document.getElementById('regPhotoPlaceholder').style.display = 'none';
       document.getElementById('regPhotoRing').style.borderStyle = 'solid';
       document.getElementById('regPhotoRing').style.borderColor = 'var(--primary)';
       document.getElementById('regPhotoHint').innerHTML = '<span style="color:var(--primary);font-weight:600">✓ फोटो छानियो!</span> <span style="color:var(--text-tertiary)">फोटो बदल्न यहाँ क्लिक गर्नुहोस्</span>';
       document.getElementById('regPhotoError').classList.add('hidden');
-      document.getElementById('regPhotoSuccess').textContent = 'फोटो तयार छ! दर्ता गर्दा अपलोड हुनेछ।';
+      const sizeKB = Math.round(compressed.length * 0.75 / 1024);
+      document.getElementById('regPhotoSuccess').textContent = 'फोटो तयार छ! (' + sizeKB + 'KB) दर्ता गर्दा अपलोड हुनेछ।';
       document.getElementById('regPhotoSuccess').classList.remove('hidden');
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    img.src = compressed;
+  } catch (err) {
+    showRegPhotoError('फोटो प्रशोधन गर्न असफल। कृपया फेरि प्रयास गर्नुहोस्।');
+    document.getElementById('regPhotoSuccess').classList.add('hidden');
+  }
 }
 
 function showRegPhotoError(msg) {

@@ -82,11 +82,19 @@ const AuthSystem = {
       preferred_language: data.preferredLanguage || 'ne'
     };
 
-    if (data.photoDataUrl) {
+    // Only store photo URL if it's an HTTP URL (not base64 DataURL)
+    if (data.photoDataUrl && data.photoDataUrl.startsWith('http')) {
       profileData.profile_picture_url = data.photoDataUrl;
     }
 
-    await SupabaseAuth.saveProfile(profileData);
+    try {
+      const profileResult = await SupabaseAuth.saveProfile(profileData);
+      if (profileResult.error) {
+        console.error('[Registration] Profile save failed:', profileResult.error.message || profileResult.error);
+      }
+    } catch (profileErr) {
+      console.error('[Registration] Profile save exception:', profileErr.message || profileErr);
+    }
 
     // Cache in localStorage for backward compatibility
     const localUser = {
@@ -107,7 +115,7 @@ const AuthSystem = {
       citizenshipNumber: data.citizenshipNumber || '',
       preferredLanguage: data.preferredLanguage || 'ne',
       avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.name.trim()),
-      profilePhotoUrl: data.photoDataUrl || '',
+      profilePhotoUrl: '',
       verified: false,
       suspended: false,
       emailVerified: false,
