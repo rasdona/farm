@@ -120,79 +120,29 @@ const AuthSystem = {
       return { success: false, message: 'Account creation failed: ' + err.message, steps };
     }
 
-    // ── Step 6: Upload photo to Storage (if provided) ──
-    let profilePhotoUrl = '';
-    if (data.photoDataUrl) {
-      log(6, 'started', 'Uploading profile photo to storage');
-      try {
-        if (data.photoFile) {
-          const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(authData.user.id, data.photoFile);
-          if (url) {
-            profilePhotoUrl = url;
-            log(6, 'success', 'Photo uploaded to storage: ' + url);
-          } else {
-            log(6, 'failed', 'Storage upload failed: ' + (uploadErr || 'unknown'));
-            console.warn('[Registration] Photo storage upload failed, continuing without photo:', uploadErr);
-          }
-        } else if (data.photoDataUrl && data.photoDataUrl.startsWith('http')) {
-          profilePhotoUrl = data.photoDataUrl;
-          log(6, 'success', 'Using existing photo URL');
-        } else {
-          log(6, 'failed', 'No photo file to upload');
-        }
-      } catch (err) {
-        log(6, 'failed', 'Photo upload exception: ' + err.message);
-        console.warn('[Registration] Photo upload failed, continuing without photo:', err.message);
-      }
-    } else {
-      log(6, 'success', 'No photo to upload (skipped)');
-    }
-
-    // ── Step 7: Save profile to Supabase DB ──
-    const profileData = {
-      user_id: authData.user.id,
-      full_name: data.name.trim(),
-      mobile_number: phone,
-      role: userRoles[0],
-      roles: userRoles,
-      province: data.province || '',
-      district: data.district || '',
-      municipality: data.municipality || '',
-      ward: data.ward || '',
-      gender: data.gender || '',
-      dob: data.dob || '',
-      citizenship_number: data.citizenshipNumber || '',
-      preferred_language: data.preferredLanguage || 'ne'
-    };
-    if (profilePhotoUrl) {
-      profileData.profile_picture_url = profilePhotoUrl;
-    }
-
-    log(7, 'started', 'Saving profile to database');
+    // ── Step 6: Send email OTP via Supabase Auth ──
+    log(6, 'started', 'Sending 6-digit email OTP to: ' + email);
     try {
-      const { data: profileResult, error: profileErr } = await SupabaseAuth.saveProfile(profileData);
-      if (profileErr) {
-        log(7, 'failed', 'Profile save SQL error: ' + (profileErr.message || JSON.stringify(profileErr)));
-        console.error('[Registration] Profile save failed (non-blocking):', profileErr);
-      } else {
-        log(7, 'success', 'Profile saved to database');
+      const otpResult = await SupabaseAuth.sendEmailOtp(email);
+      if (otpResult.error) {
+        const otpMsg = otpResult.error.message || 'Failed to send OTP';
+        log(6, 'failed', otpMsg);
+        return { success: false, message: 'OTP पठाउन असफल भयो: ' + otpMsg, steps };
       }
+      log(6, 'success', 'Email OTP sent successfully');
     } catch (err) {
-      log(7, 'failed', 'Profile save exception: ' + err.message);
-      console.error('[Registration] Profile save exception (non-blocking):', err.message);
+      log(6, 'failed', 'OTP send exception: ' + err.message);
+      return { success: false, message: 'OTP पठाउन असफल भयो: ' + err.message, steps };
     }
 
-    // ── Step 8: Cache user in localStorage ──
-    log(8, 'started', 'Caching user in localStorage');
-    const localUser = {
-      id: 'USR' + Date.now(),
-      supabase_id: authData.user.id,
+    // ── Step 7: Store pending registration data for OTP completion ──
+    log(7, 'started', 'Storing pending registration data');
+    const pendingData = {
+      supabaseUserId: authData.user.id,
       name: data.name.trim(),
       phone: phone,
       email: email,
       roles: userRoles,
-      role: userRoles[0],
-      activeRole: userRoles[0],
       province: data.province || '',
       district: data.district || '',
       municipality: data.municipality || '',
@@ -200,14 +150,158 @@ const AuthSystem = {
       gender: data.gender || '',
       dob: data.dob || '',
       citizenshipNumber: data.citizenshipNumber || '',
-      preferredLanguage: data.preferredLanguage || 'ne',
-      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.name.trim()),
+      preferredLanguage: data.preferredLanguage || 'ne'
+    };
+    try {
+      sessionStorage.setItem('agri_pendingRegistration', JSON.stringify(pendingData));
+      log(7, 'success', 'Pending data stored in sessionStorage');
+    } catch (err) {
+      log(7, 'failed', 'SessionStorage write failed: ' + err.message);
+      return { success: false, message: 'Failed to save registration state. Please try again.', steps };
+    }
+
+    // ── Step 8: Done ──
+    log(8, 'success', 'Account created, OTP sent. Awaiting verification.');
+    console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
+
+    return {
+      success: true,
+      user: { supabase_id: authData.user.id, email, name: data.name.trim() },
+      message: 'OTP sent to your email. Please enter the 6-digit code.',
+      requiresOtp: true,
+      steps
+    };
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // OTP COMPLETION — finishes registration after email OTP verified
+  // ═══════════════════════════════════════════════════════
+
+  async completeRegistrationAfterOtp() {
+    const steps = [];
+    const log = (step, status, detail) => {
+      const entry = { step, status, detail: detail || '', time: new Date().toISOString() };
+      steps.push(entry);
+      const icon = status === 'started' ? '▶' : status === 'success' ? '✓' : '✗';
+      console.log('[RegComplete ' + icon + '] Step ' + step + ': ' + status + (detail ? ' — ' + detail : ''));
+    };
+
+    // ── Step 1: Load pending data ──
+    log(1, 'started', 'Loading pending registration data');
+    let pendingData;
+    try {
+      const raw = sessionStorage.getItem('agri_pendingRegistration');
+      if (!raw) {
+        log(1, 'failed', 'No pending registration data found');
+        return { success: false, message: 'Registration data not found. Please register again.', steps };
+      }
+      pendingData = JSON.parse(raw);
+      log(1, 'success', 'Loaded pending data for: ' + pendingData.email);
+    } catch (err) {
+      log(1, 'failed', 'Failed to parse pending data: ' + err.message);
+      return { success: false, message: 'Invalid registration state. Please register again.', steps };
+    }
+
+    // ── Step 2: Verify Supabase client ──
+    log(2, 'started', 'Checking Supabase client');
+    try {
+      if (!SupabaseAuth._initialized) SupabaseAuth.init();
+      SupabaseAuth._guard();
+      log(2, 'success', 'Supabase client ready');
+    } catch (err) {
+      log(2, 'failed', err.message);
+      return { success: false, message: 'Server connection failed. Please refresh and try again.', steps };
+    }
+
+    // ── Step 3: Upload photo to Storage (if provided) ──
+    let profilePhotoUrl = '';
+    let pendingPhotoDataUrl = null;
+    try {
+      pendingPhotoDataUrl = sessionStorage.getItem('agri_pendingPhoto');
+    } catch (e) {}
+
+    if (pendingPhotoDataUrl) {
+      log(3, 'started', 'Uploading profile photo');
+      try {
+        const byteStr = atob(pendingPhotoDataUrl.split(',')[1]);
+        const ab = new ArrayBuffer(byteStr.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+        const photoFile = new Blob([ab], { type: 'image/jpeg' });
+        photoFile.name = 'avatar.jpg';
+
+        const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(pendingData.supabaseUserId, photoFile);
+        if (url) {
+          profilePhotoUrl = url;
+          log(3, 'success', 'Photo uploaded: ' + url);
+        } else {
+          log(3, 'failed', 'Upload failed: ' + (uploadErr || 'unknown'));
+        }
+      } catch (err) {
+        log(3, 'failed', 'Photo upload exception: ' + err.message);
+      }
+    } else {
+      log(3, 'success', 'No photo to upload');
+    }
+
+    // ── Step 4: Save profile to Supabase DB ──
+    const profileData = {
+      user_id: pendingData.supabaseUserId,
+      full_name: pendingData.name,
+      mobile_number: pendingData.phone,
+      role: pendingData.roles[0],
+      roles: pendingData.roles,
+      province: pendingData.province,
+      district: pendingData.district,
+      municipality: pendingData.municipality,
+      ward: pendingData.ward,
+      gender: pendingData.gender,
+      dob: pendingData.dob,
+      citizenship_number: pendingData.citizenshipNumber,
+      preferred_language: pendingData.preferredLanguage || 'ne'
+    };
+    if (profilePhotoUrl) {
+      profileData.profile_picture_url = profilePhotoUrl;
+    }
+
+    log(4, 'started', 'Saving profile to database');
+    try {
+      const { error: profileErr } = await SupabaseAuth.saveProfile(profileData);
+      if (profileErr) {
+        log(4, 'failed', 'Profile save error: ' + (profileErr.message || JSON.stringify(profileErr)));
+      } else {
+        log(4, 'success', 'Profile saved to database');
+      }
+    } catch (err) {
+      log(4, 'failed', 'Profile save exception: ' + err.message);
+    }
+
+    // ── Step 5: Cache user in localStorage ──
+    log(5, 'started', 'Caching user in localStorage');
+    const localUser = {
+      id: 'USR' + Date.now(),
+      supabase_id: pendingData.supabaseUserId,
+      name: pendingData.name,
+      phone: pendingData.phone,
+      email: pendingData.email,
+      roles: pendingData.roles,
+      role: pendingData.roles[0],
+      activeRole: pendingData.roles[0],
+      province: pendingData.province,
+      district: pendingData.district,
+      municipality: pendingData.municipality,
+      ward: pendingData.ward,
+      gender: pendingData.gender,
+      dob: pendingData.dob,
+      citizenshipNumber: pendingData.citizenshipNumber,
+      preferredLanguage: pendingData.preferredLanguage || 'ne',
+      avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(pendingData.name),
       profilePhotoUrl: profilePhotoUrl || '',
       profilePhotoVerified: false,
       requiresPhotoUpload: !profilePhotoUrl,
       verified: false,
       suspended: false,
-      emailVerified: false,
+      emailVerified: true,
       phoneVerified: false,
       mobileVerified: false,
       verificationMethod: 'email',
@@ -216,23 +310,38 @@ const AuthSystem = {
 
     try {
       DB.addUser(localUser);
-      log(8, 'success', 'User cached in localStorage, id: ' + localUser.id);
+      log(5, 'success', 'User cached in localStorage, id: ' + localUser.id);
     } catch (err) {
-      log(8, 'failed', 'localStorage write failed: ' + err.message);
-      console.error('[Registration] localStorage write failed (non-blocking):', err.message);
+      log(5, 'failed', 'localStorage write failed: ' + err.message);
     }
 
-    // ── Step 9: Done ──
-    log(9, 'success', 'Registration complete');
-    console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
+    // ── Step 6: Sign in to get active session ──
+    log(6, 'started', 'Signing in via Supabase Auth');
+    try {
+      const { data: sessionData, error: sessionErr } = await SupabaseAuth.getSession();
+      if (sessionErr || !sessionData?.session) {
+        log(6, 'failed', 'No active session after OTP verification: ' + (sessionErr?.message || 'unknown'));
+      } else {
+        log(6, 'success', 'Active session confirmed');
+      }
+    } catch (err) {
+      log(6, 'failed', 'Session check exception: ' + err.message);
+    }
 
-    return {
-      success: true,
-      user: localUser,
-      message: 'Your account has been created successfully. Please check your email and click the verification link before logging in.',
-      requiresEmailVerification: true,
-      steps
-    };
+    // ── Step 7: Cleanup and done ──
+    log(7, 'started', 'Cleaning up pending data');
+    try {
+      sessionStorage.removeItem('agri_pendingRegistration');
+      sessionStorage.removeItem('agri_pendingEmail');
+      log(7, 'success', 'Pending data cleared');
+    } catch (err) {
+      log(7, 'failed', 'Cleanup failed: ' + err.message);
+    }
+
+    log(8, 'success', 'Registration complete after OTP verification');
+    console.log('[RegComplete] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
+
+    return { success: true, user: localUser, steps };
   },
 
   // ═══════════════════════════════════════════════════════
@@ -268,7 +377,7 @@ const AuthSystem = {
       if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
         return {
           success: false,
-          message: 'Your email address has not been verified. Please check your email for the verification link.',
+          message: 'तपाईंको इमेल अझै सत्यापन भएको छैन। कृपया OTP कोड प्रविष्ट गर्नुहोस्।',
           requiresEmailVerification: true,
           email: email
         };
@@ -287,7 +396,7 @@ const AuthSystem = {
     if (!data.user.confirmed_at) {
       return {
         success: false,
-        message: 'Your email address has not been verified. Please check your email for the verification link.',
+        message: 'तपाईंको इमेल अझै सत्यापन भएको छैन। कृपया OTP कोड प्रविष्ट गर्नुहोस्।',
         requiresEmailVerification: true,
         email: email
       };

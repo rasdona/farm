@@ -35,8 +35,8 @@ function handleLogin(e) {
         setTimeout(() => { window.location.href = redirect || Auth.getDashboardUrl(); }, 800);
       }
     } else if (result.requiresEmailVerification) {
-      pendingVerificationEmail = result.email || identifier;
-      showEmailVerificationRequired(result.email || identifier);
+      Utils.toast('कृपया इमेल OTP सत्यापन गर्नुहोस्।', 'warning');
+      setTimeout(() => { window.location.href = 'verify-otp.html?type=email&email=' + encodeURIComponent(result.email || identifier); }, 500);
     } else {
       showLoginError(result.message);
     }

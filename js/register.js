@@ -231,26 +231,19 @@ async function handleRegister() {
     if (result.success) {
       console.log('[Registration] Registration succeeded');
 
-      sessionStorage.setItem('agri_pendingEmail', data.email.trim().toLowerCase());
-
-      if (regPhotoDataUrl && !result.user.profilePhotoUrl) {
+      if (regPhotoDataUrl) {
         try {
-          DB.updateUser(result.user.id, {
-            profilePhotoUrl: regPhotoDataUrl,
-            profilePhotoVerified: true,
-            requiresPhotoUpload: false
-          });
-          console.log('[Registration] Photo saved to localStorage as fallback');
-        } catch (photoErr) {
-          console.warn('[Registration] Photo localStorage save failed (non-blocking):', photoErr.message);
+          sessionStorage.setItem('agri_pendingPhoto', regPhotoDataUrl);
+        } catch (e) {
+          console.warn('[Registration] Could not store photo in sessionStorage:', e.message);
         }
       }
 
-      Utils.toast('दर्ता सफल भयो! इमेल सत्यापन पठाइँदैछ...');
+      Utils.toast('दर्ता सफल भयो! OTP पठाइँदैछ...');
       btn.textContent = 'दर्ता सफल! ✓';
       btn.style.background = '#059669';
 
-      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 1500);
+      setTimeout(() => { window.location.href = 'verify-otp.html?type=email&email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 1500);
     } else {
       console.error('[Registration] Registration failed:', result.message || JSON.stringify(result.errors));
 

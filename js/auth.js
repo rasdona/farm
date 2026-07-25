@@ -153,7 +153,7 @@ const Auth = {
     if (this.currentUser.role === 'admin') return true;
     if (!this.currentUser.emailVerified) {
       Utils.toast('कृपया इमेल सत्यापन गर्नुहोस् / Please verify your email to continue.', 'warning');
-      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(this.currentUser.email); }, 500);
+      setTimeout(() => { window.location.href = 'verify-otp.html?type=email&email=' + encodeURIComponent(this.currentUser.email); }, 500);
       return false;
     }
     return true;

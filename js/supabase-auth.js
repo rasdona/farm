@@ -148,6 +148,47 @@ const SupabaseAuth = {
     }
   },
 
+  async sendEmailOtp(email) {
+    this._guard();
+    console.log('[SupabaseAuth] sendEmailOtp:', email);
+    try {
+      const result = await this.client.auth.signInWithOtp({
+        type: 'email',
+        email
+      });
+      if (result.error) {
+        console.error('[SupabaseAuth] sendEmailOtp failed:', result.error.message);
+      } else {
+        console.log('[SupabaseAuth] sendEmailOtp sent OK');
+      }
+      return result;
+    } catch (err) {
+      console.error('[SupabaseAuth] sendEmailOtp exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
+  },
+
+  async verifyEmailOtp(email, token) {
+    this._guard();
+    console.log('[SupabaseAuth] verifyEmailOtp:', email);
+    try {
+      const result = await this.client.auth.verifyOtp({
+        type: 'email',
+        email,
+        token
+      });
+      if (result.error) {
+        console.error('[SupabaseAuth] verifyEmailOtp failed:', result.error.message);
+      } else {
+        console.log('[SupabaseAuth] verifyEmailOtp success, session:', !!result.data?.session);
+      }
+      return result;
+    } catch (err) {
+      console.error('[SupabaseAuth] verifyEmailOtp exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
+  },
+
   async resetPassword(email, redirectTo) {
     this._guard();
     console.log('[SupabaseAuth] resetPassword:', email);

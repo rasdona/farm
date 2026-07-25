@@ -3,179 +3,18 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Email Verification - AgriConnect Nepal</title>
-  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
-  <link rel="stylesheet" href="css/auth.css">
-  <style>
-    .verify-email-page { max-width: 480px; margin: 0 auto; padding: 40px 20px; }
-    .verify-email-card { background: var(--card); border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
-    .verify-email-header { background: linear-gradient(135deg, #16a34a, #22c55e); padding: 40px 30px; text-align: center; color: white; }
-    .verify-email-icon { font-size: 60px; margin-bottom: 16px; display: block; }
-    .verify-email-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-    .verify-email-header p { font-size: 14px; opacity: 0.9; }
-    .verify-email-body { padding: 30px; }
-    .verify-email-info { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
-    .verify-email-info strong { color: #166534; display: block; margin-bottom: 4px; }
-    .verify-email-info p { color: #166534; font-size: 13px; margin: 0; }
-    .check-instruction { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
-    .check-instruction strong { color: #0c4a6e; display: block; margin-bottom: 4px; }
-    .check-instruction p { color: #0c4a6e; font-size: 13px; margin: 0; }
-    .verify-btn { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--primary); color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
-    .verify-btn:hover:not(:disabled) { background: #15803d; transform: translateY(-1px); }
-    .verify-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .verify-btn.loading { pointer-events: none; }
-    .spinner { display: none; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto; }
-    .verify-btn.loading .btn-text { display: none; }
-    .verify-btn.loading .spinner { display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .message { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; margin-top: 16px; display: none; }
-    .message.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .message.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-    .message.visible { display: block; }
-  </style>
-</head>
-<body>
-  <header id="navbar" class="navbar"></header>
-  <main class="auth-page">
-    <div class="auth-container">
-      <div class="auth-card" style="max-width:480px">
-        <div class="verify-email-header">
-          <span class="verify-email-icon">📧</span>
-          <h1>इमेल सत्यापन</h1>
-          <p>हामीले तपाईंको इमेलमा सत्यापन लिंक पठाएका छौं</p>
-        </div>
-
-        <div class="verify-email-body">
-          <div class="verify-email-info" id="emailInfo">
-            <strong>📧 सत्यापन लिंक पठाइयो</strong>
-            <p id="emailDisplayText">कृपया तपाईंको इमेलमा पठाइएको सत्यापन लिंकमा क्लिक गर्नुहोस्।</p>
-          </div>
-
-          <div class="check-instruction">
-            <strong>📌 गाइड</strong>
-            <p>Visit your email inbox<br>
-            Look for an email from AgriConnect Nepal<br>
-            Click the "Verify Email" link in the email<br>
-            This page will update automatically</p>
-          </div>
-
-          <div id="verifyError" class="auth-alert auth-alert-error hidden"></div>
-          <div id="verifySuccess" class="auth-alert auth-alert-success hidden"></div>
-
-          <button type="button" class="verify-btn" id="resendBtn" onclick="resendVerificationEmail()">
-            <span class="btn-text">🔄 पुन: सत्यापन इमेल पठाउनुहोस्</span>
-            <span class="spinner"></span>
-          </button>
-
-          <div style="text-align:center;margin-top:20px">
-            <a href="login.html" class="auth-link" style="font-size:14px">← लगइन पेजमा फर्कनुहोस्</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <script src="js/data.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/supabase-auth.js"></script>
-  <script src="js/auth-system.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script>
-    let pendingEmail = '';
-
-    document.addEventListener('DOMContentLoaded', function() {
-      App.init();
-
-      const params = new URLSearchParams(window.location.search);
-      pendingEmail = params.get('email') || '';
-      if (!pendingEmail) {
-        pendingEmail = sessionStorage.getItem('agri_pendingEmail') || '';
-      }
-
-      if (pendingEmail) {
-        document.getElementById('emailDisplayText').textContent = `"${pendingEmail}" मा पठाइएको सत्यापन लिंकमा क्लिक गर्नुहोस्।`;
-        sessionStorage.setItem('agri_pendingEmail', pendingEmail);
-      }
-
-      // Check if user just verified via callback URL
-      const code = params.get('code');
-      if (code) {
-        handleVerificationCallback(code);
-      }
-    });
-
-    async function handleVerificationCallback(code) {
-      showVerifyLoading(true);
-      const { error } = await SupabaseAuth.exchangeCodeForSession(code);
-      showVerifyLoading(false);
-
-      if (error) {
-        showVerifyError('सत्यापन असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।');
-      } else {
-        showVerifySuccess('सत्यापन सफल भयो! अब तपाईं लगइन गर्न सक्नुहुन्छ।');
-        // Update local user record
-        if (pendingEmail) {
-          const user = DB.getUserByEmail(pendingEmail);
-          if (user) {
-            DB.updateUser(user.id, { emailVerified: true });
-          }
-        }
-      }
-    }
-
-    async function resendVerificationEmail() {
-      if (!pendingEmail) return;
-
-      const btn = document.getElementById('resendBtn');
-      btn.disabled = true;
-      btn.classList.add('loading');
-      showVerifyError('');
-
-      const result = await AuthSystem.resendEmailVerification(pendingEmail);
-      btn.disabled = false;
-      btn.classList.remove('loading');
-
-      if (result.success) {
-        showVerifySuccess(`सत्यापन लिंक ${pendingEmail} मा पुन: पठाइयो!`);
-      } else {
-        showVerifyError(result.message || 'सत्यापन लिंक पठाउन असफल');
-      }
-    }
-
-    function showVerifyError(msg) {
-      const el = document.getElementById('verifyError');
-      const suc = document.getElementById('verifySuccess');
-      suc.classList.remove('visible');
-      suc.style.display = 'none';
-      if (msg) {
-        el.textContent = msg;
-        el.classList.remove('hidden');
-        el.classList.add('visible');
-        el.style.display = 'block';
-      } else {
-        el.classList.add('hidden');
-        el.classList.remove('visible');
-        el.style.display = 'none';
-      }
-    }
-
-    function showVerifySuccess(msg) {
-      const el = document.getElementById('verifySuccess');
-      const err = document.getElementById('verifyError');
-      err.classList.add('hidden');
-      err.classList.remove('visible');
-      err.style.display = 'none';
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      el.classList.add('visible');
-      el.style.display = 'block';
-    }
-
-    function showVerifyLoading(show) {
-      const btn = document.getElementById('resendBtn');
-      btn.disabled = show;
-      btn.classList.toggle('loading', show);
+    // Old magic-link verify-email page — redirect to OTP verification
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email') || sessionStorage.getItem('agri_pendingEmail') || '';
+    if (email) {
+      window.location.replace('verify-otp.html?type=email&email=' + encodeURIComponent(email));
+    } else {
+      window.location.replace('register.html');
     }
   </script>
+</head>
+<body>
+  <p>Redirecting to OTP verification...</p>
 </body>
 </html>

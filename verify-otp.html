@@ -2,7 +2,7 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>OTP Verification - AgriConnect Nepal</title>
+  <title>OTP सत्यापन - AgriConnect Nepal</title>
   <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/auth.css">
 </head>
@@ -16,10 +16,10 @@
             <span class="auth-brand-icon">🌱</span>
             <span>AgriConnect</span>
           </a>
-          <div class="auth-otp-icon">📱</div>
-          <h1 class="auth-title">OTP सत्यापन</h1>
-          <p class="auth-subtitle" id="otpSubtitle">तपाईंको फोन नम्बरमा ६ अंकको कोड पठाइएको छ</p>
-          <p class="auth-phone-display" id="otpPhone"></p>
+          <div class="auth-otp-icon">✉️</div>
+          <h1 class="auth-title">इमेल OTP सत्यापन</h1>
+          <p class="auth-subtitle" id="otpSubtitle">तपाईंको इमेलमा ६ अंकको कोड पठाइएको छ</p>
+          <p class="auth-phone-display" id="otpEmail"></p>
         </div>
 
         <div id="otpError" class="auth-alert auth-alert-error hidden"></div>
@@ -59,12 +59,17 @@
     let resendTimer = null;
     let attemptCount = 0;
     const maxAttempts = 5;
-    const otpType = new URLSearchParams(window.location.search).get('type') || 'phone';
-    const otpPhone = new URLSearchParams(window.location.search).get('phone') || '';
+    const otpType = new URLSearchParams(window.location.search).get('type') || 'email';
+    const otpEmail = new URLSearchParams(window.location.search).get('email') || '';
 
     document.addEventListener('DOMContentLoaded', function() {
       App.init();
-      document.getElementById('otpPhone').textContent = otpPhone ? otpPhone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3') : '';
+      if (!otpEmail) {
+        showOtpError('इमेल ठेगाना फेला भएन। कृपया दर्ता फेरि गर्नुहोस्।');
+        document.getElementById('otpVerifyBtn').disabled = true;
+        return;
+      }
+      document.getElementById('otpEmail').textContent = otpEmail;
       setupOtpInputs();
       startResendTimer();
     });
@@ -95,51 +100,103 @@
       return Array.from(document.querySelectorAll('.auth-otp-input')).map(i => i.value).join('');
     }
 
-    function verifyOtp() {
+    async function handleOtpVerify(e) {
+      e.preventDefault();
+      await verifyOtp();
+    }
+
+    async function verifyOtp() {
       const otp = getOtpValue();
       if (otp.length !== 6) return;
-      if (attemptCount >= maxAttempts) { showOtpError('धेरै पटक प्रयास भयो। कृपया फेरि प्रयास गर्नुहोस्'); return; }
+      if (attemptCount >= maxAttempts) {
+        showOtpError('धेरै पटक प्रयास भयो। कृपया पुन: पठाउनुहोस् वा दर्ता फेरि गर्नुहोस्।');
+        return;
+      }
 
       showOtpLoading(true);
-      setTimeout(() => {
-        let result;
+      try {
         if (otpType === 'password_reset') {
-          result = AuthSystem.verifyPasswordResetOtp(sessionStorage.getItem('agri_resetUserId'), otp);
-        } else {
-          result = AuthSystem.verifyPhone(otp);
-        }
-        showOtpLoading(false);
-
-        if (result.success) {
-          showOtpSuccess('सत्यापन सफल भयो!');
-          if (otpType === 'password_reset') {
+          const result = AuthSystem.verifyPasswordResetOtp(sessionStorage.getItem('agri_resetUserId'), otp);
+          showOtpLoading(false);
+          if (result.success) {
+            showOtpSuccess('सत्यापन सफल भयो!');
             setTimeout(() => { window.location.href = 'forgot-password.html?step=newpassword'; }, 1000);
           } else {
-            setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1000);
+            attemptCount++;
+            showOtpError(result.message || 'गलत कोड। फेरि प्रयास गर्नुहोस्।');
+            clearOtpInputs();
           }
         } else {
-          attemptCount++;
-          showOtpError(result.message);
-          document.querySelectorAll('.auth-otp-input').forEach(i => { i.value = ''; });
-          document.querySelector('.auth-otp-input').focus();
+          // Email OTP — verify via Supabase Auth
+          const { data, error } = await SupabaseAuth.verifyEmailOtp(otpEmail, otp);
+          showOtpLoading(false);
+
+          if (error) {
+            attemptCount++;
+            const msg = error.message || '';
+            if (msg.includes('expired')) {
+              showOtpError('कोडको म्याद सकिएको छ। नयाँ कोड पठाउनुहोस्।');
+            } else if (msg.includes('invalid') || msg.includes('Token')) {
+              showOtpError('गलत कोड। फेरि प्रयास गर्नुहोस्। (' + attemptCount + '/' + maxAttempts + ')');
+            } else if (msg.includes('rate') || msg.includes('Too many')) {
+              showOtpError('धेरै पटक प्रयास भयो। केही समय पर्खनुहोस्।');
+            } else {
+              showOtpError('सत्यापन असफल: ' + msg);
+            }
+            clearOtpInputs();
+          } else {
+            showOtpSuccess('इमेल सत्यापन सफल भयो! प्रोफाइल तयार हुँदैछ...');
+            // Complete registration — upload photo, save profile, cache user
+            const completeResult = await AuthSystem.completeRegistrationAfterOtp();
+            if (completeResult.success) {
+              sessionStorage.removeItem('agri_pendingPhoto');
+              showOtpSuccess('दर्ता पूरा भयो! ड्यासबोर्डमा लगिँदैछ...');
+              setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1200);
+            } else {
+              showOtpSuccess('इमेल सत्यापन भयो, तर प्रोफाइल सेभ गर्दा समस्या भयो। लगइन गर्नुहोस्।');
+              setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+            }
+          }
         }
-      }, 800);
+      } catch (err) {
+        showOtpLoading(false);
+        showOtpError('नेटवर्क त्रुटि। कृपया इन्टरनेट जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।');
+        clearOtpInputs();
+      }
     }
 
     async function resendOtp() {
-      if (!otpPhone) return;
-      showOtpLoading(true);
-      let result;
+      if (!otpEmail) return;
+
       if (otpType === 'password_reset') {
-        result = await AuthSystem.sendPasswordResetOtp(otpPhone);
+        const user = DB.getUserByEmail(otpEmail);
+        if (!user) { showOtpError('यो इमेलमा खाता फेला भएन।'); return; }
+        showOtpLoading(true);
+        const result = await AuthSystem.sendPasswordResetOtp(user.phone);
+        showOtpLoading(false);
+        if (result && result.success) {
+          showOtpSuccess('नयाँ OTP पठाइयो!');
+          startResendTimer();
+        } else {
+          showOtpError(result?.message || 'OTP पठाउन असफल भयो।');
+        }
       } else {
-        const user = DB.getUserByPhone(otpPhone);
-        if (user) result = await AuthSystem.sendPhoneOtp(user.id);
-      }
-      showOtpLoading(false);
-      if (result && result.success) {
-        showOtpSuccess('नयाँ OTP पठाइयो!');
-        startResendTimer();
+        // Email OTP — resend via Supabase Auth
+        showOtpLoading(true);
+        try {
+          const { error } = await SupabaseAuth.sendEmailOtp(otpEmail);
+          showOtpLoading(false);
+          if (error) {
+            showOtpError('OTP पठाउन असफल: ' + (error.message || 'अज्ञात त्रुटि'));
+          } else {
+            showOtpSuccess('नयाँ OTP कोड ' + otpEmail + ' मा पठाइयो!');
+            attemptCount = 0;
+            startResendTimer();
+          }
+        } catch (err) {
+          showOtpLoading(false);
+          showOtpError('नेटवर्क त्रुटि। कृपया फेरि प्रयास गर्नुहोस्।');
+        }
       }
     }
 
@@ -151,13 +208,28 @@
       if (resendTimer) clearInterval(resendTimer);
       resendTimer = setInterval(() => {
         sec--;
-        text.textContent = `पुन: पठाउनुहोस् (${sec} सेकेन्ड)`;
+        text.textContent = 'पुन: पठाउनुहोस् (' + sec + ' सेकेन्ड)';
         if (sec <= 0) { clearInterval(resendTimer); btn.disabled = false; text.textContent = 'पुन: पठाउनुहोस्'; }
       }, 1000);
     }
 
-    function showOtpError(msg) { const el = document.getElementById('otpError'); el.textContent = msg; el.classList.remove('hidden'); document.getElementById('otpSuccess').classList.add('hidden'); }
-    function showOtpSuccess(msg) { const el = document.getElementById('otpSuccess'); el.textContent = msg; el.classList.remove('hidden'); document.getElementById('otpError').classList.add('hidden'); }
+    function clearOtpInputs() {
+      document.querySelectorAll('.auth-otp-input').forEach(i => { i.value = ''; });
+      document.querySelector('.auth-otp-input').focus();
+    }
+
+    function showOtpError(msg) {
+      const el = document.getElementById('otpError');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      document.getElementById('otpSuccess').classList.add('hidden');
+    }
+    function showOtpSuccess(msg) {
+      const el = document.getElementById('otpSuccess');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      document.getElementById('otpError').classList.add('hidden');
+    }
     function showOtpLoading(show) {
       document.getElementById('otpVerifyBtn').disabled = show;
       document.getElementById('otpBtnText').textContent = show ? 'सत्यापन हुँदैछ...' : 'सत्यापन गर्नुहोस्';
