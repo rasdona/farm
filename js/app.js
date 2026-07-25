@@ -9,6 +9,7 @@ const App = {
     Utils.initBackToTop();
     Utils.animateOnScroll();
     this.initScrollEffects();
+    this.initButtonRipple();
     this.updateNotificationBadge();
     if (window.innerWidth <= 768) {
       this.renderFAB();
@@ -57,8 +58,8 @@ const App = {
             <div class="navbar-divider"></div>
 
             <div class="lang-switcher" id="navLangSwitcher">
-              <button class="lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
-                <span class="lang-flag" id="langFlag">🌐</span>
+              <button class="lang-btn" onclick="App.toggleLangDropdown()" id="langBtn" title="Language" aria-label="Switch language">
+                <span class="lang-globe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
                 <span class="lang-label" id="langLabel">${langLabel}</span>
                 <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -71,7 +72,7 @@ const App = {
             ${user ? `
               ${AuthSystem.requiresPhotoUpload(user) ? `<a href="photo-gate.html" class="nav-icon-btn warn" title="Upload Photo">⚠️</a>` : ''}
               <div class="nav-icon-wrap">
-                <button class="nav-icon-btn" onclick="this.nextElementSibling.classList.toggle('show')" id="notifBtn" title="${t('nav.notifTitle')}">
+                <button class="nav-icon-btn" onclick="this.nextElementSibling.classList.toggle('show')" id="notifBtn" title="${t('nav.notifTitle')}" aria-label="${t('nav.notifTitle')}" data-tooltip="${t('nav.notifTitle')}">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   ${unreadNotifs > 0 ? `<span class="badge-count">${unreadNotifs}</span>` : ''}
                 </button>
@@ -80,7 +81,7 @@ const App = {
                   <div id="notifList">${this.renderNotifications(user.id)}</div>
                 </div>
               </div>
-              <a href="chat.html" class="nav-icon-btn" title="${t('nav.msgs')}">
+              <a href="chat.html" class="nav-icon-btn" title="${t('nav.msgs')}" aria-label="${t('nav.msgs')}" data-tooltip="${t('nav.msgs')}">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 ${unreadChats > 0 ? `<span class="badge-count">${unreadChats}</span>` : ''}
               </a>
@@ -88,7 +89,7 @@ const App = {
               <div class="navbar-divider"></div>
 
               <div class="role-switcher-wrap">
-                <button class="role-switcher-btn" onclick="document.getElementById('roleSwitcherDropdown').classList.toggle('show')" title="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}">
+                <button class="role-switcher-btn" onclick="App.toggleRoleDropdown()" title="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-label="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-haspopup="true">
                   <span class="role-icon">${activeRoleInfo.icon}</span>
                   <span class="role-label">${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
                   <svg class="role-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -105,8 +106,8 @@ const App = {
                 </div>
               </div>
 
-              <div class="navbar-profile-wrap">
-                <div class="navbar-profile" onclick="document.getElementById('profileDropdown').classList.toggle('show')">
+              <div class="navbar-profile-wrap" id="profileWrap">
+                <div class="navbar-profile" onclick="App.toggleProfileDropdown()" role="button" aria-haspopup="true" tabindex="0">
                   ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
                   <span class="name">${user.name.split(' ')[0]}</span>
                   <svg class="profile-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -407,6 +408,25 @@ const App = {
     document.body.style.overflow = menu?.classList.contains('open') ? 'hidden' : '';
   },
 
+  toggleLangDropdown() {
+    const dd = document.getElementById('langDropdown');
+    const switcher = document.getElementById('navLangSwitcher');
+    if (dd) dd.classList.toggle('show');
+    if (switcher) switcher.classList.toggle('open');
+  },
+
+  toggleRoleDropdown() {
+    const dd = document.getElementById('roleSwitcherDropdown');
+    if (dd) dd.classList.toggle('show');
+  },
+
+  toggleProfileDropdown() {
+    const dd = document.getElementById('profileDropdown');
+    const wrap = document.getElementById('profileWrap');
+    if (dd) dd.classList.toggle('show');
+    if (wrap) wrap.classList.toggle('open');
+  },
+
   // ═══════════════════════════════════════════════════════
   // GREETING HELPER
   // ═══════════════════════════════════════════════════════
@@ -650,13 +670,34 @@ const App = {
     }
     document.addEventListener('click', (e) => {
       document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
-        if (!d.parentElement.contains(e.target)) d.classList.remove('show');
+        if (!d.parentElement.contains(e.target)) {
+          d.classList.remove('show');
+          if (d.parentElement.classList) d.parentElement.classList.remove('open');
+        }
       });
       const fab = document.getElementById('mobileFAB');
       if (fab && fab.classList.contains('open') && !fab.contains(e.target)) {
         fab.classList.remove('open');
         document.body.style.overflow = '';
       }
+    });
+  },
+
+  initButtonRipple() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-pill');
+      if (!btn) return;
+      const circle = document.createElement('span');
+      circle.className = 'ripple';
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      circle.style.width = circle.style.height = size + 'px';
+      circle.style.left = (e.clientX - rect.left - size / 2) + 'px';
+      circle.style.top = (e.clientY - rect.top - size / 2) + 'px';
+      const existing = btn.querySelector('.ripple');
+      if (existing) existing.remove();
+      btn.appendChild(circle);
+      circle.addEventListener('animationend', () => circle.remove());
     });
   },
 
@@ -784,9 +825,7 @@ const App = {
 
   applyLanguage(lang) {
     if (typeof I18N !== 'undefined') I18N.lang = lang;
-    const flagEl = document.getElementById('langFlag');
     const labelEl = document.getElementById('langLabel');
-    if (flagEl) flagEl.textContent = '🌐';
     if (labelEl) labelEl.textContent = lang === 'ne' ? 'नेपाली' : 'English';
 
     // Update all elements with data-ne / data-en attributes

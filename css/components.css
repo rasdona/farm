@@ -5,7 +5,7 @@
 .navbar {
   position: fixed; top: 0; left: 0; right: 0;
   height: var(--navbar-height); z-index: 9999;
-  background: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.88);
   backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8);
   border-bottom: 1px solid rgba(226,232,240,0.5);
   transition: height 0.35s cubic-bezier(0.4,0,0.2,1),
@@ -17,7 +17,7 @@
   height: 64px;
   background: rgba(255,255,255,0.96);
   backdrop-filter: blur(32px) saturate(2); -webkit-backdrop-filter: blur(32px) saturate(2);
-  box-shadow: 0 1px 0 rgba(226,232,240,0.5), 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 0 rgba(226,232,240,0.5), 0 4px 20px rgba(0,0,0,0.08);
 }
 .navbar-inner { height: 100%; }
 .navbar-container {
@@ -39,32 +39,34 @@
 
 /* ── Center Section: Navigation Links ─────────────────── */
 .navbar-center {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 6px;
   flex: 1; justify-content: center;
-  max-width: 520px;
+  max-width: 560px;
 }
 .nav-link {
   position: relative; display: flex; align-items: center;
-  padding: 8px 16px; border-radius: var(--radius);
+  padding: 8px 18px; border-radius: var(--radius-full);
   font-weight: 500; font-size: 0.875rem; color: var(--text-secondary);
   text-decoration: none; white-space: nowrap;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 .nav-link:hover {
-  color: var(--primary); background: rgba(22,163,74,0.06);
+  color: var(--primary); background: rgba(22,163,74,0.08);
+  transform: translateY(-1px); box-shadow: 0 2px 8px rgba(22,163,74,0.08);
 }
 .nav-link.active {
   color: var(--primary); font-weight: 600;
+  background: rgba(22,163,74,0.08);
 }
 .nav-link.active::after {
-  content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+  content: ''; position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%);
   width: 0; height: 2.5px; background: var(--primary);
   border-radius: 2px;
   animation: navUnderlineIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;
 }
 @keyframes navUnderlineIn {
   0%   { width: 0; opacity: 0; }
-  100% { width: 40px; opacity: 1; }
+  100% { width: calc(100% - 32px); opacity: 1; }
 }
 
 /* ── Right Section: Actions ───────────────────────────── */
@@ -78,27 +80,28 @@
 
 /* ── Search Bar ───────────────────────────────────────── */
 .navbar-search {
-  position: relative; width: 400px; flex-shrink: 0;
-  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+  position: relative; width: 420px; flex-shrink: 0;
+  transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 .navbar-search input {
   width: 100%; height: 40px; padding: 0 16px 0 40px;
   border-radius: var(--radius-full);
   border: 1.5px solid var(--border); background: var(--bg-alt);
   font-size: 0.85rem; color: var(--text);
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .navbar-search input::placeholder { color: var(--text-tertiary); }
 .navbar-search input:focus {
   border-color: var(--primary); background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(22,163,74,0.1); outline: none;
+  box-shadow: 0 0 0 4px rgba(22,163,74,0.1), 0 2px 8px rgba(22,163,74,0.08);
+  outline: none;
 }
 .navbar-search .search-icon {
   position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
   color: var(--text-tertiary); pointer-events: none;
-  transition: color 0.2s ease;
+  transition: color 0.25s ease, transform 0.25s ease;
 }
-.navbar-search input:focus ~ .search-icon { color: var(--primary); }
+.navbar-search input:focus ~ .search-icon { color: var(--primary); transform: translateY(-50%) scale(1.1); }
 
 /* ── Language Switcher ────────────────────────────────── */
 .lang-switcher { position: relative; flex-shrink: 0; }
@@ -107,13 +110,16 @@
   background: transparent; border: 1.5px solid var(--border);
   border-radius: var(--radius-full); padding: 6px 14px;
   font-size: 0.82rem; font-weight: 600; color: var(--text);
-  cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease;
+  cursor: pointer; transition: all 0.25s ease;
   white-space: nowrap; line-height: 1.2; height: 36px;
 }
-.lang-btn:hover { border-color: var(--primary); background: rgba(22,163,74,0.04); }
+.lang-btn:hover { border-color: var(--primary); background: rgba(22,163,74,0.06); transform: translateY(-1px); }
+.lang-btn .lang-globe { display: flex; align-items: center; color: var(--text-secondary); transition: color 0.25s ease, transform 0.5s ease; }
+.lang-btn:hover .lang-globe { color: var(--primary); transform: rotate(15deg); }
 .lang-flag { font-size: 1rem; line-height: 1; }
 .lang-label { font-size: 0.82rem; }
 .lang-arrow { transition: transform 0.25s ease; color: var(--text-tertiary); }
+.lang-switcher.open .lang-arrow { transform: rotate(180deg); }
 .lang-dropdown {
   display: none; position: absolute; top: calc(100% + 8px); right: 0;
   background: var(--surface); border: 1px solid var(--border-light);
@@ -140,13 +146,30 @@
 .nav-icon-btn {
   position: relative; width: 40px; height: 40px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: var(--text-secondary); transition: background 0.2s ease, color 0.2s ease;
+  color: var(--text-secondary); transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
   text-decoration: none; flex-shrink: 0; border: none; background: none;
   cursor: pointer;
 }
-.nav-icon-btn:hover { background: rgba(22,163,74,0.06); color: var(--primary); }
-.nav-icon-btn svg { transition: transform 0.2s ease; }
-.nav-icon-btn:hover svg { transform: scale(1.08); }
+.nav-icon-btn:hover { background: rgba(22,163,74,0.1); color: var(--primary); transform: translateY(-1px); }
+.nav-icon-btn svg { transition: transform 0.25s ease; }
+.nav-icon-btn:hover svg { transform: scale(1.1); }
+.nav-icon-btn[data-tooltip] { position: relative; }
+.nav-icon-btn[data-tooltip]::after {
+  content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%) translateY(4px); padding: 6px 12px;
+  background: var(--text); color: white; font-size: 0.75rem; font-weight: 500;
+  border-radius: var(--radius-sm); white-space: nowrap; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: all 0.2s ease;
+  z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.nav-icon-btn[data-tooltip]:hover::after { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.nav-icon-btn[data-tooltip]::before {
+  content: ''; position: absolute; bottom: calc(100% + 4px); left: 50%;
+  transform: translateX(-50%); border: 5px solid transparent;
+  border-top-color: var(--text); pointer-events: none;
+  opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 100;
+}
+.nav-icon-btn[data-tooltip]:hover::before { opacity: 1; visibility: visible; }
 .nav-icon-btn .badge-count,
 .nav-icon-wrap .badge-count,
 a.nav-icon-btn .badge-count {
@@ -155,6 +178,11 @@ a.nav-icon-btn .badge-count {
   background: var(--danger); color: white; font-size: 0.65rem; font-weight: 700;
   border-radius: 9999px; display: flex; align-items: center; justify-content: center;
   border: 2px solid var(--surface); line-height: 1;
+  animation: badgePop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes badgePop {
+  0%   { transform: scale(0); }
+  100% { transform: scale(1); }
 }
 .nav-icon-wrap { position: relative; display: flex; align-items: center; }
 
@@ -162,18 +190,20 @@ a.nav-icon-btn .badge-count {
 .navbar-profile-wrap { position: relative; }
 .navbar-profile {
   display: flex; align-items: center; gap: 8px;
-  padding: 4px 10px 4px 4px;
+  padding: 4px 12px 4px 4px;
   border-radius: var(--radius-full); cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: all 0.25s ease;
   border: 1.5px solid transparent;
 }
-.navbar-profile:hover { background: rgba(22,163,74,0.04); border-color: var(--border); }
-.navbar-profile img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.navbar-profile:hover { background: rgba(22,163,74,0.06); border-color: rgba(22,163,74,0.15); transform: translateY(-1px); }
+.navbar-profile img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--primary-200); transition: border-color 0.25s ease; }
+.navbar-profile:hover img { border-color: var(--primary); }
 .navbar-profile .name {
   font-weight: 600; font-size: 0.85rem; color: var(--text);
   max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .navbar-profile .profile-arrow { color: var(--text-tertiary); flex-shrink: 0; transition: transform 0.25s ease; }
+.navbar-profile-wrap.open .profile-arrow { transform: rotate(180deg); }
 
 /* ── Profile / Notifications Dropdown ─────────────────── */
 .navbar-dropdown,
@@ -203,7 +233,7 @@ a.nav-icon-btn .badge-count {
 .navbar-dropdown .danger:hover { background: #fef2f2; color: var(--danger); }
 
 /* ── Auth Buttons (Login / Register) ──────────────────── */
-.navbar-auth-btns { display: flex; align-items: center; gap: 8px; }
+.navbar-auth-btns { display: flex; align-items: center; gap: 10px; }
 .btn-pill {
   border-radius: var(--radius-full);
   padding: 8px 22px; font-size: 0.85rem; font-weight: 600;
@@ -214,20 +244,24 @@ a.nav-icon-btn .badge-count {
 }
 .btn-pill:active { transform: scale(0.97); }
 .navbar-auth-btns .btn-outline {
-  border: 1.5px solid var(--border);
-  color: var(--text); background: transparent;
+  border: 1.5px solid var(--primary);
+  color: var(--primary); background: transparent;
 }
 .navbar-auth-btns .btn-outline:hover {
-  border-color: var(--primary); color: var(--primary);
-  background: rgba(22,163,74,0.04);
+  border-color: var(--primary); color: white;
+  background: var(--primary); transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22,163,74,0.25);
 }
 .navbar-auth-btns .btn-primary {
-  border: 1.5px solid var(--primary);
-  background: var(--primary); color: white;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.25);
 }
 .navbar-auth-btns .btn-primary:hover {
-  background: var(--primary-dark); border-color: var(--primary-dark);
-  box-shadow: 0 2px 8px rgba(22,163,74,0.25);
+  background: linear-gradient(135deg, var(--primary-dark) 0%, #14532d 100%);
+  box-shadow: 0 4px 16px rgba(22,163,74,0.35);
+  transform: translateY(-1px);
 }
 
 /* ── Role Switcher ────────────────────────────────────── */
@@ -236,10 +270,10 @@ a.nav-icon-btn .badge-count {
   display: flex; align-items: center; gap: 6px;
   padding: 6px 12px; border: 1.5px solid var(--border);
   background: transparent; border-radius: var(--radius-full);
-  cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease;
+  cursor: pointer; transition: all 0.25s ease;
   font-size: 0.8rem; color: var(--text); white-space: nowrap; height: 36px;
 }
-.role-switcher-btn:hover { border-color: var(--primary); background: rgba(22,163,74,0.04); }
+.role-switcher-btn:hover { border-color: var(--primary); background: rgba(22,163,74,0.06); transform: translateY(-1px); }
 .role-icon { font-size: 0.95rem; line-height: 1; }
 .role-label { font-weight: 600; color: var(--text); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .role-arrow { color: var(--text-tertiary); transition: transform 0.25s ease; }

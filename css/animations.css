@@ -86,3 +86,52 @@
   [data-animate] { opacity: 1; transform: none; }
   .stagger-children > * { opacity: 1; transform: none; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   NAVBAR ANIMATIONS
+   ══════════════════════════════════════════════════════════ */
+
+/* Button ripple effect */
+.btn-pill { position: relative; overflow: hidden; }
+.btn-pill .ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  transform: scale(0); animation: btnRipple 0.5s ease-out;
+  pointer-events: none;
+}
+@keyframes btnRipple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* Nav link hover glow */
+.nav-link::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: inherit; opacity: 0;
+  background: radial-gradient(circle at center, rgba(22,163,74,0.08) 0%, transparent 70%);
+  transition: opacity 0.25s ease; pointer-events: none;
+}
+.nav-link:hover::before { opacity: 1; }
+
+/* Dropdown entrance */
+.navbar-dropdown.show,
+.notification-dropdown.show,
+.role-switcher-dropdown.show,
+.lang-dropdown.show {
+  animation: dropdownEnter 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes dropdownEnter {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Notification badge pulse */
+.badge-count { animation: badgePop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* Profile avatar ring animation on hover */
+.navbar-profile:hover img {
+  animation: avatarPulse 0.6s ease;
+}
+@keyframes avatarPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(22,163,74,0.3); }
+  100% { box-shadow: 0 0 0 6px rgba(22,163,74,0); }
+}
