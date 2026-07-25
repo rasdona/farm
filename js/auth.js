@@ -62,6 +62,52 @@ const Auth = {
 
   getUserRoles() { return this.currentUser ? (this.currentUser.roles || [this.currentUser.role]) : []; },
 
+  getActiveRole() { return this.currentUser?.activeRole || this.currentUser?.role || 'farmer'; },
+
+  setActiveRole(role) {
+    if (!this.currentUser) return false;
+    const result = AuthSystem.setActiveRole(this.currentUser.id, role);
+    if (result.success) {
+      this.currentUser = DB.getUserById(this.currentUser.id);
+    }
+    return result;
+  },
+
+  addRole(role) {
+    if (!this.currentUser) return false;
+    const result = AuthSystem.addRole(this.currentUser.id, role);
+    if (result.success) {
+      this.currentUser = DB.getUserById(this.currentUser.id);
+    }
+    return result;
+  },
+
+  removeRole(role) {
+    if (!this.currentUser) return false;
+    const result = AuthSystem.removeRole(this.currentUser.id, role);
+    if (result.success) {
+      this.currentUser = DB.getUserById(this.currentUser.id);
+    }
+    return result;
+  },
+
+  getAvailableRolesToAdd() {
+    return this.currentUser ? AuthSystem.getAvailableRolesToAdd(this.currentUser.id) : [];
+  },
+
+  canAccessFeature(feature) {
+    return this.currentUser ? AuthSystem.canAccessFeature(this.currentUser.id, feature) : false;
+  },
+
+  getTrustScore() {
+    return this.currentUser ? DB.getTrustScore(this.currentUser.id) : 0;
+  },
+
+  getTrustLevel() {
+    const score = this.getTrustScore();
+    return DB.getTrustLevel(score);
+  },
+
   updateProfile(data) {
     if (!this.currentUser) return false;
     const updated = DB.updateUser(this.currentUser.id, data);
@@ -126,9 +172,10 @@ const Auth = {
   getDashboardUrl() {
     if (!this.isLoggedIn()) return 'login.html';
     if (this.currentUser.role === 'admin') return 'admin.html';
-    if (this.hasRole('farmer')) return 'dashboard-farmer.html';
-    if (this.hasRole('worker')) return 'dashboard-worker.html';
-    return 'index.html';
+    const activeRole = this.getActiveRole();
+    if (activeRole === 'worker' && this.hasRole('worker')) return 'dashboard-worker.html';
+    if (activeRole === 'farmer' || this.hasRole('farmer') || this.hasRole('cooperative')) return 'dashboard-farmer.html';
+    return 'dashboard-farmer.html';
   },
 
   getProfileCompletion() { return AuthSystem.getProfileCompletion(this.currentUser); }

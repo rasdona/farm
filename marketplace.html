@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Marketplace - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .mkt-category-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+    .mkt-tab{padding:8px 18px;border-radius:var(--radius-full);font-weight:600;font-size:0.85rem;cursor:pointer;border:1.5px solid var(--border);background:var(--bg-alt);transition:var(--transition);display:flex;align-items:center;gap:6px}
+    .mkt-tab:hover{border-color:var(--primary);color:var(--primary)}
+    .mkt-tab.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .mkt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+    .mkt-card{background:var(--surface);border:1px solid var(--border-light);border-radius:var(--radius-md);overflow:hidden;transition:var(--transition);cursor:pointer}
+    .mkt-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px)}
+    .mkt-card-img{height:180px;background:var(--bg-alt);background-size:cover;background-position:center;position:relative}
+    .mkt-card-badge{position:absolute;top:12px;left:12px;padding:4px 10px;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700}
+    .mkt-card-badge.sell{background:var(--primary);color:white}
+    .mkt-card-badge.rent{background:var(--info);color:white}
+    .mkt-card-badge.pre{background:var(--accent);color:#78350f}
+    .mkt-card-body{padding:16px}
+    .mkt-card-price{font-size:1.2rem;font-weight:800;color:var(--primary);margin-bottom:4px}
+    .mkt-card-title{font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mkt-card-meta{display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-secondary);margin-bottom:8px}
+    .mkt-card-seller{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-secondary)}
+    .mkt-card-seller img{width:24px;height:24px;border-radius:50%}
+    .mkt-hero{background:linear-gradient(135deg,var(--primary),var(--primary-dark));padding:48px 0;color:white;text-align:center}
+    .mkt-hero h1{color:white;margin-bottom:8px}
+    .mkt-hero p{color:rgba(255,255,255,0.85);margin-bottom:24px}
+    .mkt-empty{text-align:center;padding:60px 20px}
+    .mkt-empty-icon{font-size:4rem;margin-bottom:16px;opacity:0.5}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height)">
+    <section class="mkt-hero">
+      <div class="container">
+        <h1 style="font-size:2rem">🌾 Marketplace</h1>
+        <p>Buy and sell agricultural products, equipment, and supplies across Nepal</p>
+        <div style="max-width:500px;margin:0 auto;position:relative">
+          <input type="text" id="mktSearch" placeholder="Search products..." style="width:100%;padding:14px 20px 14px 44px;border-radius:var(--radius-full);border:none;font-size:1rem;background:rgba(255,255,255,0.95);color:#0f172a" oninput="Marketplace.filter()">
+          <svg style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-tertiary)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </div>
+      </div>
+    </section>
+    <section style="padding:24px 0;min-height:60vh">
+      <div class="container">
+        <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Marketplace</span></div>
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+          <div>
+            <div class="mkt-category-tabs" id="mktTabs">
+              <div class="mkt-tab active" data-cat="all" onclick="Marketplace.setCategory('all',this)">🛒 All</div>
+              <div class="mkt-tab" data-cat="crops" onclick="Marketplace.setCategory('crops',this)">🌾 Crops</div>
+              <div class="mkt-tab" data-cat="seeds" onclick="Marketplace.setCategory('seeds',this)">🌱 Seeds</div>
+              <div class="mkt-tab" data-cat="dairy" onclick="Marketplace.setCategory('dairy',this)">🥛 Dairy</div>
+              <div class="mkt-tab" data-cat="equipment" onclick="Marketplace.setCategory('equipment',this)">🚜 Equipment</div>
+              <div class="mkt-tab" data-cat="fertilizer" onclick="Marketplace.setCategory('fertilizer',this)">🧪 Fertilizer</div>
+              <div class="mkt-tab" data-cat="other" onclick="Marketplace.setCategory('other',this)">📦 Other</div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <select class="form-select" id="mktSort" style="width:auto;padding:8px 32px 8px 12px;font-size:0.85rem" onchange="Marketplace.filter()">
+              <option value="newest">Newest</option>
+              <option value="price-low">Price: Low → High</option>
+              <option value="price-high">Price: High → Low</option>
+            </select>
+            <button class="btn btn-primary btn-pill" id="mktCreateBtn" style="display:none" onclick="Marketplace.showCreate()">+ Create Listing</button>
+          </div>
+        </div>
+        <div id="mktList" class="mkt-grid"></div>
+        <div id="mktEmpty" class="mkt-empty" style="display:none">
+          <div class="mkt-empty-icon">🏪</div>
+          <h3>No products found</h3>
+          <p class="text-muted mt-2">Try adjusting your search or category filters.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <div class="back-to-top">↑</div>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
+  <script>
+  const Marketplace = {
+    currentCat: 'all',
+    sampleProducts: [
+      { id:'PRD1', name:'Fresh Organic Tomatoes', category:'crops', price:120, unit:'kg', district:'Kathmandu', sellerId:'USR001', description:'Locally grown organic tomatoes from Bhaktapur. Pesticide-free, fresh from the farm.', images:['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=300&fit=crop'], type:'sell', stock:500, createdAt:'2025-07-10T08:00:00Z' },
+      { id:'PRD2', name:'Basmati Rice (Premium)', category:'crops', price:85, unit:'kg', district:'Chitwan', sellerId:'USR002', description:'Premium quality Basmati rice from Terai region. Aged 6 months for best flavor.', images:['https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=300&fit=crop'], type:'sell', stock:2000, createdAt:'2025-07-08T10:00:00Z' },
+      { id:'PRD3', name:'Fresh Cow Milk', category:'dairy', price:80, unit:'litre', district:'Kaski', sellerId:'USR003', description:'Fresh whole milk from our dairy farm in Pokhara. Available daily, delivered warm.', images:['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&h=300&fit=crop'], type:'sell', stock:100, createdAt:'2025-07-12T06:00:00Z' },
+      { id:'PRD4', name:'Hybrid Maize Seeds', category:'seeds', price:350, unit:'kg', district:'Nawalparasi', sellerId:'USR001', description:'High-yield hybrid maize seeds. Germination rate 95%+. Suitable for Terai and mid-hills.', images:['https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=300&fit=crop'], type:'sell', stock:300, createdAt:'2025-07-05T09:00:00Z' },
+      { id:'PRD5', name:'Power Tiller (Kubota)', category:'equipment', price:2500, unit:'day', district:'Bara', sellerId:'USR006', description:'Rent a Kubota power tiller. Excellent condition, well-maintained. Delivery available.', images:['https://images.unsplash.com/photo-1530267981375-f0de937f5f13?w=400&h=300&fit=crop'], type:'rent', stock:1, createdAt:'2025-07-01T08:00:00Z' },
+      { id:'PRD6', name:'Organic Compost Fertilizer', category:'fertilizer', price:25, unit:'kg', district:'Lalitpur', sellerId:'USR002', description:'Premium organic compost. Made from vermicomposting. Safe for all crops.', images:['https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop'], type:'sell', stock:5000, createdAt:'2025-07-09T12:00:00Z' },
+      { id:'PRD7', name:'Fresh Goat Cheese', category:'dairy', price:600, unit:'kg', district:'Gorkha', sellerId:'USR003', description:'Artisan goat cheese made fresh weekly. Rich flavor, perfect for cooking.', images:['https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&h=300&fit=crop'], type:'sell', stock:20, createdAt:'2025-07-11T07:00:00Z' },
+      { id:'PRD8', name:'Wheat Seeds (Local)', category:'seeds', price:60, unit:'kg', district:'Dang', sellerId:'USR001', description:'Traditional local wheat seeds. Well-adapted to mid-hill conditions.', images:['https://images.unsplash.com/photo-1437252611977-07f74518abd7?w=400&h=300&fit=crop'], type:'sell', stock:800, createdAt:'2025-07-06T11:00:00Z' }
+    ],
+
+    getProducts() {
+      try { return DB.getProducts ? DB.getProducts() : this.sampleProducts; } catch(e) { return this.sampleProducts; }
+    },
+
+    init() {
+      App.init();
+      if (Auth.currentUser) document.getElementById('mktCreateBtn').style.display = '';
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get('category') || params.get('cat');
+      if (cat) this.setCategory(cat, document.querySelector(`.mkt-tab[data-cat="${cat}"]`));
+      this.filter();
+    },
+
+    setCategory(cat, el) {
+      this.currentCat = cat;
+      document.querySelectorAll('.mkt-tab').forEach(t => t.classList.remove('active'));
+      if (el) el.classList.add('active');
+      this.filter();
+    },
+
+    filter() {
+      const q = (document.getElementById('mktSearch')?.value || '').toLowerCase();
+      const sort = document.getElementById('mktSort')?.value || 'newest';
+      let products = this.getProducts();
+      if (this.currentCat !== 'all') products = products.filter(p => p.category === this.currentCat);
+      if (q) products = products.filter(p => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.district.toLowerCase().includes(q));
+      if (sort === 'price-low') products.sort((a,b) => a.price - b.price);
+      else if (sort === 'price-high') products.sort((a,b) => b.price - a.price);
+      else products.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      this.render(products);
+    },
+
+    render(products) {
+      const list = document.getElementById('mktList');
+      const empty = document.getElementById('mktEmpty');
+      if (!products.length) { list.innerHTML = ''; empty.style.display = ''; return; }
+      empty.style.display = 'none';
+      list.innerHTML = products.map(p => {
+        const seller = DB.getUserById(p.sellerId);
+        const sellerName = seller ? seller.name.split(' ')[0] : 'Seller';
+        const sellerAvatar = seller ? (seller.avatar || seller.profilePhotoUrl || '') : '';
+        const img = p.images && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&h=300&fit=crop';
+        const badgeClass = p.type === 'rent' ? 'rent' : p.type === 'pre-harvest' ? 'pre' : 'sell';
+        const badgeText = p.type === 'rent' ? 'For Rent' : p.type === 'pre-harvest' ? 'Pre-Harvest' : 'For Sale';
+        const unitText = p.unit === 'day' ? '/day' : '/' + p.unit;
+        return `
+          <div class="mkt-card" onclick="window.location.href='product-detail.html?id=${p.id}'">
+            <div class="mkt-card-img" style="background-image:url(${img})">
+              <span class="mkt-card-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="mkt-card-body">
+              <div class="mkt-card-price">NPR ${p.price.toLocaleString()}<small style="font-size:0.75rem;font-weight:500;color:var(--text-secondary)"> ${unitText}</small></div>
+              <div class="mkt-card-title">${Utils.escapeHtml(p.name)}</div>
+              <div class="mkt-card-meta">
+                <span>📍 ${p.district}</span>
+                <span>📦 ${p.stock || 0} available</span>
+              </div>
+              <div class="mkt-card-seller">
+                ${sellerAvatar ? `<img src="${sellerAvatar}" alt="${sellerName}">` : ''}
+                <span>${sellerName}</span>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    },
+
+    showCreate() {
+      if (!Auth.requireAuth()) return;
+      Utils.toast('Create listing feature coming soon!', 'info');
+    }
+  };
+  Marketplace.init();
+  </script>
+</body>
+</html>

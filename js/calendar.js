@@ -42,7 +42,7 @@ const CalendarView = {
         <div class="calendar-day-num">${day}</div>
         <div class="calendar-events">
           ${dayEvents.slice(0, 3).map(e => {
-            const colorClass = e.type === 'paid' ? 'calendar-event-paid' : e.type === 'arma' ? 'calendar-event-arma' : 'calendar-event-season';
+            const colorClass = e.type === 'paid' ? 'calendar-event-paid' : e.type === 'arma' ? 'calendar-event-arma' : e.type === 'marketplace' ? 'calendar-event-marketplace' : e.type === 'equipment' ? 'calendar-event-equipment' : 'calendar-event-season';
             return `<div class="calendar-event ${colorClass}" title="${Utils.escapeHtml(e.title)}">${e.title.substring(0, 12)}${e.title.length > 12 ? '...' : ''}</div>`;
           }).join('')}
           ${dayEvents.length > 3 ? `<div class="calendar-more">+${dayEvents.length - 3} more</div>` : ''}
@@ -64,8 +64,15 @@ const CalendarView = {
     const month = this.currentDate.getMonth();
     const events = this.getEventsForMonth(year, month);
     const filtered = this.currentFilter === 'all' ? events : events.filter(e => e.type === this.currentFilter);
+    const user = Auth.currentUser;
+    const availability = user ? DB.getAvailabilityInfo(user.id) : null;
 
     const el = document.getElementById('monthEvents');
+    if (availability) {
+      const badge = typeof Weather !== 'undefined' ? Weather.getAvailabilityBadge(availability.status) : null;
+      const badgeHtml = badge ? `<div class="availability-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:${badge.bg};border-radius:var(--radius);font-size:0.85rem"><span style="font-size:1.1rem">${badge.icon}</span><span style="font-weight:600;color:${badge.color}">${badge.text}</span>${availability.nextAvailable ? `<span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary)">Next: ${availability.nextAvailable}</span>` : ''}</div>` : '';
+      el.innerHTML = badgeHtml;
+    }
     if (filtered.length === 0) {
       el.innerHTML = '<p class="text-muted text-center py-4">No events this month</p>';
     } else {
@@ -106,7 +113,9 @@ const CalendarView = {
     document.getElementById('calendarSummary').innerHTML = `
       <div class="flex justify-between mb-2"><span class="text-muted">💰 Paid Jobs:</span><strong>${stats.paid}</strong></div>
       <div class="flex justify-between mb-2"><span class="text-muted">🤝 Arma Parma:</span><strong>${stats.arma}</strong></div>
-      <div class="flex justify-between"><span class="text-muted">🌱 Season Events:</span><strong>${stats.season}</strong></div>
+      <div class="flex justify-between mb-2"><span class="text-muted">🌱 Season Events:</span><strong>${stats.season}</strong></div>
+      ${events.some(e => e.type === 'marketplace') ? `<div class="flex justify-between mb-2"><span class="text-muted">🌾 Marketplace:</span><strong>${events.filter(e => e.type === 'marketplace').length}</strong></div>` : ''}
+      ${events.some(e => e.type === 'equipment') ? `<div class="flex justify-between"><span class="text-muted">🚜 Equipment:</span><strong>${events.filter(e => e.type === 'equipment').length}</strong></div>` : ''}
     `;
   },
 
@@ -146,6 +155,25 @@ const CalendarView = {
         events.push({ date: e.date, title: e.title, type: 'season' });
       });
     });
+
+    if (user) {
+      DB.getPreHarvestBookings().filter(b => b.sellerId === user.id || b.bookings?.some(bk => bk.buyerId === user.id)).forEach(b => {
+        if (b.harvestDate) {
+          const d = new Date(b.harvestDate);
+          if (d.getFullYear() === year && d.getMonth() === month) {
+            events.push({ date: b.harvestDate, title: '🌾 ' + b.crop + ' Harvest', type: 'marketplace', location: b.district });
+          }
+        }
+      });
+      DB.getEquipmentRentals().filter(e => e.ownerId === user.id).forEach(eq => {
+        if (eq.startDate) {
+          const d = new Date(eq.startDate);
+          if (d.getFullYear() === year && d.getMonth() === month) {
+            events.push({ date: eq.startDate, title: '🚜 ' + eq.name, type: 'equipment', location: eq.district });
+          }
+        }
+      });
+    }
 
     return events;
   },

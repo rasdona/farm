@@ -10,6 +10,10 @@ const App = {
     Utils.animateOnScroll();
     this.initScrollEffects();
     this.updateNotificationBadge();
+    if (window.innerWidth <= 768) {
+      this.renderFAB();
+      this.renderMobileHome();
+    }
   },
 
   renderNavbar() {
@@ -24,7 +28,6 @@ const App = {
     const roleMeta = (typeof AUTH_ROLES !== 'undefined') ? AUTH_ROLES : (typeof DB !== 'undefined' ? (DB.getRoles() || []) : []);
     const allRoles = user ? (user.roles || []) : [];
     const activeRoleInfo = roleMeta.find(r => r.id === activeRole) || { icon: '👤', name: activeRole || 'user', nameNe: activeRole || 'user' };
-    const langFlag = T ? (T.lang === 'ne' ? '🇳🇵' : '🇬🇧') : '🇳🇵';
     const langLabel = T ? (T.lang === 'ne' ? 'नेपाली' : 'English') : 'नेपाली';
 
     nav.innerHTML = `
@@ -32,7 +35,7 @@ const App = {
         <div class="container navbar-container">
           <div class="navbar-left">
             <a href="index.html" class="navbar-brand">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
+              <svg width="36" height="36" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
               <span class="navbar-brand-text">AgriConnect</span>
             </a>
           </div>
@@ -55,7 +58,7 @@ const App = {
 
             <div class="lang-switcher" id="navLangSwitcher">
               <button class="lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
-                <span class="lang-flag" id="langFlag">${langFlag}</span>
+                <span class="lang-flag" id="langFlag">🌐</span>
                 <span class="lang-label" id="langLabel">${langLabel}</span>
                 <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -143,8 +146,9 @@ const App = {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
-        <div class="mobile-menu-user">
-          ${user ? `
+
+        ${user ? `
+          <div class="mobile-menu-user">
             <div class="mobile-menu-user-card">
               ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'md')}
               <div>
@@ -162,49 +166,64 @@ const App = {
                 }).join('')}
               </div>
             </div>
-          ` : `
-            <div class="mobile-menu-auth">
-              <a href="login.html" class="btn btn-outline btn-block">${t('nav.login')}</a>
-              <a href="register.html" class="btn btn-primary btn-block">${t('nav.signup')}</a>
+          </div>
+        ` : `
+          <div class="mobile-drawer-welcome">
+            <div class="mobile-drawer-welcome-icon">
+              <svg width="48" height="48" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
             </div>
-          `}
-        </div>
+            <div class="mobile-drawer-welcome-title">${t('drawer.welcome')}</div>
+            <div class="mobile-drawer-welcome-desc">${t('drawer.desc')}</div>
+            <div class="mobile-drawer-auth">
+              <a href="login.html" class="btn btn-primary btn-block btn-lg">${t('drawer.quickLogin')}</a>
+              <a href="register.html" class="btn btn-outline btn-block">${t('drawer.createAccount')}</a>
+            </div>
+            <div class="mobile-drawer-guest">
+              <a href="jobs.html" class="mobile-drawer-guest-link">${t('drawer.browseGuest')}</a>
+            </div>
+          </div>
+        `}
+
         <nav class="mobile-menu-nav">
-          <a href="index.html">
+          <a href="index.html" class="${this.isActive('index') ? 'active' : ''}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             ${t('nav.home')}
           </a>
-          <a href="jobs.html">
+          <a href="jobs.html" class="${this.isActive('jobs') ? 'active' : ''}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             ${t('nav.findWork')}
           </a>
-          <a href="workers.html">
+          <a href="workers.html" class="${this.isActive('workers') ? 'active' : ''}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             ${t('nav.findWorkers')}
           </a>
-          <a href="community.html">
+          <a href="marketplace.html" class="${this.isActive('marketplace') ? 'active' : ''}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            ${t('nav.marketplace')}
+          </a>
+          <a href="community.html" class="${this.isActive('community') ? 'active' : ''}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             ${t('nav.community')}
           </a>
-          <a href="about.html">
+          <a href="about.html" class="${this.isActive('about') ? 'active' : ''}">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             ${t('nav.about')}
           </a>
           ${user ? `
             <div class="mobile-menu-divider"></div>
-            <a href="${Auth.getDashboardUrl()}">
+            <a href="${Auth.getDashboardUrl()}" class="${this.isActive('dashboard') || this.isActive('dashboard-farmer') || this.isActive('dashboard-worker') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
               ${t('nav.dashboard')}
             </a>
-            <a href="chat.html">
+            <a href="chat.html" class="${this.isActive('chat') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               ${t('nav.msgs')}
             </a>
-            <a href="profile.html?id=${user.id}">
+            <a href="profile.html?id=${user.id}" class="${this.isActive('profile') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               ${t('nav.myProfile')}
             </a>
-            <a href="settings.html">
+            <a href="settings.html" class="${this.isActive('settings') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               ${t('nav.settings')}
             </a>
@@ -213,17 +232,7 @@ const App = {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               ${t('nav.logout')}
             </button>
-          ` : `
-            <div class="mobile-menu-divider"></div>
-            <a href="login.html">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-              ${t('nav.login')}
-            </a>
-            <a href="register.html">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-              ${t('nav.signup')}
-            </a>
-          `}
+          ` : ''}
         </nav>
       </div>
       <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="App.toggleMobileMenu()"></div>
@@ -363,32 +372,25 @@ const App = {
     bottomNav.innerHTML = `
       <div class="mobile-bottom-nav-inner">
         <a href="index.html" class="${current === 'index' ? 'active' : ''}">
-          <span class="nav-icon">🏠</span>
+          <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
           <span>${t('bottomNav.home')}</span>
         </a>
         <a href="jobs.html" class="${current === 'jobs' ? 'active' : ''}">
-          <span class="nav-icon">💼</span>
+          <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
           <span>${t('bottomNav.jobs')}</span>
         </a>
         <a href="workers.html" class="${current === 'workers' ? 'active' : ''}">
-          <span class="nav-icon">👷</span>
+          <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
           <span>${t('bottomNav.workers')}</span>
         </a>
+        <a href="marketplace.html" class="${current === 'marketplace' ? 'active' : ''}">
+          <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></span>
+          <span>${t('bottomNav.market')}</span>
+        </a>
         <a href="community.html" class="${current === 'community' ? 'active' : ''}">
-          <span class="nav-icon">💬</span>
+          <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
           <span>${t('nav.community')}</span>
         </a>
-        ${user ? `
-          <a href="chat.html" class="${current === 'chat' ? 'active' : ''}">
-            <span class="nav-icon">✉️</span>
-            <span>${t('nav.msgs')}</span>
-          </a>
-        ` : `
-          <a href="login.html" class="${current === 'login' ? 'active' : ''}">
-            <span class="nav-icon">🔑</span>
-            <span>${t('nav.login')}</span>
-          </a>
-        `}
       </div>
     `;
   },
@@ -397,10 +399,246 @@ const App = {
     const menu = document.getElementById('mobileMenu');
     const overlay = document.getElementById('mobileMenuOverlay');
     const hamburger = document.querySelector('.hamburger');
+    const fab = document.getElementById('mobileFAB');
+    if (fab) fab.classList.remove('open');
     if (menu) menu.classList.toggle('open');
     if (overlay) overlay.classList.toggle('active');
     if (hamburger) hamburger.classList.toggle('active');
     document.body.style.overflow = menu?.classList.contains('open') ? 'hidden' : '';
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // GREETING HELPER
+  // ═══════════════════════════════════════════════════════
+
+  getGreeting() {
+    const h = new Date().getHours();
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
+    if (h < 12) return t('home.greeting.morning');
+    if (h < 17) return t('home.greeting.afternoon');
+    return t('home.greeting.evening');
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // FLOATING ACTION BUTTON (FAB)
+  // ═══════════════════════════════════════════════════════
+
+  renderFAB() {
+    let fab = document.getElementById('mobileFAB');
+    if (!fab) {
+      fab = document.createElement('div');
+      fab.id = 'mobileFAB';
+      fab.className = 'fab-container';
+      document.body.appendChild(fab);
+    }
+    const user = Auth.currentUser;
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
+    const fabActions = user ? [
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>', label: t('fab.requestWork'), href: 'post-job.html', color: '#16a34a' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>', label: t('fab.offerWork'), href: 'jobs.html', color: '#2563eb' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>', label: t('fab.sellProduct'), href: 'marketplace.html?create=1', color: '#7c3aed' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>', label: t('fab.buyProduct'), href: 'marketplace.html', color: '#d97706' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>', label: t('fab.rentEquipment'), href: 'marketplace.html?category=equipment', color: '#ea580c' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', label: t('fab.createArma'), href: 'post-job.html?mode=arma-parma', color: '#059669' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>', label: t('fab.createPost'), href: 'community.html?create=1', color: '#0891b2' },
+    ] : [
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>', label: t('fab.requestWork'), href: 'register.html?role=farmer', color: '#16a34a' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>', label: t('fab.buyProduct'), href: 'marketplace.html', color: '#d97706' },
+      { icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>', label: t('fab.createArma'), href: 'register.html', color: '#059669' },
+    ];
+    fab.innerHTML = `
+      <div class="fab-overlay" id="fabOverlay" onclick="App.toggleFAB()"></div>
+      <div class="fab-actions" id="fabActions">
+        ${fabActions.map((a, i) => `
+          <a href="${a.href}" class="fab-action" style="--fab-delay:${i * 0.04}s; --fab-color:${a.color}">
+            <span class="fab-action-label">${a.label}</span>
+            <span class="fab-action-icon">${a.icon}</span>
+          </a>
+        `).join('')}
+      </div>
+      <button class="fab-trigger" id="fabTrigger" onclick="App.toggleFAB()" aria-label="Quick Actions">
+        <svg class="fab-icon fab-icon-plus" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg class="fab-icon fab-icon-close" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    `;
+  },
+
+  toggleFAB() {
+    const fab = document.getElementById('mobileFAB');
+    if (fab) {
+      fab.classList.toggle('open');
+      document.body.style.overflow = fab.classList.contains('open') ? 'hidden' : '';
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // MOBILE HOME SCREEN
+  // ═══════════════════════════════════════════════════════
+
+  renderMobileHome() {
+    let container = document.getElementById('mobileHomeContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'mobileHomeContainer';
+      container.className = 'mobile-home';
+      const hero = document.querySelector('.hero');
+      const footer = document.querySelector('.footer') || document.getElementById('footer');
+      if (hero && hero.nextElementSibling) {
+        hero.parentNode.insertBefore(container, hero.nextElementSibling);
+      }
+    }
+    const user = Auth.currentUser;
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = T ? (key => T.get(key)) : (key => key);
+    const greeting = this.getGreeting();
+    const weather = typeof Weather !== 'undefined' ? Weather.getWeather(user?.district) : null;
+    const jobs = typeof DB !== 'undefined' ? DB.getJobs().filter(j => j.status === 'active').slice(0, 4) : [];
+    const users = typeof DB !== 'undefined' ? DB.getUsers().filter(u => !u.suspended).slice(0, 6) : [];
+    const products = typeof DB !== 'undefined' && DB.getProducts ? DB.getProducts().slice(0, 3) : [];
+
+    container.innerHTML = `
+      <div class="mobile-home-inner">
+
+        ${!user ? `
+          <div class="mobile-home-hero-section">
+            <div class="mobile-home-greeting">
+              <h1 class="mobile-home-greeting-text">${greeting}!</h1>
+              <p class="mobile-home-greeting-sub">${t('home.connectFarm')}</p>
+            </div>
+            <div class="mobile-home-auth-cards">
+              <a href="register.html?role=farmer" class="mobile-home-auth-card farmer">
+                <div class="mobile-home-auth-card-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div class="mobile-home-auth-card-text">
+                  <strong>${t('footer.regFarmer')}</strong>
+                  <span>${t('home.requestWork')}</span>
+                </div>
+              </a>
+              <a href="register.html?role=worker" class="mobile-home-auth-card worker">
+                <div class="mobile-home-auth-card-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <div class="mobile-home-auth-card-text">
+                  <strong>${t('footer.regWorker')}</strong>
+                  <span>${t('home.findJobs')}</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        ` : `
+          <div class="mobile-home-greeting">
+            <div class="mobile-home-greeting-row">
+              <div>
+                <h1 class="mobile-home-greeting-text">${greeting}, ${user.name.split(' ')[0]}!</h1>
+                <p class="mobile-home-greeting-sub">${t('home.welcomeBack')}</p>
+              </div>
+              <a href="profile.html?id=${user.id}" class="mobile-home-avatar">
+                ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
+              </a>
+            </div>
+          </div>
+        `}
+
+        ${weather ? `
+          <div class="mobile-home-weather-card" onclick="window.location.href='dashboard-${user ? (user.roles && user.roles.includes('worker') ? 'worker' : 'farmer') : 'farmer'}.html'">
+            <div class="mobile-home-weather-main">
+              <span class="mobile-home-weather-icon">${weather.current.icon}</span>
+              <div>
+                <div class="mobile-home-weather-temp">${weather.current.temp}°C</div>
+                <div class="mobile-home-weather-condition">${weather.current.condition}</div>
+              </div>
+            </div>
+            <div class="mobile-home-weather-details">
+              <span>💧 ${weather.current.humidity}%</span>
+              <span>💨 ${weather.current.wind} km/h</span>
+              <span>🌧️ ${weather.current.rain}%</span>
+            </div>
+          </div>
+        ` : ''}
+
+        ${user ? `
+          <div class="mobile-home-section">
+            <div class="mobile-home-section-header">
+              <h3>${t('home.todaySchedule')}</h3>
+            </div>
+            <div class="mobile-home-schedule-card">
+              <div class="mobile-home-schedule-empty">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-tertiary)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <p>${t('home.noSchedule')}</p>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="mobile-home-section">
+          <div class="mobile-home-section-header">
+            <h3>${t('home.trendingJobs')}</h3>
+            <a href="jobs.html" class="mobile-home-view-all">${t('home.viewAll')} →</a>
+          </div>
+          <div class="mobile-home-jobs-scroll">
+            ${jobs.length ? jobs.map(job => `
+              <a href="job-detail.html?id=${job.id}" class="mobile-home-job-card">
+                <div class="mobile-home-job-title">${Utils.escapeHtml(job.title)}</div>
+                <div class="mobile-home-job-meta">
+                  <span>📍 ${job.district}</span>
+                  <span>💰 ${(job.wage?.daily || 0).toLocaleString()}/day</span>
+                </div>
+                <div class="mobile-home-job-skills">
+                  ${(job.requiredSkills || []).slice(0, 2).map(s => `<span class="badge badge-primary">${s}</span>`).join('')}
+                </div>
+              </a>
+            `).join('') : '<div class="mobile-home-empty"><p>No jobs available yet</p></div>'}
+          </div>
+        </div>
+
+        <div class="mobile-home-section">
+          <div class="mobile-home-section-header">
+            <h3>${t('home.nearbyUsers')}</h3>
+            <a href="workers.html" class="mobile-home-view-all">${t('home.viewAll')} →</a>
+          </div>
+          <div class="mobile-home-users-scroll">
+            ${users.slice(0, 6).map(u => `
+              <a href="worker-profile.html?id=${u.id}" class="mobile-home-user-card">
+                ${Utils.avatarHTML(Utils.getUserPhoto(u), u.name, 'sm')}
+                <div class="mobile-home-user-name">${u.name.split(' ')[0]}</div>
+                <div class="mobile-home-user-district">📍 ${u.district || ''}</div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+
+        ${products.length ? `
+          <div class="mobile-home-section">
+            <div class="mobile-home-section-header">
+              <h3>${t('home.marketplaceHighlights')}</h3>
+              <a href="marketplace.html" class="mobile-home-view-all">${t('home.viewAll')} →</a>
+            </div>
+            <div class="mobile-home-products-scroll">
+              ${products.map(p => `
+                <a href="product-detail.html?id=${p.id}" class="mobile-home-product-card">
+                  <div class="mobile-home-product-img" style="background-image:url(${p.images && p.images[0] ? p.images[0] : ''})"></div>
+                  <div class="mobile-home-product-name">${Utils.escapeHtml(p.name)}</div>
+                  <div class="mobile-home-product-price">NPR ${(p.price || 0).toLocaleString()}</div>
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${!user ? `
+          <div class="mobile-home-cta-section">
+            <div class="mobile-home-cta-card">
+              <h3>${t('home.getStarted')}</h3>
+              <p>${t('home.connectFarm')}</p>
+              <a href="register.html" class="btn btn-primary btn-lg btn-block">${t('nav.signup')}</a>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
   },
 
   initScrollEffects() {
@@ -414,6 +652,11 @@ const App = {
       document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
         if (!d.parentElement.contains(e.target)) d.classList.remove('show');
       });
+      const fab = document.getElementById('mobileFAB');
+      if (fab && fab.classList.contains('open') && !fab.contains(e.target)) {
+        fab.classList.remove('open');
+        document.body.style.overflow = '';
+      }
     });
   },
 
@@ -531,6 +774,10 @@ const App = {
     this.renderNavbar();
     this.renderFooter();
     this.renderMobileBottomNav();
+    if (window.innerWidth <= 768) {
+      this.renderFAB();
+      this.renderMobileHome();
+    }
     const dropdown = document.getElementById('langDropdown');
     if (dropdown) dropdown.classList.remove('show');
   },
@@ -539,7 +786,7 @@ const App = {
     if (typeof I18N !== 'undefined') I18N.lang = lang;
     const flagEl = document.getElementById('langFlag');
     const labelEl = document.getElementById('langLabel');
-    if (flagEl) flagEl.textContent = lang === 'ne' ? '🇳🇵' : '🇬🇧';
+    if (flagEl) flagEl.textContent = '🌐';
     if (labelEl) labelEl.textContent = lang === 'ne' ? 'नेपाली' : 'English';
 
     // Update all elements with data-ne / data-en attributes

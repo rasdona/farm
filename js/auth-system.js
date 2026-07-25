@@ -16,7 +16,7 @@ const AuthSystem = {
     if (!/[0-9]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain a number' });
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) errors.push({ field: 'password', message: 'Password must contain special character' });
     if (data.password !== data.confirmPassword) errors.push({ field: 'confirmPassword', message: 'Passwords do not match' });
-    if (!data.roles || data.roles.length === 0) errors.push({ field: 'roles', message: 'Select at least one role' });
+    if (data.roles && data.roles.length > 0) { /* roles optional — anyone can register */ }
     if (!data.province) errors.push({ field: 'province', message: 'Select province' });
     if (!data.district) errors.push({ field: 'district', message: 'Select district' });
     return errors;
@@ -43,11 +43,12 @@ const AuthSystem = {
     console.log('[Registration] Creating user via Supabase Auth...');
 
     // Create user in Supabase Auth
+    const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
     const { data: authData, error: authError } = await SupabaseAuth.signUp(email, data.password, {
       full_name: data.name.trim(),
       mobile_number: phone,
-      role: data.roles[0],
-      roles: JSON.stringify(data.roles)
+      role: userRoles[0],
+      roles: JSON.stringify(userRoles)
     });
 
     if (authError) {
@@ -69,8 +70,8 @@ const AuthSystem = {
       user_id: authData.user.id,
       full_name: data.name.trim(),
       mobile_number: phone,
-      role: data.roles[0],
-      roles: data.roles,
+      role: userRoles[0],
+      roles: userRoles,
       province: data.province || '',
       district: data.district || '',
       municipality: data.municipality || '',
@@ -94,8 +95,9 @@ const AuthSystem = {
       name: data.name.trim(),
       phone: phone,
       email: email,
-      roles: data.roles,
-      role: data.roles[0],
+      roles: userRoles,
+      role: userRoles[0],
+      activeRole: userRoles[0],
       province: data.province || '',
       district: data.district || '',
       municipality: data.municipality || '',
@@ -340,7 +342,97 @@ const AuthSystem = {
   },
 
   // ═══════════════════════════════════════════════════════
-  // UTILITIES
+  // DYNAMIC ROLE MANAGEMENT
+  // ═══════════════════════════════════════════════════════
+
+  setActiveRole(userId, role) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    if (!user.roles || !user.roles.includes(role)) {
+      return { success: false, message: 'You do not have this role. Add it first.' };
+    }
+    DB.updateUser(userId, { activeRole: role });
+    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
+    if (currentUser && currentUser.id === userId) {
+      currentUser.activeRole = role;
+      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
+    }
+    return { success: true, activeRole: role };
+  },
+
+  getActiveRole(userId) {
+    const user = DB.getUserById(userId);
+    return user?.activeRole || user?.role || 'farmer';
+  },
+
+  addRole(userId, role) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    if (!user.roles) user.roles = [];
+    if (user.roles.includes(role)) return { success: false, message: 'You already have this role' };
+    user.roles.push(role);
+    DB.updateUser(userId, { roles: user.roles });
+    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
+    if (currentUser && currentUser.id === userId) {
+      currentUser.roles = user.roles;
+      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
+    }
+    return { success: true, roles: user.roles };
+  },
+
+  removeRole(userId, role) {
+    const user = DB.getUserById(userId);
+    if (!user) return { success: false, message: 'User not found' };
+    if (!user.roles || !user.roles.includes(role)) return { success: false, message: 'You do not have this role' };
+    if (user.roles.length <= 1) return { success: false, message: 'Cannot remove your only role. Add another role first.' };
+    user.roles = user.roles.filter(r => r !== role);
+    const newActive = (user.activeRole === role) ? user.roles[0] : user.activeRole;
+    DB.updateUser(userId, { roles: user.roles, activeRole: newActive });
+    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
+    if (currentUser && currentUser.id === userId) {
+      currentUser.roles = user.roles;
+      currentUser.activeRole = newActive;
+      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
+    }
+    return { success: true, roles: user.roles, activeRole: newActive };
+  },
+
+  getUserRoles(userId) {
+    const user = DB.getUserById(userId);
+    if (!user) return [];
+    const allRoles = AUTH_ROLES || DB.getRoles() || [];
+    return (user.roles || []).map(roleId => {
+      const meta = allRoles.find(r => r.id === roleId);
+      return meta || { id: roleId, name: roleId, icon: '👤' };
+    });
+  },
+
+  getAvailableRolesToAdd(userId) {
+    const user = DB.getUserById(userId);
+    if (!user) return [];
+    const allRoles = AUTH_ROLES || DB.getRoles() || [];
+    const userRoles = user.roles || [];
+    return allRoles.filter(r => !userRoles.includes(r.id));
+  },
+
+  canAccessFeature(userId, feature) {
+    const role = this.getActiveRole(userId);
+    const features = {
+      'post-jobs': ['farmer', 'cooperative'],
+      'apply-jobs': ['worker'],
+      'create-listing': ['seller', 'farmer', 'cooperative'],
+      'buy-products': ['buyer', 'farmer', 'worker'],
+      'rent-equipment': ['buyer', 'farmer', 'worker'],
+      'list-equipment': ['equipment_owner', 'farmer'],
+      'provide-transport': ['transport_provider', 'worker'],
+      'arma-parma': ['farmer', 'cooperative'],
+      'manage-farm': ['farmer', 'cooperative'],
+      'dashboard-farmer': ['farmer', 'cooperative'],
+      'dashboard-worker': ['worker', 'farmer'],
+    };
+    return features[feature]?.includes(role) || false;
+  },
+
   // ═══════════════════════════════════════════════════════
 
   // ═══════════════════════════════════════════════════════

@@ -1,4 +1,253 @@
 const Dashboard = {
+  renderSmartDashboard() {
+    const user = Auth.currentUser;
+    if (!user) { window.location.href = 'login.html'; return; }
+    const activeRole = Auth.getActiveRole();
+    const allRoles = user.roles || [user.role || 'farmer'];
+    const trustScore = DB.getTrustScore(user.id);
+    const trustLevel = DB.getTrustLevel(trustScore);
+    const availability = DB.getAvailabilityInfo(user.id);
+    const farmProfile = DB.getFarmProfileByUser(user.id);
+    const userDistrict = user.district || 'Kathmandu';
+    const weather = typeof Weather !== 'undefined' ? Weather.getWeather(userDistrict) : null;
+    const T = typeof I18N !== 'undefined' ? I18N : null;
+    const t = (key) => T ? T.get(key) : key;
+    const today = new Date().toISOString().split('T')[0];
+    const calendarEvents = DB.getCalendarEventsByUser(user.id).filter(e => e.date === today);
+    const creditInfo = DB.getLaborCreditsByUser(user.id);
+    const notifs = DB.getNotifications(user.id).filter(n => !n.read).slice(0, 5);
+    const chats = DB.getChatsByUser(user.id);
+    const recentChats = chats.slice(0, 3);
+    const roleMeta = (typeof AUTH_ROLES !== 'undefined') ? AUTH_ROLES : (typeof DB !== 'undefined' ? (DB.getRoles() || []) : []);
+    const activeRoleInfo = roleMeta.find(r => r.id === activeRole) || { icon: '👤', name: activeRole, nameNe: activeRole };
+
+    const content = document.getElementById('dashboardContent');
+    if (!content) return;
+
+    content.innerHTML = `
+      <div class="dashboard-header">
+        <div>
+          <h1 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            Welcome back, ${user.name.split(' ')[0]}!
+            <span style="font-size:0.85rem;font-weight:500;padding:4px 12px;border-radius:16px;background:${trustLevel.color}20;color:${trustLevel.color}">${trustLevel.icon} ${trustLevel.level} — ${trustScore}/100</span>
+          </h1>
+          <div class="breadcrumb mt-2"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Smart Dashboard</span></div>
+        </div>
+        <div class="dashboard-header-actions">
+          <a href="profile.html?id=${user.id}" class="btn btn-outline">👤 Profile</a>
+        </div>
+      </div>
+      ${this.renderProfileCompletion(user)}
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+        ${this._statCard(activeRoleInfo.icon, activeRoleInfo.name, 'var(--primary)', 'var(--primary-bg)')}
+        ${this._statCard('📅', calendarEvents.length + ' today', '#3b82f6', '#dbeafe')}
+        ${this._statCard('💰', 'NPR ' + (creditInfo.balance || 0), '#16a34a', '#dcfce7')}
+        ${this._statCard('⭐', trustScore + '/100', trustLevel.color, trustLevel.color + '15')}
+      </div>
+      <div class="dashboard-grid-sidebar">
+        <div>
+          ${availability.status !== 'available' ? `
+          <div class="dashboard-card" style="border-left:4px solid ${availability.status === 'busy' ? '#dc2626' : '#ca8a04'}">
+            <div class="dashboard-card-body" style="display:flex;align-items:center;gap:12px">
+              ${Weather.renderAvailabilityBadge(availability.status)}
+              <span style="font-size:0.85rem;color:var(--text-secondary)">${availability.nextAvailable ? `Available from ${availability.nextAvailable}` : 'Busy today'}</span>
+              <a href="calendar.html" class="btn btn-ghost btn-sm" style="margin-left:auto">📅 Manage</a>
+            </div>
+          </div>` : ''}
+          ${activeRole === 'farmer' || activeRole === 'cooperative' ? this._farmerWidget(user) : ''}
+          ${activeRole === 'worker' ? this._workerWidget(user) : ''}
+          ${activeRole === 'seller' || activeRole === 'farmer' ? this._marketplaceWidget(user) : ''}
+          ${activeRole === 'equipment_owner' || activeRole === 'farmer' ? this._equipmentWidget(user) : ''}
+          ${activeRole === 'transport_provider' ? this._transportWidget(user) : ''}
+          <div class="dashboard-card">
+            <div class="dashboard-card-header"><h3>📅 ${t('eco.todaySchedule')}</h3><a href="calendar.html" class="btn btn-ghost btn-sm">Full View</a></div>
+            <div class="dashboard-card-body" id="dashboardCalendar"></div>
+          </div>
+        </div>
+        <div>
+          ${weather ? `
+          <div class="dashboard-card mb-4" id="weatherWidgetContainer">
+            <div class="dashboard-card-header"><h3>🌤️ ${t('eco.weather')} — ${userDistrict}</h3></div>
+            <div class="dashboard-card-body" id="dashboardWeather"></div>
+          </div>` : ''}
+          <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header"><h3>⚡ Quick Actions</h3></div>
+            <div class="dashboard-card-body">
+              <div class="quick-actions">
+                ${this._quickActionsForRole(activeRole).map(qa => `<a href="${qa.href}" class="quick-action"><div class="icon">${qa.icon}</div><div class="label">${qa.label}</div></a>`).join('')}
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header"><h3>💬 ${t('nav.msgs')}</h3><a href="chat.html" class="btn btn-ghost btn-sm">All</a></div>
+            <div class="dashboard-card-body">
+              ${recentChats.length ? recentChats.map(c => {
+                const otherId = c.participants?.find(id => id !== user.id);
+                const other = otherId ? DB.getUserById(otherId) : null;
+                const lastMsg = DB.getMessages().filter(m => m.chatId === c.id).pop();
+                return `<div class="flex items-center gap-3 p-2 hover-lift" style="border-bottom:1px solid var(--border-light);border-radius:var(--radius);cursor:pointer" onclick="window.location.href='chat.html?user=${otherId}'">
+                  ${Utils.avatarHTML(Utils.getUserPhoto(other), other?.name || '?', 'sm')}
+                  <div class="flex-1"><div class="font-semibold text-sm">${other?.name || 'Unknown'}</div><div class="text-xs text-muted">${lastMsg ? Utils.truncate(lastMsg.text, 40) : 'No messages'}</div></div>
+                </div>`;
+              }).join('') : '<p class="text-muted text-center py-3">No conversations yet</p>'}
+            </div>
+          </div>
+          ${notifs.length ? `
+          <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header"><h3>🔔 ${t('nav.notifTitle')}</h3><button class="btn btn-ghost btn-sm" onclick="App.markAllRead();location.reload()">Mark all read</button></div>
+            <div class="dashboard-card-body">
+              ${notifs.map(n => `
+                <div class="activity-item">
+                  <div class="activity-icon" style="background:var(--primary-100);color:var(--primary)">${App.getNotifIcon(n.type)}</div>
+                  <div><div class="activity-text">${n.text}</div><div class="activity-time">${Utils.formatTime(n.createdAt)}</div></div>
+                </div>
+              `).join('')}
+            </div>
+          </div>` : ''}
+          <div class="dashboard-card">
+            <div class="dashboard-card-header"><h3>📊 ${t('eco.trustScore')}</h3></div>
+            <div class="dashboard-card-body">
+              <div style="text-align:center;padding:16px">
+                <div style="font-size:3rem;line-height:1">${trustLevel.icon}</div>
+                <div style="font-size:2rem;font-weight:700;color:${trustLevel.color};margin:8px 0">${trustScore}</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px">${trustLevel.level} Level</div>
+                <div style="width:100%;height:8px;background:var(--bg-alt);border-radius:4px;overflow:hidden">
+                  <div style="width:${trustScore}%;height:100%;background:${trustLevel.color};border-radius:4px;transition:width 0.5s"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      this.renderMiniCalendar();
+      if (weather && typeof Weather !== 'undefined') {
+        Weather.renderWidget('dashboardWeather', userDistrict);
+      }
+    }, 50);
+  },
+
+  _statCard(icon, label, color, bg) {
+    return `<div class="stat-card hover-lift" style="background:${bg || 'var(--bg-card)'}"><div class="icon" style="color:${color}">${icon}</div><div><div class="label" style="font-size:0.8rem">${label}</div></div></div>`;
+  },
+
+  _farmerWidget(user) {
+    const jobs = DB.getJobsByFarmer(user.id);
+    const activeJobs = jobs.filter(j => j.status === 'active');
+    const totalApps = jobs.reduce((sum, j) => sum + DB.getApplicationsByJob(j.id).length, 0);
+    return `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>🌾 My Farm Activity</h3><a href="post-job.html" class="btn btn-primary btn-sm">+ Post Job</a></div>
+        <div class="dashboard-card-body">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">
+            ${this._statCard('📋', jobs.length + ' Total Jobs', '#3b82f6', '#dbeafe')}
+            ${this._statCard('✅', activeJobs.length + ' Active', '#16a34a', '#dcfce7')}
+            ${this._statCard('📥', totalApps + ' Applications', '#f59e0b', '#fef3c7')}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _workerWidget(user) {
+    const applications = DB.getApplicationsByWorker(user.id);
+    const pending = applications.filter(a => a.status === 'pending');
+    const accepted = applications.filter(a => a.status === 'accepted');
+    return `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>👷 My Applications</h3><a href="jobs.html" class="btn btn-primary btn-sm">Find Jobs</a></div>
+        <div class="dashboard-card-body">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);gap:12px">
+            ${this._statCard('📋', applications.length + ' Total', '#3b82f6', '#dbeafe')}
+            ${this._statCard('⏳', pending.length + ' Pending', '#f59e0b', '#fef3c7')}
+            ${this._statCard('✅', accepted.length + ' Accepted', '#16a34a', '#dcfce7')}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _marketplaceWidget(user) {
+    const listings = DB.getListings ? DB.getListings().filter(l => l.userId === user.id) : [];
+    return `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>🏷️ Marketplace</h3><a href="marketplace.html" class="btn btn-primary btn-sm">View All</a></div>
+        <div class="dashboard-card-body">
+          <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">
+            ${this._statCard('📦', listings.length + ' Listings', '#8b5cf6', '#ede9fe')}
+            ${this._statCard('🛒', '0 Sales', '#16a34a', '#dcfce7')}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _equipmentWidget(user) {
+    const equipment = DB.getEquipmentByOwner(user.id);
+    return `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>🚜 Equipment</h3><a href="marketplace.html?category=equipment" class="btn btn-primary btn-sm">Manage</a></div>
+        <div class="dashboard-card-body">
+          <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">
+            ${this._statCard('🚜', equipment.length + ' Listed', '#d97706', '#fef3c7')}
+            ${this._statCard('✅', equipment.filter(e => e.available).length + ' Available', '#16a34a', '#dcfce7')}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _transportWidget(user) {
+    const vehicles = DB.getTransportByProvider(user.id);
+    return `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>🚛 Transport</h3><a href="marketplace.html?category=transport" class="btn btn-primary btn-sm">Manage</a></div>
+        <div class="dashboard-card-body">
+          <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:12px">
+            ${this._statCard('🚛', vehicles.length + ' Vehicles', '#3b82f6', '#dbeafe')}
+            ${this._statCard('✅', vehicles.filter(v => v.available).length + ' Available', '#16a34a', '#dcfce7')}
+          </div>
+        </div>
+      </div>`;
+  },
+
+  _quickActionsForRole(role) {
+    const base = [
+      { icon: '📅', label: 'Calendar', href: 'calendar.html' },
+      { icon: '💬', label: 'Messages', href: 'chat.html' },
+      { icon: '👥', label: 'Community', href: 'community.html' },
+      { icon: '⚙️', label: 'Settings', href: 'settings.html' },
+    ];
+    const roleActions = {
+      farmer: [
+        { icon: '📝', label: 'Post Job', href: 'post-job.html' },
+        { icon: '🔍', label: 'Find Workers', href: 'workers.html' },
+        { icon: '🤝', label: 'Arma Parma', href: 'jobs.html?mode=arma-parma' },
+        { icon: '🌾', label: 'Farm Profile', href: 'settings.html#farm' },
+        { icon: '📦', label: 'Pre-Harvest', href: 'marketplace.html?mode=pre-harvest' },
+        { icon: '🚜', label: 'Equipment', href: 'marketplace.html?category=equipment' },
+      ],
+      worker: [
+        { icon: '🔍', label: 'Find Jobs', href: 'jobs.html' },
+        { icon: '🤝', label: 'Arma Parma', href: 'jobs.html?mode=arma-parma' },
+        { icon: '🚛', label: 'Transport', href: 'marketplace.html?category=transport' },
+      ],
+      seller: [
+        { icon: '📦', label: 'My Listings', href: 'marketplace.html?mine=true' },
+        { icon: '🏷️', label: 'Create Listing', href: 'marketplace.html?create=true' },
+      ],
+      buyer: [
+        { icon: '🛒', label: 'Browse', href: 'marketplace.html' },
+        { icon: '📦', label: 'Pre-Harvest', href: 'marketplace.html?mode=pre-harvest' },
+      ],
+      equipment_owner: [
+        { icon: '🚜', label: 'My Equipment', href: 'marketplace.html?category=equipment&mine=true' },
+        { icon: '➕', label: 'List Equipment', href: 'marketplace.html?category=equipment&create=true' },
+      ],
+      transport_provider: [
+        { icon: '🚛', label: 'My Vehicles', href: 'marketplace.html?category=transport&mine=true' },
+        { icon: '➕', label: 'List Vehicle', href: 'marketplace.html?category=transport&create=true' },
+      ],
+    };
+    return [...(roleActions[role] || []), ...base];
+  },
   renderFarmerDashboard() {
     if (!Auth.requireRole('farmer')) return;
     const user = Auth.currentUser;

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Product Details - AgriConnect Nepal</title>
+  <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .pd-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:32px 0}
+    .pd-gallery{border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-alt);position:relative}
+    .pd-main-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+    .pd-thumbs{display:flex;gap:8px;margin-top:12px}
+    .pd-thumb{width:72px;height:56px;border-radius:var(--radius-sm);object-fit:cover;border:2px solid transparent;cursor:pointer;transition:var(--transition)}
+    .pd-thumb.active,.pd-thumb:hover{border-color:var(--primary)}
+    .pd-info{display:flex;flex-direction:column;gap:16px}
+    .pd-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:var(--radius-full);font-size:0.75rem;font-weight:700;width:fit-content}
+    .pd-badge.sell{background:#dcfce7;color:var(--primary)}
+    .pd-badge.rent{background:#dbeafe;color:var(--info)}
+    .pd-price{font-size:2rem;font-weight:800;color:var(--primary)}
+    .pd-title{font-size:1.5rem;font-weight:700;color:var(--text)}
+    .pd-desc{color:var(--text-secondary);line-height:1.6}
+    .pd-specs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+    .pd-spec{background:var(--bg-alt);padding:12px 16px;border-radius:var(--radius-sm)}
+    .pd-spec-label{font-size:0.75rem;color:var(--text-tertiary);margin-bottom:2px}
+    .pd-spec-value{font-weight:600;color:var(--text);font-size:0.9rem}
+    .pd-seller{display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-alt);border-radius:var(--radius-md)}
+    .pd-seller img{width:48px;height:48px;border-radius:50%;object-fit:cover}
+    .pd-actions{display:flex;gap:12px;margin-top:8px}
+    .pd-actions .btn{flex:1}
+    @media(max-width:768px){.pd-layout{grid-template-columns:1fr;gap:24px;padding:20px 0}.pd-price{font-size:1.5rem}.pd-actions{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <header id="navbar" class="navbar"></header>
+  <main style="margin-top:var(--navbar-height)">
+    <section style="padding:20px 0">
+      <div class="container">
+        <div class="breadcrumb" id="pdBreadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="marketplace.html">Marketplace</a><span class="separator">/</span><span class="current">Product</span></div>
+        <div id="pdContent" style="display:none">
+          <div class="pd-layout">
+            <div class="pd-gallery">
+              <img class="pd-main-img" id="pdMainImg" src="" alt="">
+              <div class="pd-thumbs" id="pdThumbs"></div>
+            </div>
+            <div class="pd-info">
+              <div class="pd-badge" id="pdBadge"></div>
+              <h1 class="pd-title" id="pdTitle"></h1>
+              <div class="pd-price" id="pdPrice"></div>
+              <p class="pd-desc" id="pdDesc"></p>
+              <div class="pd-specs" id="pdSpecs"></div>
+              <div class="pd-seller" id="pdSeller"></div>
+              <div class="pd-actions">
+                <button class="btn btn-primary btn-lg" id="pdContact" onclick="ProductDetail.contact()">💬 Contact Seller</button>
+                <button class="btn btn-outline btn-lg" id="pdFavorite" onclick="ProductDetail.toggleFav()">♡ Save</button>
+              </div>
+            </div>
+          </div>
+          <section style="padding:40px 0">
+            <div class="container">
+              <h2 class="section-title">Similar Products</h2>
+              <div id="pdRelated" class="mkt-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px"></div>
+            </div>
+          </section>
+        </div>
+        <div id="pdNotFound" class="mkt-empty" style="display:none;padding:60px 20px;text-align:center">
+          <div style="font-size:4rem;margin-bottom:16px;opacity:0.5">🔍</div>
+          <h3>Product not found</h3>
+          <p class="text-muted mt-2">This product may have been removed or doesn't exist.</p>
+          <a href="marketplace.html" class="btn btn-primary btn-pill mt-4">← Back to Marketplace</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer id="footer" class="footer"></footer>
+  <div class="back-to-top">↑</div>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
+  <script>
+  const ProductDetail = {
+    sampleProducts: [
+      { id:'PRD1', name:'Fresh Organic Tomatoes', category:'crops', price:120, unit:'kg', district:'Kathmandu', sellerId:'USR001', description:'Locally grown organic tomatoes from Bhaktapur. Pesticide-free, fresh from the farm.', images:['https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&h=450&fit=crop','https://images.unsplash.com/photo-1561155707-3f9e40f6a489?w=600&h=450&fit=crop'], type:'sell', stock:500, createdAt:'2025-07-10T08:00:00Z' },
+      { id:'PRD2', name:'Basmati Rice (Premium)', category:'crops', price:85, unit:'kg', district:'Chitwan', sellerId:'USR002', description:'Premium quality Basmati rice from Terai region. Aged 6 months for best flavor.', images:['https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&h=450&fit=crop'], type:'sell', stock:2000, createdAt:'2025-07-08T10:00:00Z' },
+      { id:'PRD3', name:'Fresh Cow Milk', category:'dairy', price:80, unit:'litre', district:'Kaski', sellerId:'USR003', description:'Fresh whole milk from our dairy farm in Pokhara. Available daily, delivered warm.', images:['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&h=450&fit=crop'], type:'sell', stock:100, createdAt:'2025-07-12T06:00:00Z' },
+      { id:'PRD4', name:'Hybrid Maize Seeds', category:'seeds', price:350, unit:'kg', district:'Nawalparasi', sellerId:'USR001', description:'High-yield hybrid maize seeds. Germination rate 95%+. Suitable for Terai and mid-hills.', images:['https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600&h=450&fit=crop'], type:'sell', stock:300, createdAt:'2025-07-05T09:00:00Z' },
+      { id:'PRD5', name:'Power Tiller (Kubota)', category:'equipment', price:2500, unit:'day', district:'Bara', sellerId:'USR006', description:'Rent a Kubota power tiller. Excellent condition, well-maintained. Delivery available.', images:['https://images.unsplash.com/photo-1530267981375-f0de937f5f13?w=600&h=450&fit=crop'], type:'rent', stock:1, createdAt:'2025-07-01T08:00:00Z' },
+      { id:'PRD6', name:'Organic Compost Fertilizer', category:'fertilizer', price:25, unit:'kg', district:'Lalitpur', sellerId:'USR002', description:'Premium organic compost. Made from vermicomposting. Safe for all crops.', images:['https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&h=450&fit=crop'], type:'sell', stock:5000, createdAt:'2025-07-09T12:00:00Z' },
+      { id:'PRD7', name:'Fresh Goat Cheese', category:'dairy', price:600, unit:'kg', district:'Gorkha', sellerId:'USR003', description:'Artisan goat cheese made fresh weekly. Rich flavor, perfect for cooking.', images:['https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&h=450&fit=crop'], type:'sell', stock:20, createdAt:'2025-07-11T07:00:00Z' },
+      { id:'PRD8', name:'Wheat Seeds (Local)', category:'seeds', price:60, unit:'kg', district:'Dang', sellerId:'USR001', description:'Traditional local wheat seeds. Well-adapted to mid-hill conditions.', images:['https://images.unsplash.com/photo-1437252611977-07f74518abd7?w=600&h=450&fit=crop'], type:'sell', stock:800, createdAt:'2025-07-06T11:00:00Z' }
+    ],
+
+    getProducts() {
+      try { return DB.getProducts ? DB.getProducts() : this.sampleProducts; } catch(e) { return this.sampleProducts; }
+    },
+
+    init() {
+      App.init();
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) { this.showNotFound(); return; }
+      const product = this.getProducts().find(p => p.id === id);
+      if (!product) { this.showNotFound(); return; }
+      this.renderProduct(product);
+      this.renderRelated(product);
+    },
+
+    showNotFound() {
+      document.getElementById('pdNotFound').style.display = '';
+      document.getElementById('pdContent').style.display = 'none';
+    },
+
+    renderProduct(p) {
+      document.getElementById('pdContent').style.display = '';
+      const img = p.images && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=450&fit=crop';
+      document.getElementById('pdMainImg').src = img;
+      document.getElementById('pdMainImg').alt = p.name;
+      document.title = p.name + ' - AgriConnect Nepal';
+      const badgeEl = document.getElementById('pdBadge');
+      badgeEl.className = 'pd-badge ' + (p.type === 'rent' ? 'rent' : 'sell');
+      badgeEl.textContent = p.type === 'rent' ? '🚜 For Rent' : '🏷️ For Sale';
+      document.getElementById('pdTitle').textContent = p.name;
+      const unitText = p.unit === 'day' ? '/day' : '/' + p.unit;
+      document.getElementById('pdPrice').textContent = 'NPR ' + p.price.toLocaleString() + ' ' + unitText;
+      document.getElementById('pdDesc').textContent = p.description;
+      const specs = [
+        { label: 'Category', value: p.category.charAt(0).toUpperCase() + p.category.slice(1) },
+        { label: 'District', value: p.district },
+        { label: 'Available', value: (p.stock || 0) + ' ' + p.unit + 's' },
+        { label: 'Listed', value: new Date(p.createdAt).toLocaleDateString() }
+      ];
+      document.getElementById('pdSpecs').innerHTML = specs.map(s =>
+        '<div class="pd-spec"><div class="pd-spec-label">' + s.label + '</div><div class="pd-spec-value">' + s.value + '</div></div>'
+      ).join('');
+      const seller = DB.getUserById(p.sellerId);
+      const sellerName = seller ? seller.name : 'Seller';
+      const sellerAvatar = seller ? (seller.avatar || seller.profilePhotoUrl || '') : '';
+      const sellerDistrict = seller ? (seller.district || '') : '';
+      document.getElementById('pdSeller').innerHTML =
+        (sellerAvatar ? '<img src="' + sellerAvatar + '" alt="' + sellerName + '">' : '') +
+        '<div><div style="font-weight:600">' + sellerName + '</div><div class="text-muted" style="font-size:0.85rem">📍 ' + sellerDistrict + '</div></div>';
+      if (p.images && p.images.length > 1) {
+        document.getElementById('pdThumbs').innerHTML = p.images.map((im, i) =>
+          '<img class="pd-thumb ' + (i === 0 ? 'active' : '') + '" src="' + im + '" onclick="ProductDetail.switchImg(this,\'' + im + '\')">'
+        ).join('');
+      }
+      const breadcrumb = document.getElementById('pdBreadcrumb');
+      const cat = p.category;
+      breadcrumb.innerHTML = '<a href="index.html">Home</a><span class="separator">/</span><a href="marketplace.html">Marketplace</a><span class="separator">/</span><a href="marketplace.html?category=' + cat + '">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</a><span class="separator">/</span><span class="current">' + Utils.escapeHtml(p.name) + '</span>';
+    },
+
+    switchImg(thumb, src) {
+      document.getElementById('pdMainImg').src = src;
+      document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
+      thumb.classList.add('active');
+    },
+
+    renderRelated(current) {
+      const related = this.getProducts().filter(p => p.id !== current.id && p.category === current.category).slice(0, 4);
+      if (!related.length) { document.getElementById('pdRelated').closest('section').style.display = 'none'; return; }
+      document.getElementById('pdRelated').innerHTML = related.map(p => {
+        const img = p.images && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&h=300&fit=crop';
+        const unitText = p.unit === 'day' ? '/day' : '/' + p.unit;
+        return '<div class="mkt-card" onclick="window.location.href=\'product-detail.html?id=' + p.id + '\'">' +
+          '<div class="mkt-card-img" style="background-image:url(' + img + ')"></div>' +
+          '<div class="mkt-card-body"><div class="mkt-card-price">NPR ' + p.price.toLocaleString() + '<small style="font-size:0.75rem;font-weight:500;color:var(--text-secondary)"> ' + unitText + '</small></div>' +
+          '<div class="mkt-card-title">' + Utils.escapeHtml(p.name) + '</div>' +
+          '<div class="mkt-card-meta"><span>📍 ' + p.district + '</span></div></div></div>';
+      }).join('');
+    },
+
+    contact() {
+      if (!Auth.requireAuth()) return;
+      Utils.toast('Contact feature coming soon!', 'info');
+    },
+
+    toggleFav() {
+      if (!Auth.requireAuth()) return;
+      Utils.toast('Saved to favorites!', 'success');
+    }
+  };
+  ProductDetail.init();
+  </script>
+</body>
+</html>

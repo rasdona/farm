@@ -27,7 +27,8 @@ a, button { touch-action: manipulation; }
   font-weight: 500; text-decoration: none; transition: var(--transition);
   min-width: 56px; border-radius: var(--radius);
 }
-.mobile-bottom-nav a .nav-icon { font-size: 1.35rem; line-height: 1; }
+.mobile-bottom-nav a .nav-icon { display: flex; align-items: center; justify-content: center; }
+.mobile-bottom-nav a .nav-icon svg { width: 22px; height: 22px; }
 .mobile-bottom-nav a:hover,
 .mobile-bottom-nav a.active { color: var(--primary); background: var(--primary-50); }
 .mobile-bottom-nav a.active { font-weight: 700; }
@@ -53,9 +54,9 @@ a, button { touch-action: manipulation; }
 @media (max-width: 1280px) {
   :root { --container-max: 1140px; }
   .container { max-width: 1140px; }
-  .navbar-search { width: 380px; }
-  .navbar-center { gap: 1px; }
-  .nav-link { padding: 8px 14px; font-size: 0.875rem; }
+  .navbar-search { width: 340px; }
+  .navbar-center { gap: 2px; }
+  .nav-link { padding: 8px 12px; font-size: 0.85rem; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -81,7 +82,7 @@ a, button { touch-action: manipulation; }
 
   /* ── Navbar: Tablet adjustments ───────────────────── */
   .navbar-center { display: none; }
-  .navbar-search { width: 260px; }
+  .navbar-search { width: 240px; }
   .navbar-right { gap: 8px; }
   .nav-link-about { display: none; }
   .navbar-divider { display: none; }
@@ -133,8 +134,23 @@ a, button { touch-action: manipulation; }
   .mobile-bottom-nav { display: block; }
   body { padding-bottom: 68px; }
 
+  /* ── Mobile FAB ─────────────────────────────────────── */
+  .fab-container { display: block; }
+
+  /* ── Mobile Home ────────────────────────────────────── */
+  .mobile-home { display: block; }
+
+  /* ── Hide desktop sections on index.html ─────────────── */
+  body.index-page .hero,
+  body.index-page .section-sm,
+  body.index-page .section { display: none; }
+  body.index-page #mobileHomeContainer { display: block !important; }
+  body.index-page #mobileHomeContainer .mobile-home { display: block !important; }
+
   /* ── Mobile Drawer ──────────────────────────────────── */
   .mobile-menu { width: 300px; right: -320px; }
+  .mobile-menu-user { display: block; }
+  .mobile-drawer-welcome { display: block; }
 
   /* ── Hero ───────────────────────────────────────────── */
   .hero { height: 65vh; }
@@ -351,6 +367,15 @@ a, button { touch-action: manipulation; }
   /* ── Quick Actions ──────────────────────────────────── */
   .quick-actions { grid-template-columns: repeat(2, 1fr); }
 
+  /* ── Mobile Home ────────────────────────────────────── */
+  .mobile-home-inner { padding: 0 14px 100px; }
+  .mobile-home-greeting-text { font-size: 1.3rem; }
+  .mobile-home-auth-card { padding: 20px 12px; }
+  .mobile-home-auth-card-icon { width: 48px; height: 48px; }
+  .mobile-home-weather-temp { font-size: 1.3rem; }
+  .mobile-home-job-card { min-width: 180px; }
+  .mobile-home-section-header h3 { font-size: 0.95rem; }
+
   /* ── Stats ──────────────────────────────────────────── */
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat-card { gap: 10px; padding: 12px; }
@@ -380,6 +405,29 @@ a, button { touch-action: manipulation; }
   .hero-stat { padding: 10px 6px; }
   .hero-stat .number { font-size: 1.1rem; }
   .hero-stat .label { font-size: 0.72rem; }
+
+  /* ── Mobile Home ────────────────────────────────────── */
+  .mobile-home-inner { padding: 0 12px 96px; }
+  .mobile-home-greeting-text { font-size: 1.2rem; }
+  .mobile-home-auth-cards { flex-direction: column; gap: 10px; }
+  .mobile-home-auth-card { flex-direction: row; padding: 16px; gap: 12px; }
+  .mobile-home-auth-card-icon { width: 44px; height: 44px; }
+  .mobile-home-weather-main { gap: 8px; }
+  .mobile-home-weather-icon { font-size: 1.5rem; }
+  .mobile-home-weather-temp { font-size: 1.2rem; }
+  .mobile-home-weather-details { gap: 12px; font-size: 0.75rem; }
+  .mobile-home-job-card { min-width: 160px; padding: 10px; }
+  .mobile-home-job-title { font-size: 0.82rem; }
+  .mobile-home-job-meta { font-size: 0.7rem; }
+  .mobile-home-user-card { min-width: 68px; padding: 8px 4px; }
+  .mobile-home-user-name { font-size: 0.7rem; }
+  .mobile-home-user-district { font-size: 0.6rem; }
+  .mobile-home-product-card { min-width: 110px; }
+  .mobile-home-product-img { height: 70px; }
+  .mobile-home-product-name { font-size: 0.78rem; padding: 8px 10px 2px; }
+  .mobile-home-product-price { font-size: 0.8rem; padding: 0 10px 8px; }
+  .mobile-home-cta-card { padding: 22px 18px; }
+  .mobile-home-cta-card h3 { font-size: 1.05rem; }
 
   /* ── Sections ───────────────────────────────────────── */
   .section { padding: 32px 0; }
@@ -485,7 +533,20 @@ a, button { touch-action: manipulation; }
   .profile-stats { gap: 8px; padding: 10px 12px; }
   .profile-stat .number { font-size: 1.05rem; }
   .mobile-bottom-nav a { min-width: 48px; padding: 5px 8px; font-size: 0.6rem; }
-  .mobile-bottom-nav a .nav-icon { font-size: 1.2rem; }
+  .mobile-bottom-nav a .nav-icon svg { width: 20px; height: 20px; }
+  .fab-container { bottom: 80px; right: 12px; }
+  .fab-trigger { width: 50px; height: 50px; }
+  .fab-action-icon { width: 42px; height: 42px; }
+  .mobile-home-greeting-text { font-size: 1.3rem; }
+  .mobile-home-auth-cards { gap: 8px; }
+  .mobile-home-auth-card { padding: 18px 12px; }
+  .mobile-home-auth-card-icon { width: 48px; height: 48px; }
+  .mobile-home-weather-card { padding: 12px; }
+  .mobile-home-weather-temp { font-size: 1.3rem; }
+  .mobile-home-job-card { min-width: 170px; padding: 12px; }
+  .mobile-home-user-card { min-width: 72px; padding: 10px 6px; }
+  .mobile-home-product-card { min-width: 120px; }
+  .mobile-home-product-img { height: 80px; }
   .footer { padding-top: 36px; }
   .footer-grid { gap: 20px; }
   .mobile-menu { width: 280px; right: -300px; }
@@ -523,6 +584,30 @@ a, button { touch-action: manipulation; }
   .badge { padding: 2px 6px; font-size: 0.65rem; }
   .profile-cover { height: 80px; }
   .profile-avatar-wrapper img { width: 64px; height: 64px; margin-top: -32px; }
+  /* ── Mobile Home (320px) ──────────────────────────────── */
+  .mobile-home-inner { padding: 0 10px 90px; }
+  .mobile-home-greeting-text { font-size: 1.1rem; }
+  .mobile-home-auth-card { padding: 14px 10px; gap: 8px; }
+  .mobile-home-auth-card-icon { width: 36px; height: 36px; }
+  .mobile-home-auth-card-text strong { font-size: 0.82rem; }
+  .mobile-home-auth-card-text span { font-size: 0.72rem; }
+  .mobile-home-weather-main { gap: 6px; }
+  .mobile-home-weather-icon { font-size: 1.3rem; }
+  .mobile-home-weather-temp { font-size: 1.1rem; }
+  .mobile-home-weather-details { gap: 10px; font-size: 0.7rem; }
+  .mobile-home-job-card { min-width: 140px; padding: 8px; }
+  .mobile-home-job-title { font-size: 0.78rem; }
+  .mobile-home-job-meta { font-size: 0.68rem; gap: 4px; }
+  .mobile-home-user-card { min-width: 56px; padding: 6px 3px; }
+  .mobile-home-user-name { font-size: 0.65rem; }
+  .mobile-home-user-district { display: none; }
+  .mobile-home-product-card { min-width: 90px; }
+  .mobile-home-product-img { height: 55px; }
+  .mobile-home-product-name { font-size: 0.72rem; padding: 6px 8px 2px; }
+  .mobile-home-product-price { font-size: 0.75rem; padding: 0 8px 6px; }
+  .mobile-home-cta-card { padding: 18px 14px; }
+  .mobile-home-cta-card h3 { font-size: 0.95rem; }
+  .mobile-home-cta-card p { font-size: 0.8rem; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -556,7 +641,8 @@ a, button { touch-action: manipulation; }
 @media print {
   .navbar, .footer, .back-to-top, .chat-sidebar, .chat-input-area,
   .dashboard-sidebar, .admin-sidebar, .mobile-bottom-nav,
-  .mobile-menu, .mobile-menu-overlay, .hamburger { display: none !important; }
+  .mobile-menu, .mobile-menu-overlay, .hamburger,
+  .fab-container { display: none !important; }
   .dashboard-main, .admin-main { margin-left: 0 !important; padding: 0 !important; }
   body { background: white; padding-bottom: 0; }
 }

@@ -33,6 +33,15 @@ const DB = {
       this._set('devices', []);
       this._set('verificationDocuments', []);
       this._set('loginHistory', []);
+      this._set('farmProfiles', SAMPLE_FARM_PROFILES);
+      this._set('listings', []);
+      this._set('preHarvestBookings', SAMPLE_PRE_HARVEST_BOOKINGS);
+      this._set('equipmentRentals', SAMPLE_EQUIPMENT_RENTALS);
+      this._set('equipmentRequests', []);
+      this._set('transportServices', SAMPLE_TRANSPORT_SERVICES);
+      this._set('transportRequests', []);
+      this._set('workRequests', []);
+      this._set('groups', []);
       this._set('initialized', true);
     }
   },
@@ -468,6 +477,309 @@ const DB = {
   async verifyPassword(password, hash) {
     const newHash = await this.hashPassword(password);
     return newHash === hash;
+  },
+
+  // ══════════════════════════════════════════════════════════
+  // ECOSYSTEM FEATURES
+  // ══════════════════════════════════════════════════════════
+
+  // ── Active Role Management ────────────────────────────
+  setActiveRole(userId, role) {
+    this.updateUser(userId, { activeRole: role });
+    const u = JSON.parse(localStorage.getItem('agri_currentUser'));
+    if (u && u.id === userId) { u.activeRole = role; localStorage.setItem('agri_currentUser', JSON.stringify(u)); }
+  },
+  getActiveRole(userId) {
+    const user = this.getUserById(userId);
+    return user?.activeRole || user?.role || 'farmer';
+  },
+
+  // ── Availability Status ───────────────────────────────
+  getUserAvailability(userId, date) {
+    const events = this.getCalendarEventsByUser(userId);
+    const d = typeof date === 'string' ? date : date.toISOString().split('T')[0];
+    const busy = events.filter(e => e.date <= d && (!e.endDate || e.endDate >= d));
+    if (busy.length === 0) return 'available';
+    if (busy.length >= 3) return 'busy';
+    return 'partial';
+  },
+  getAvailabilityInfo(userId) {
+    const today = new Date().toISOString().split('T')[0];
+    const events = this.getCalendarEventsByUser(userId);
+    const upcoming = events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+    const status = this.getUserAvailability(userId, today);
+    let nextAvailable = null;
+    if (status !== 'available' && upcoming.length) {
+      const lastBusy = upcoming.filter(e => e.endDate || e.date).pop();
+      if (lastBusy) {
+        const end = lastBusy.endDate || lastBusy.date;
+        const d = new Date(end);
+        d.setDate(d.getDate() + 1);
+        nextAvailable = d.toISOString().split('T')[0];
+      }
+    }
+    return { status, nextAvailable, upcomingCount: upcoming.length };
+  },
+
+  // ── Farm Profiles ─────────────────────────────────────
+  getListings() { return this._get('listings') || []; },
+  getListingsByUser(userId) { return this.getListings().filter(l => l.userId === userId); },
+  addListing(listing) {
+    const l = this.getListings();
+    listing.id = 'LST' + Date.now();
+    listing.createdAt = new Date().toISOString();
+    listing.status = 'active';
+    l.push(listing);
+    this._set('listings', l);
+    return listing;
+  },
+  updateListing(id, data) {
+    const l = this.getListings();
+    const i = l.findIndex(x => x.id === id);
+    if (i >= 0) { l[i] = { ...l[i], ...data }; this._set('listings', l); return l[i]; }
+    return null;
+  },
+
+  getFarmProfiles() { return this._get('farmProfiles') || []; },
+  getFarmProfileByUser(userId) { return this.getFarmProfiles().find(f => f.userId === userId); },
+  addFarmProfile(profile) {
+    const p = this.getFarmProfiles();
+    profile.id = 'FARM' + Date.now();
+    profile.createdAt = new Date().toISOString();
+    p.push(profile);
+    this._set('farmProfiles', p);
+    return profile;
+  },
+  updateFarmProfile(userId, data) {
+    const p = this.getFarmProfiles();
+    const i = p.findIndex(f => f.userId === userId);
+    if (i >= 0) { p[i] = { ...p[i], ...data }; this._set('farmProfiles', p); return p[i]; }
+    return this.addFarmProfile({ ...data, userId });
+  },
+
+  // ── Pre-Harvest Bookings ──────────────────────────────
+  getPreHarvestBookings() { return this._get('preHarvestBookings') || []; },
+  getPreHarvestBySeller(sellerId) { return this.getPreHarvestBookings().filter(b => b.sellerId === sellerId); },
+  addPreHarvestBooking(booking) {
+    const b = this.getPreHarvestBookings();
+    booking.id = 'PHB' + Date.now();
+    booking.createdAt = new Date().toISOString();
+    booking.status = 'open';
+    b.push(booking);
+    this._set('preHarvestBookings', b);
+    return booking;
+  },
+  updatePreHarvestBooking(id, data) {
+    const b = this.getPreHarvestBookings();
+    const i = b.findIndex(x => x.id === id);
+    if (i >= 0) { b[i] = { ...b[i], ...data }; this._set('preHarvestBookings', b); return b[i]; }
+    return null;
+  },
+  bookPreHarvest(bookingId, buyerId, quantity) {
+    const b = this.getPreHarvestBookings();
+    const booking = b.find(x => x.id === bookingId);
+    if (!booking) return null;
+    if (!booking.bookings) booking.bookings = [];
+    booking.bookings.push({ buyerId, quantity, bookedAt: new Date().toISOString(), status: 'reserved' });
+    const totalBooked = booking.bookings.reduce((s, x) => s + x.quantity, 0);
+    if (totalBooked >= booking.expectedQuantity) booking.status = 'fully-booked';
+    this._set('preHarvestBookings', b);
+    return booking;
+  },
+
+  // ── Marketplace Products ──────────────────────────────
+  getProducts() { return this._get('products') || []; },
+  addProduct(product) {
+    const p = this.getProducts();
+    product.id = 'PRD' + Date.now();
+    product.createdAt = new Date().toISOString();
+    p.push(product);
+    this._set('products', p);
+    return product;
+  },
+  updateProduct(id, data) {
+    const p = this.getProducts();
+    const i = p.findIndex(x => x.id === id);
+    if (i >= 0) { p[i] = { ...p[i], ...data }; this._set('products', p); return p[i]; }
+    return null;
+  },
+
+  // ── Equipment Rentals ─────────────────────────────────
+  getEquipmentRentals() { return this._get('equipmentRentals') || []; },
+  getEquipmentByOwner(ownerId) { return this.getEquipmentRentals().filter(e => e.ownerId === ownerId); },
+  addEquipmentRental(equipment) {
+    const e = this.getEquipmentRentals();
+    equipment.id = 'EQP' + Date.now();
+    equipment.createdAt = new Date().toISOString();
+    equipment.available = true;
+    e.push(equipment);
+    this._set('equipmentRentals', e);
+    return equipment;
+  },
+  updateEquipmentRental(id, data) {
+    const e = this.getEquipmentRentals();
+    const i = e.findIndex(x => x.id === id);
+    if (i >= 0) { e[i] = { ...e[i], ...data }; this._set('equipmentRentals', e); return e[i]; }
+    return null;
+  },
+
+  // ── Equipment Rental Requests ─────────────────────────
+  getEquipmentRequests() { return this._get('equipmentRequests') || []; },
+  addEquipmentRequest(req) {
+    const r = this.getEquipmentRequests();
+    req.id = 'EQR' + Date.now();
+    req.createdAt = new Date().toISOString();
+    req.status = 'pending';
+    r.push(req);
+    this._set('equipmentRequests', r);
+    return req;
+  },
+  updateEquipmentRequest(id, data) {
+    const r = this.getEquipmentRequests();
+    const i = r.findIndex(x => x.id === id);
+    if (i >= 0) { r[i] = { ...r[i], ...data }; this._set('equipmentRequests', r); return r[i]; }
+    return null;
+  },
+
+  // ── Transport Services ────────────────────────────────
+  getTransportServices() { return this._get('transportServices') || []; },
+  getTransportByProvider(providerId) { return this.getTransportServices().filter(t => t.providerId === providerId); },
+  addTransportService(service) {
+    const s = this.getTransportServices();
+    service.id = 'TRS' + Date.now();
+    service.createdAt = new Date().toISOString();
+    service.available = true;
+    s.push(service);
+    this._set('transportServices', s);
+    return service;
+  },
+  updateTransportService(id, data) {
+    const s = this.getTransportServices();
+    const i = s.findIndex(x => x.id === id);
+    if (i >= 0) { s[i] = { ...s[i], ...data }; this._set('transportServices', s); return s[i]; }
+    return null;
+  },
+  getTransportRequests() { return this._get('transportRequests') || []; },
+  addTransportRequest(req) {
+    const r = this.getTransportRequests();
+    req.id = 'TRR' + Date.now();
+    req.createdAt = new Date().toISOString();
+    req.status = 'pending';
+    r.push(req);
+    this._set('transportRequests', r);
+    return req;
+  },
+  updateTransportRequest(id, data) {
+    const r = this.getTransportRequests();
+    const i = r.findIndex(x => x.id === id);
+    if (i >= 0) { r[i] = { ...r[i], ...data }; this._set('transportRequests', r); return r[i]; }
+    return null;
+  },
+
+  // ── Work Requests (Smart System) ──────────────────────
+  getWorkRequests() { return this._get('workRequests') || []; },
+  addWorkRequest(req) {
+    const r = this.getWorkRequests();
+    req.id = 'WR' + Date.now();
+    req.createdAt = new Date().toISOString();
+    req.status = 'open';
+    r.push(req);
+    this._set('workRequests', r);
+    return req;
+  },
+  updateWorkRequest(id, data) {
+    const r = this.getWorkRequests();
+    const i = r.findIndex(x => x.id === id);
+    if (i >= 0) { r[i] = { ...r[i], ...data }; this._set('workRequests', r); return r[i]; }
+    return null;
+  },
+
+  // ── Groups / Teams ────────────────────────────────────
+  getGroups() { return this._get('groups') || []; },
+  addGroup(group) {
+    const g = this.getGroups();
+    group.id = 'GRP' + Date.now();
+    group.createdAt = new Date().toISOString();
+    g.push(group);
+    this._set('groups', g);
+    return group;
+  },
+  updateGroup(id, data) {
+    const g = this.getGroups();
+    const i = g.findIndex(x => x.id === id);
+    if (i >= 0) { g[i] = { ...g[i], ...data }; this._set('groups', g); return g[i]; }
+    return null;
+  },
+  getGroupsByUser(userId) {
+    return this.getGroups().filter(g => g.members && g.members.includes(userId));
+  },
+
+  // ── Trust Score Calculation ───────────────────────────
+  getTrustScore(userId) {
+    const user = this.getUserById(userId);
+    if (!user) return 0;
+    let score = 0;
+    if (user.verified || user.emailVerified) score += 15;
+    if (user.phoneVerified || user.mobileVerified) score += 10;
+    if (DB.hasUploadedPhoto(userId)) score += 10;
+    const reviews = this.getReviews(userId);
+    if (reviews.length) {
+      const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+      score += Math.round(avg * 6);
+    }
+    const apps = this.getApplicationsByWorker(userId);
+    score += Math.min(apps.filter(a => a.status === 'accepted').length * 5, 20);
+    const apApps = (this._get('armaParmaRequests') || []).filter(r => r.applicants && r.applicants.includes(userId));
+    score += Math.min(apApps.length * 3, 15);
+    const phBookings = this.getPreHarvestBookings().filter(b => b.sellerId === userId && b.status === 'sold');
+    score += Math.min(phBookings.length * 4, 15);
+    if (user.createdAt) {
+      const days = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000);
+      score += Math.min(Math.floor(days / 30), 10);
+    }
+    const chats = this.getChatsByUser(userId);
+    const msgs = this.getMessages().filter(m => chats.some(c => c.id === m.chatId));
+    const responses = msgs.filter(m => m.senderId !== userId);
+    if (responses.length > 0) score += 5;
+    return Math.min(score, 100);
+  },
+  getTrustLevel(score) {
+    if (score >= 80) return { level: 'Platinum', icon: '💎', color: '#6366f1' };
+    if (score >= 60) return { level: 'Gold', icon: '🥇', color: '#f59e0b' };
+    if (score >= 40) return { level: 'Silver', icon: '🥈', color: '#94a3b8' };
+    if (score >= 20) return { level: 'Bronze', icon: '🥉', color: '#d97706' };
+    return { level: 'New', icon: '🌱', color: '#16a34a' };
+  },
+
+  // ── Groups ────────────────────────────────────────────
+  getGroupByUser(userId) { return this.getGroups().filter(g => g.memberIds && g.memberIds.includes(userId)); },
+
+  // ── Weather (mock) ────────────────────────────────────
+  getWeather(district) {
+    const districts = {
+      'Chitwan': { temp: 32, condition: 'Partly Cloudy', humidity: 75, rain: 40, icon: '⛅', wind: 12, suggestions: ['Good day for planting', 'Ensure adequate irrigation', 'Monitor for pest activity'] },
+      'Ilam': { temp: 22, condition: 'Misty', humidity: 85, rain: 60, icon: '🌫️', wind: 8, suggestions: ['Avoid pesticide spraying today', 'Good for tea plucking', 'Cover sensitive crops'] },
+      'Kathmandu': { temp: 28, condition: 'Sunny', humidity: 55, rain: 10, icon: '☀️', wind: 15, suggestions: ['Perfect for field work', 'Stay hydrated', 'Good harvest day'] },
+      'Kaski': { temp: 25, condition: 'Light Rain', humidity: 80, rain: 70, icon: '🌧️', wind: 10, suggestions: ['Postpone spraying', 'Check drainage systems', 'Good for rice transplanting'] },
+      'Bara': { temp: 34, condition: 'Hot', humidity: 65, rain: 20, icon: '🌡️', wind: 18, suggestions: ['Work early morning', 'Provide extra water for crops', 'Heat warning for livestock'] },
+    };
+    const forecast = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      const conditions = ['☀️', '⛅', '🌤️', '🌧️', '⛈️'];
+      const condNames = ['Sunny', 'Partly Cloudy', 'Mostly Sunny', 'Rainy', 'Thunderstorm'];
+      const ci = Math.floor(Math.random() * 5);
+      forecast.push({
+        date: d.toISOString().split('T')[0],
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        temp: Math.floor(20 + Math.random() * 15),
+        icon: conditions[ci],
+        condition: condNames[ci],
+        rain: Math.floor(Math.random() * 100),
+      });
+    }
+    return { current: districts[district] || districts['Kathmandu'], forecast };
   }
 };
 
@@ -732,8 +1044,109 @@ const SAMPLE_CALENDAR_EVENTS = [
 const AUTH_ROLES = [
   { id: 'farmer', name: 'Farmer', nameNe: 'किसान', icon: '🌾', description: 'Post jobs, manage farms, Arma Parma' },
   { id: 'worker', name: 'Worker', nameNe: 'श्रमिक', icon: '👷', description: 'Find jobs, earn credits, build reputation' },
+  { id: 'seller', name: 'Seller', nameNe: 'बिक्रेता', icon: '🏷️', description: 'Sell agricultural products on marketplace' },
   { id: 'buyer', name: 'Buyer', nameNe: 'किन्ने व्यक्ति', icon: '🛒', description: 'Buy agricultural products' },
   { id: 'equipment_owner', name: 'Equipment Owner', nameNe: 'उपकरण स्वामी', icon: '🚜', description: 'Rent/sell farm equipment' },
+  { id: 'transport_provider', name: 'Transport Provider', nameNe: 'यातायात सेवा', icon: '🚛', description: 'Provide farm transport services' },
   { id: 'expert', name: 'Agriculture Expert', nameNe: 'कृषि विशेषज्ञ', icon: '🎓', description: 'Provide consulting & advice' },
   { id: 'cooperative', name: 'Cooperative Member', nameNe: 'सहकारी सदस्य', icon: '🏛️', description: 'Represent a cooperative' }
+];
+
+// ══════════════════════════════════════════════════════════
+// ECOSYSTEM SAMPLE DATA
+// ══════════════════════════════════════════════════════════
+
+const SAMPLE_FARM_PROFILES = [
+  {
+    id: 'FARMP1', userId: 'USR001', name: 'Shrestha Organic Farm', district: 'Chitwan',
+    areaInRopani: 5.5, soilType: 'Loamy', irrigation: 'Canal', mainCrops: ['Rice', 'Vegetables', 'Spices'],
+    certifications: ['Organic Certified'], farmPhotos: [], establishedYear: 2018,
+    description: 'Family-run organic farm specializing in seasonal vegetables and spices.',
+    latitude: 27.55, longitude: 84.35, createdAt: '2025-06-01T06:00:00.000Z'
+  },
+  {
+    id: 'FARMP2', userId: 'USR003', name: 'Tamang Tea Estate', district: 'Ilam',
+    areaInRopani: 12, soilType: 'Clay', irrigation: 'Rainfed', mainCrops: ['Tea', 'Cardamom'],
+    certifications: [], farmPhotos: [], establishedYear: 2005,
+    description: 'Premium tea estate producing orthodox and CTC teas.',
+    latitude: 26.92, longitude: 87.93, createdAt: '2025-06-05T06:00:00.000Z'
+  },
+  {
+    id: 'FARMP3', userId: 'USR006', name: 'Rai Grain Farm', district: 'Bara',
+    areaInRopani: 8, soilType: 'Sandy Loam', irrigation: 'Tube Well', mainCrops: ['Rice', 'Wheat', 'Maize'],
+    certifications: [], farmPhotos: [], establishedYear: 2012,
+    description: 'Large-scale grain production farm with modern storage facilities.',
+    latitude: 27.02, longitude: 84.92, createdAt: '2025-06-10T06:00:00.000Z'
+  }
+];
+
+const SAMPLE_PRE_HARVEST_BOOKINGS = [
+  {
+    id: 'PHB1', sellerId: 'USR001', crop: 'Tomato', variety: 'Local Red',
+    expectedQuantity: 500, unit: 'kg', pricePerUnit: 80, currency: 'NPR',
+    harvestDate: '2026-08-15', status: 'open', bookings: [],
+    description: 'Fresh organic tomatoes expected from mid-August.',
+    district: 'Chitwan', farmName: 'Shrestha Organic Farm',
+    createdAt: '2025-07-01T06:00:00.000Z'
+  },
+  {
+    id: 'PHB2', sellerId: 'USR003', crop: 'Green Tea Leaves', variety: 'First Flush',
+    expectedQuantity: 200, unit: 'kg', pricePerUnit: 400, currency: 'NPR',
+    harvestDate: '2026-04-01', status: 'partially-booked',
+    bookings: [{ buyerId: 'USR002', quantity: 50, bookedAt: '2025-07-10T06:00:00.000Z', status: 'reserved' }],
+    description: 'Premium first flush tea leaves from high altitude.',
+    district: 'Ilam', farmName: 'Tamang Tea Estate',
+    createdAt: '2025-07-10T06:00:00.000Z'
+  },
+  {
+    id: 'PHB3', sellerId: 'USR006', crop: 'Rice (Basmati)', variety: 'Tuna Basmati',
+    expectedQuantity: 1000, unit: 'kg', pricePerUnit: 65, currency: 'NPR',
+    harvestDate: '2026-10-20', status: 'open', bookings: [],
+    description: 'High-quality Tuna Basmati rice, expected harvest October.',
+    district: 'Bara', farmName: 'Rai Grain Farm',
+    createdAt: '2025-07-15T06:00:00.000Z'
+  }
+];
+
+const SAMPLE_EQUIPMENT_RENTALS = [
+  {
+    id: 'EQP1', ownerId: 'USR001', name: 'Mahindra 575 Tractor', type: 'tractor',
+    brand: 'Mahindra', model: '575 DI', year: 2022, condition: 'Good',
+    hourlyRate: 800, dailyRate: 5000, currency: 'NPR', available: true,
+    district: 'Chitwan', description: '45HP tractor with plough attachment.',
+    photos: [], createdAt: '2025-06-15T06:00:00.000Z'
+  },
+  {
+    id: 'EQP2', ownerId: 'USR006', name: 'Power Tiller', type: 'tiller',
+    brand: 'Kubota', model: 'NE-6', year: 2023, condition: 'Excellent',
+    hourlyRate: 400, dailyRate: 2500, currency: 'NPR', available: true,
+    district: 'Bara', description: 'Efficient power tiller for small to medium fields.',
+    photos: [], createdAt: '2025-06-20T06:00:00.000Z'
+  },
+  {
+    id: 'EQP3', ownerId: 'USR001', name: 'Sprayer Pump', type: 'sprayer',
+    brand: 'Stihl', model: 'SG 31', year: 2024, condition: 'Excellent',
+    hourlyRate: 150, dailyRate: 800, currency: 'NPR', available: true,
+    district: 'Chitwan', description: 'Battery-powered sprayer pump for pesticides.',
+    photos: [], createdAt: '2025-07-01T06:00:00.000Z'
+  }
+];
+
+const SAMPLE_TRANSPORT_SERVICES = [
+  {
+    id: 'TRS1', providerId: 'USR008', vehicleType: 'Tempo', vehicleName: 'Bajaj RE Tempo',
+    capacity: '1.5 tons', hourlyRate: 500, perKmRate: 25, currency: 'NPR',
+    district: 'Chitwan', available: true,
+    route: 'Chitwan → Narayangarh → Hetauda',
+    description: 'Covered tempo suitable for vegetable and grain transport.',
+    photos: [], createdAt: '2025-06-25T06:00:00.000Z'
+  },
+  {
+    id: 'TRS2', providerId: 'USR010', vehicleType: 'Truck', vehicleName: 'Tata 407',
+    capacity: '5 tons', hourlyRate: 1200, perKmRate: 45, currency: 'NPR',
+    district: 'Kathmandu', available: true,
+    route: 'Kathmandu → Bhaktapur → Dolakha',
+    description: 'Medium truck for bulk agricultural product transport.',
+    photos: [], createdAt: '2025-07-01T06:00:00.000Z'
+  }
 ];

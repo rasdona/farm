@@ -6,7 +6,7 @@
   <meta name="description" content="Connect with skilled agricultural workers across Nepal. Find jobs, hire workers, and grow your farm.">
   <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
 </head>
-<body>
+<body class="index-page">
   <header id="navbar" class="navbar"></header>
 
   <!-- Hero Section with Background Image -->
@@ -151,17 +151,6 @@
   <footer id="footer" class="footer"></footer>
   <div class="back-to-top">↑</div>
 
-  <!-- Bottom Navigation (Mobile) -->
-  <nav class="bottom-nav" id="bottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:var(--z-fixed);padding:8px 0">
-    <div class="flex justify-around items-center">
-      <a href="index.html" class="text-center" style="text-decoration:none;color:var(--primary)"><div style="font-size:1.4rem">🏠</div><div style="font-size:0.7rem;font-weight:600" data-en="Home" data-ne="गृह">Home</div></a>
-      <a href="jobs.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">💼</div><div style="font-size:0.7rem;font-weight:600" data-en="Jobs" data-ne="रोजगारी">Jobs</div></a>
-      <a href="workers.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👷</div><div style="font-size:0.7rem;font-weight:600" data-en="Workers" data-ne="श्रमिक">Workers</div></a>
-      <a href="marketplace.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">🛒</div><div style="font-size:0.7rem;font-weight:600" data-en="Market" data-ne="बजार">Market</div></a>
-      <a href="profile.html" class="text-center" style="text-decoration:none;color:var(--text-secondary)"><div style="font-size:1.4rem">👤</div><div style="font-size:0.7rem;font-weight:600" data-en="Profile" data-ne="प्रोफाइल">Profile</div></a>
-    </div>
-  </nav>
-
   <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script>
     App.init();
@@ -179,10 +168,6 @@
       if (target) Utils.countUp(el, target, 2000);
     });
     Utils.animateOnScroll();
-    if (window.innerWidth <= 768) document.getElementById('bottomNav').style.display = 'block';
-    window.addEventListener('resize', () => {
-      document.getElementById('bottomNav').style.display = window.innerWidth <= 768 ? 'block' : 'none';
-    });
   </script>
 </body>
 </html>
