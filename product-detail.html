@@ -87,7 +87,11 @@
     ],
 
     getProducts() {
-      try { return DB.getProducts ? DB.getProducts() : this.sampleProducts; } catch(e) { return this.sampleProducts; }
+      try {
+        const dbProducts = DB.getProducts ? DB.getProducts() : [];
+        if (dbProducts.length > 0) return [...dbProducts, ...this.sampleProducts];
+        return this.sampleProducts;
+      } catch(e) { return this.sampleProducts; }
     },
 
     init() {

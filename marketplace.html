@@ -94,7 +94,11 @@
     ],
 
     getProducts() {
-      try { return DB.getProducts ? DB.getProducts() : this.sampleProducts; } catch(e) { return this.sampleProducts; }
+      try {
+        const dbProducts = DB.getProducts ? DB.getProducts() : [];
+        if (dbProducts.length > 0) return [...dbProducts, ...this.sampleProducts];
+        return this.sampleProducts;
+      } catch(e) { return this.sampleProducts; }
     },
 
     init() {
@@ -161,7 +165,86 @@
 
     showCreate() {
       if (!Auth.requireAuth()) return;
-      Utils.toast('Create listing feature coming soon!', 'info');
+      const html = `
+        <div class="form-group"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="mktName" placeholder="e.g., Fresh Organic Tomatoes"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Category *</label>
+            <select class="form-select" id="mktCategory"><option value="crops">🌾 Crops</option><option value="seeds">🌱 Seeds</option><option value="dairy">🥛 Dairy</option><option value="equipment">🚜 Equipment</option><option value="fertilizer">🧪 Fertilizer</option><option value="other">📦 Other</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Listing Type *</label>
+            <select class="form-select" id="mktType"><option value="sell">💰 For Sale</option><option value="rent">🔄 For Rent</option><option value="pre-harvest">📦 Pre-Harvest Booking</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Price (NPR) *</label><input type="number" class="form-input" id="mktPrice" min="0" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">Unit *</label>
+            <select class="form-select" id="mktUnit"><option value="kg">Per kg</option><option value="litre">Per litre</option><option value="piece">Per piece</option><option value="day">Per day</option><option value="quintal">Per quintal</option><option value="month">Per month</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Stock / Available Quantity</label><input type="number" class="form-input" id="mktStock" min="0" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Description *</label><textarea class="form-textarea" id="mktDesc" rows="3" placeholder="Describe your product..."></textarea></div>
+        <div class="form-group"><label class="form-label">Photo (optional)</label>
+          <input type="file" class="form-input" id="mktPhoto" accept="image/*" onchange="Marketplace._previewPhoto(this)">
+          <div id="mktPhotoPreview" style="margin-top:8px;display:none"><img src="" style="max-width:100%;max-height:160px;border-radius:var(--radius);object-fit:cover"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="document.querySelector('.modal-backdrop.active')?.classList.remove('active')">Cancel</button>
+          <button class="btn btn-primary" onclick="Marketplace.saveProduct()">Publish Listing</button>
+        </div>
+      `;
+      Utils.modal('Create Listing', html);
+    },
+
+    _previewPhoto(input) {
+      const preview = document.getElementById('mktPhotoPreview');
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => { preview.style.display = ''; preview.querySelector('img').src = e.target.result; };
+        reader.readAsDataURL(input.files[0]);
+      } else { preview.style.display = 'none'; }
+    },
+
+    saveProduct() {
+      const user = Auth.currentUser;
+      const name = document.getElementById('mktName')?.value.trim();
+      const category = document.getElementById('mktCategory')?.value;
+      const type = document.getElementById('mktType')?.value;
+      const price = parseInt(document.getElementById('mktPrice')?.value, 10);
+      const unit = document.getElementById('mktUnit')?.value;
+      const stock = parseInt(document.getElementById('mktStock')?.value, 10) || 0;
+      const description = document.getElementById('mktDesc')?.value.trim();
+      const photoInput = document.getElementById('mktPhoto');
+      if (!name || !price || !description) { Utils.toast('Please fill name, price, and description', 'error'); return; }
+      const product = {
+        sellerId: user.id,
+        name,
+        category,
+        type,
+        price,
+        unit,
+        stock,
+        description,
+        district: user.district || 'Kathmandu',
+        images: []
+      };
+      const saveIt = (images) => {
+        product.images = images;
+        DB.addProduct(product);
+        document.querySelector('.modal-backdrop.active')?.classList.remove('active');
+        Utils.toast('Listing published!', 'success');
+        this.filter();
+      };
+      if (photoInput?.files && photoInput.files[0] && typeof SupabaseAuth !== 'undefined' && SupabaseAuth._client) {
+        const file = photoInput.files[0];
+        const path = `marketplace/${user.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
+        SupabaseAuth._client.storage.from('avatars').upload(path, file, { contentType: file.type }).then(({ data, error }) => {
+          if (error) { saveIt([]); return; }
+          const url = SupabaseAuth._client.storage.from('avatars').getPublicUrl(path).data?.publicUrl;
+          saveIt(url ? [url] : []);
+        }).catch(() => saveIt([]));
+      } else {
+        saveIt([]);
+      }
     }
   };
   Marketplace.init();

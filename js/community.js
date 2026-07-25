@@ -28,8 +28,12 @@ const Community = {
         <div class="form-group">
           <textarea class="form-textarea" id="postContent" rows="4" placeholder="Share a farming tip, ask a question, or celebrate a success..."></textarea>
         </div>
-        <div class="flex justify-between items-center">
-          <div class="flex gap-2">
+        <div id="postImagePreview" style="display:none;margin-bottom:12px;position:relative">
+          <img src="" style="max-width:100%;max-height:200px;border-radius:var(--radius);object-fit:cover">
+          <button class="btn btn-ghost btn-sm" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center" onclick="Community.removeImage()">✕</button>
+        </div>
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <div class="flex gap-2 items-center flex-wrap">
             <select class="form-select" id="postType" style="width:auto">
               <option value="tip">💡 Tip</option>
               <option value="question">❓ Question</option>
@@ -37,11 +41,34 @@ const Community = {
               <option value="celebration">🎉 Celebration</option>
             </select>
             <input class="form-input" id="postTags" placeholder="Tags (comma separated)" style="width:250px">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Add photo">
+              📷 <input type="file" accept="image/*" style="display:none" onchange="Community.previewImage(this)">
+            </label>
           </div>
           <button class="btn btn-primary" onclick="Community.createPost()">Post</button>
         </div>
       </div>
     `;
+  },
+
+  _pendingImage: null,
+
+  previewImage(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this._pendingImage = e.target.result;
+        const preview = document.getElementById('postImagePreview');
+        if (preview) { preview.style.display = ''; preview.querySelector('img').src = e.target.result; }
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  },
+
+  removeImage() {
+    this._pendingImage = null;
+    const preview = document.getElementById('postImagePreview');
+    if (preview) preview.style.display = 'none';
   },
 
   renderPosts() {
@@ -72,6 +99,7 @@ const Community = {
             ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')" aria-label="Delete post">🗑️</button>` : ''}
           </div>
           ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
+          ${p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.image}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : ''}
           <div class="post-content">${Utils.escapeHtml(p.content)}</div>
           ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
           <div class="post-actions">
@@ -81,7 +109,7 @@ const Community = {
             <button class="post-action" onclick="Community.toggleComments('${p.id}')">
               💬 <span>${p.comments?.length || 0}</span>
             </button>
-            <button class="post-action" onclick="Utils.toast('Share coming soon!','info')">
+            <button class="post-action" onclick="Community.sharePost('${p.id}', '${Utils.escapeHtml((p.title || p.content || '').substring(0, 80))}')">
               📤 <span>Share</span>
             </button>
           </div>
@@ -115,12 +143,52 @@ const Community = {
     const title = document.getElementById('postTitle')?.value.trim();
     const type = document.getElementById('postType')?.value || 'tip';
     const tags = document.getElementById('postTags')?.value.split(',').map(t => t.trim()).filter(Boolean);
-    DB.addCommunityPost({ userId: Auth.currentUser.id, type, title, content, tags });
-    Utils.toast('Post published!');
-    document.getElementById('postContent').value = '';
-    document.getElementById('postTitle').value = '';
-    document.getElementById('postTags').value = '';
-    this.renderPosts();
+
+    const savePost = (imageUrl) => {
+      const postData = { userId: Auth.currentUser.id, type, title, content, tags };
+      if (imageUrl) postData.image = imageUrl;
+      DB.addCommunityPost(postData);
+      Utils.toast('Post published!');
+      document.getElementById('postContent').value = '';
+      document.getElementById('postTitle').value = '';
+      document.getElementById('postTags').value = '';
+      this._pendingImage = null;
+      const preview = document.getElementById('postImagePreview');
+      if (preview) preview.style.display = 'none';
+      this.renderPosts();
+    };
+
+    if (this._pendingImage && typeof SupabaseAuth !== 'undefined' && SupabaseAuth._client) {
+      const dataUrl = this._pendingImage;
+      fetch(dataUrl).then(r => r.blob()).then(blob => {
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const path = `community/${Auth.currentUser.id}/${Date.now()}.${ext}`;
+        SupabaseAuth._client.storage.from('avatars').upload(path, blob, { contentType: blob.type }).then(({ data, error }) => {
+          if (error) { savePost(''); return; }
+          const url = SupabaseAuth._client.storage.from('avatars').getPublicUrl(path).data?.publicUrl;
+          savePost(url || '');
+        }).catch(() => savePost(''));
+      }).catch(() => savePost(''));
+    } else {
+      savePost(this._pendingImage || '');
+    }
+  },
+
+  sharePost(postId, text) {
+    const url = window.location.origin + window.location.pathname + '#post-' + postId;
+    const shareText = `${text} — Read on AgriConnect Nepal`;
+    if (navigator.share) {
+      navigator.share({ title: text, text: shareText, url }).catch(() => {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText}\n${url}`).then(() => {
+        Utils.toast('Link copied to clipboard!', 'success');
+      }).catch(() => {
+        Utils.toast('Could not copy link', 'warning');
+      });
+    } else {
+      const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(shareText)}`;
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
   },
 
   toggleLike(postId) {

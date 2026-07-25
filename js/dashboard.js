@@ -153,6 +153,7 @@ const Dashboard = {
     const jobs = DB.getJobsByFarmer(user.id);
     const activeJobs = jobs.filter(j => j.status === 'active');
     const totalApps = jobs.reduce((sum, j) => sum + DB.getApplicationsByJob(j.id).length, 0);
+    const recWorkers = typeof Recommendations !== 'undefined' ? Recommendations.getRecommendedWorkers(user) : [];
     return `
       <div class="dashboard-card mb-4">
         <div class="dashboard-card-header"><h3>🌾 My Farm Activity</h3><a href="post-job.html" class="btn btn-primary btn-sm">+ Post Job</a></div>
@@ -163,13 +164,27 @@ const Dashboard = {
             ${this._statCard('📥', totalApps + ' Applications', '#f59e0b', '#fef3c7')}
           </div>
         </div>
-      </div>`;
+      </div>
+      ${recWorkers.length ? `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>👷 Recommended Workers</h3><a href="workers.html" class="btn btn-ghost btn-sm">View All</a></div>
+        <div class="dashboard-card-body">
+          ${recWorkers.slice(0, 4).map(w => `
+            <div class="flex items-center gap-3 p-2 hover-lift" style="border-bottom:1px solid var(--border-light);border-radius:var(--radius);cursor:pointer" onclick="window.location.href='worker-profile.html?id=${w.id}'">
+              ${Utils.avatarHTML(Utils.getUserPhoto(w), w.name || '?', 'sm')}
+              <div class="flex-1"><div class="font-semibold text-sm">${Utils.escapeHtml((w.name || 'Unknown').substring(0, 30))}</div><div class="text-xs text-muted">📍 ${w.district || ''} ${w.verified ? '✅ Verified' : ''}</div></div>
+              ${w.skills?.length ? `<div class="flex gap-1">${w.skills.slice(0, 2).map(s => `<span class="badge badge-primary" style="font-size:0.65rem">${Utils.escapeHtml(s)}</span>`).join('')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''}`;
   },
 
   _workerWidget(user) {
     const applications = DB.getApplicationsByWorker(user.id);
     const pending = applications.filter(a => a.status === 'pending');
     const accepted = applications.filter(a => a.status === 'accepted');
+    const recJobs = typeof Recommendations !== 'undefined' ? Recommendations.getRecommendedJobs(user) : [];
     return `
       <div class="dashboard-card mb-4">
         <div class="dashboard-card-header"><h3>👷 My Applications</h3><a href="jobs.html" class="btn btn-primary btn-sm">Find Jobs</a></div>
@@ -180,7 +195,19 @@ const Dashboard = {
             ${this._statCard('✅', accepted.length + ' Accepted', '#16a34a', '#dcfce7')}
           </div>
         </div>
-      </div>`;
+      </div>
+      ${recJobs.length ? `
+      <div class="dashboard-card mb-4">
+        <div class="dashboard-card-header"><h3>🎯 Recommended Jobs</h3><a href="jobs.html" class="btn btn-ghost btn-sm">View All</a></div>
+        <div class="dashboard-card-body">
+          ${recJobs.slice(0, 4).map(j => `
+            <div class="flex items-center gap-3 p-2 hover-lift" style="border-bottom:1px solid var(--border-light);border-radius:var(--radius);cursor:pointer" onclick="window.location.href='job-detail.html?id=${j.id}'">
+              <div style="font-size:1.2rem">${j.workMode === 'arma-parma' ? '🤝' : '💰'}</div>
+              <div class="flex-1"><div class="font-semibold text-sm">${Utils.escapeHtml(j.title.substring(0, 35))}</div><div class="text-xs text-muted">📍 ${j.district || ''} ${j.wage?.daily ? '· NPR ' + j.wage.daily + '/day' : ''}</div></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : ''}`;
   },
 
   _marketplaceWidget(user) {
@@ -564,8 +591,14 @@ const Dashboard = {
   },
 
   getRecommendedJobs(worker) {
+    if (typeof Recommendations !== 'undefined') return Recommendations.getRecommendedJobs(worker);
     const skills = worker.skills || [];
     return DB.getJobs().filter(j => j.status === 'active' && (j.requiredSkills?.some(s => skills.includes(s)) || j.district === worker.district)).slice(0, 5);
+  },
+
+  getRecommendedWorkers(farmer) {
+    if (typeof Recommendations !== 'undefined') return Recommendations.getRecommendedWorkers(farmer);
+    return [];
   },
 
   renderMiniCalendar() {

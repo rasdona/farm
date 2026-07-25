@@ -11,12 +11,18 @@
     <div class="container">
       <div class="breadcrumb mb-4"><a href="index.html">Home</a><span class="separator">/</span><span class="current">Calendar</span></div>
       <div class="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <div><h1 style="font-size:1.6rem">📅 Work Calendar</h1><p class="text-muted">Track your jobs, exchanges, and seasons</p></div>
-        <div class="flex gap-2">
-          <button class="btn btn-outline" onclick="CalendarView.prevMonth()">← Prev</button>
+        <div><h1 style="font-size:1.6rem">📅 Work Calendar</h1><p class="text-muted">Track your jobs, exchanges, seasons, and personal events</p></div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="btn btn-primary btn-sm" onclick="CalendarView.showAddEvent()">+ Add Event</button>
+          <button class="btn btn-outline" onclick="CalendarView.prev()">← Prev</button>
           <button class="btn btn-outline" onclick="CalendarView.goToday()">Today</button>
-          <button class="btn btn-outline" onclick="CalendarView.nextMonth()">Next →</button>
+          <button class="btn btn-outline" onclick="CalendarView.next()">Next →</button>
         </div>
+      </div>
+      <div class="flex gap-2 mb-4 flex-wrap">
+        <button class="btn btn-sm calendar-view-btn active" data-view="month" onclick="CalendarView.setView('month',this)">Month</button>
+        <button class="btn btn-sm btn-ghost calendar-view-btn" data-view="week" onclick="CalendarView.setView('week',this)">Week</button>
+        <button class="btn btn-sm btn-ghost calendar-view-btn" data-view="day" onclick="CalendarView.setView('day',this)">Day</button>
       </div>
       <div class="dashboard-grid-sidebar" style="gap:24px;align-items:flex-start">
         <div>
@@ -28,6 +34,7 @@
                 <span class="badge calendar-filter" data-type="paid" onclick="CalendarView.toggleType('paid',this)" style="cursor:pointer;padding:6px 12px;background:#2563eb;color:white">💰 Paid</span>
                 <span class="badge calendar-filter" data-type="arma" onclick="CalendarView.toggleType('arma',this)" style="cursor:pointer;padding:6px 12px;background:#059669;color:white">🤝 Arma Parma</span>
                 <span class="badge calendar-filter" data-type="season" onclick="CalendarView.toggleType('season',this)" style="cursor:pointer;padding:6px 12px;background:#d97706;color:white">🌱 Seasons</span>
+                <span class="badge calendar-filter" data-type="personal" onclick="CalendarView.toggleType('personal',this)" style="cursor:pointer;padding:6px 12px;background:#8b5cf6;color:white">📝 Personal</span>
               </div>
             </div>
             <div class="card-body p-0" style="overflow-x:auto">
@@ -44,15 +51,19 @@
             <div class="card-header"><h4 style="margin:0">🌱 Season Guide</h4></div>
             <div class="card-body" id="seasonGuide"></div>
           </div>
-          <div class="card">
+          <div class="card mb-4">
             <div class="card-header"><h4 style="margin:0">📊 Summary</h4></div>
             <div class="card-body" id="calendarSummary"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h4 style="margin:0">📋 Upcoming Jobs</h4></div>
+            <div class="card-body" id="upcomingJobsList"></div>
           </div>
         </aside>
       </div>
     </div>
   </main>
   <footer id="footer" class="footer"></footer>
-  <script src="js/data.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/utils.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/calendar.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script><script src="js/calendar.js"></script>
 </body>
 </html>
