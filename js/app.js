@@ -15,6 +15,18 @@ const App = {
       this.renderFAB();
       this.renderMobileHome();
     }
+    if (typeof SupabaseSync !== 'undefined') {
+      SupabaseSync.loadAll().then(() => this._onDataSynced());
+    }
+  },
+
+  _onDataSynced() {
+    this.renderNavbar();
+    this.updateNotificationBadge();
+    const dashboardMain = document.getElementById('dashboardContent');
+    if (dashboardMain && typeof Dashboard !== 'undefined') {
+      Dashboard.renderSmartDashboard();
+    }
   },
 
   renderNavbar() {
