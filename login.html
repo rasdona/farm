@@ -22,17 +22,6 @@
 
         <div id="loginError" class="auth-alert auth-alert-error hidden"></div>
         <div id="loginSuccess" class="auth-alert auth-alert-success hidden"></div>
-        <div id="emailVerificationRequired" class="auth-alert auth-alert-warning hidden" style="display:none">
-          <div style="margin-bottom:12px">
-            <strong>📧 इमेल सत्यापन आवश्यक / Email Verification Required</strong><br>
-            <span style="font-size:0.9rem" id="verificationEmailMsg"></span>
-          </div>
-          <button type="button" class="auth-btn auth-btn-primary" onclick="resendVerificationEmail()" id="resendVerificationBtn">
-            <span id="resendVerificationText">🔄 पुन: सत्यापन इमेल पठाउनुहोस्</span>
-          </button>
-          <div id="resendVerificationSuccess" class="auth-alert auth-alert-success hidden" style="margin-top:8px"></div>
-          <div id="resendVerificationError" class="auth-alert auth-alert-error hidden" style="margin-top:8px"></div>
-        </div>
 
         <form id="loginForm" class="auth-form" onsubmit="return handleLogin(event)">
           <div class="auth-input-group">

@@ -137,29 +137,18 @@ const SupabaseAuth = {
     }
   },
 
-  async resendVerification(email) {
-    this._guard();
-    console.log('[SupabaseAuth] resendVerification:', email);
-    try {
-      return await this.client.auth.resend({ type: 'signup', email });
-    } catch (err) {
-      console.error('[SupabaseAuth] resendVerification exception:', err.message);
-      return { error: { message: err.message } };
-    }
-  },
-
   async sendEmailOtp(email) {
     this._guard();
-    console.log('[SupabaseAuth] sendEmailOtp:', email);
+    console.log('[SupabaseAuth] sendEmailOtp (resend signup):', email);
     try {
-      const result = await this.client.auth.signInWithOtp({
-        type: 'email',
+      const result = await this.client.auth.resend({
+        type: 'signup',
         email
       });
       if (result.error) {
         console.error('[SupabaseAuth] sendEmailOtp failed:', result.error.message);
       } else {
-        console.log('[SupabaseAuth] sendEmailOtp sent OK');
+        console.log('[SupabaseAuth] sendEmailOtp resent OK');
       }
       return result;
     } catch (err) {
@@ -173,7 +162,7 @@ const SupabaseAuth = {
     console.log('[SupabaseAuth] verifyEmailOtp:', email);
     try {
       const result = await this.client.auth.verifyOtp({
-        type: 'email',
+        type: 'signup',
         email,
         token
       });

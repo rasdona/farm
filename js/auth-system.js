@@ -120,23 +120,8 @@ const AuthSystem = {
       return { success: false, message: 'Account creation failed: ' + err.message, steps };
     }
 
-    // ── Step 6: Send email OTP via Supabase Auth ──
-    log(6, 'started', 'Sending 6-digit email OTP to: ' + email);
-    try {
-      const otpResult = await SupabaseAuth.sendEmailOtp(email);
-      if (otpResult.error) {
-        const otpMsg = otpResult.error.message || 'Failed to send OTP';
-        log(6, 'failed', otpMsg);
-        return { success: false, message: 'OTP पठाउन असफल भयो: ' + otpMsg, steps };
-      }
-      log(6, 'success', 'Email OTP sent successfully');
-    } catch (err) {
-      log(6, 'failed', 'OTP send exception: ' + err.message);
-      return { success: false, message: 'OTP पठाउन असफल भयो: ' + err.message, steps };
-    }
-
-    // ── Step 7: Store pending registration data for OTP completion ──
-    log(7, 'started', 'Storing pending registration data');
+    // ── Step 6: Store pending registration data for OTP completion ──
+    log(6, 'started', 'Storing pending registration data');
     const pendingData = {
       supabaseUserId: authData.user.id,
       name: data.name.trim(),
@@ -154,14 +139,14 @@ const AuthSystem = {
     };
     try {
       sessionStorage.setItem('agri_pendingRegistration', JSON.stringify(pendingData));
-      log(7, 'success', 'Pending data stored in sessionStorage');
+      log(6, 'success', 'Pending data stored in sessionStorage');
     } catch (err) {
-      log(7, 'failed', 'SessionStorage write failed: ' + err.message);
+      log(6, 'failed', 'SessionStorage write failed: ' + err.message);
       return { success: false, message: 'Failed to save registration state. Please try again.', steps };
     }
 
-    // ── Step 8: Done ──
-    log(8, 'success', 'Account created, OTP sent. Awaiting verification.');
+    // ── Step 7: Done ──
+    log(7, 'success', 'Account created, OTP sent. Awaiting verification.');
     console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
 
     return {
@@ -468,35 +453,6 @@ const AuthSystem = {
     DB.addAuditLog({ action: 'login', userId: localUser?.id, details: `User logged in: ${localUser?.name || email}`, ip: this._getIP() });
 
     return { success: true, user: localUser };
-  },
-
-  // ═══════════════════════════════════════════════════════
-  // EMAIL VERIFICATION (Supabase built-in)
-  // ═══════════════════════════════════════════════════════
-
-  async sendEmailVerification(userId) {
-    const user = DB.getUserById(userId);
-    if (!user) return { success: false, message: 'User not found' };
-    if (!user.email) return { success: false, message: 'No email address on file' };
-    if (user.emailVerified) return { success: false, message: 'Email already verified' };
-
-    const { error } = await SupabaseAuth.resendVerification(user.email);
-    if (error) {
-      return { success: false, message: error.message || 'Failed to send verification email.' };
-    }
-    return { success: true, message: `Verification email sent to ${user.email}` };
-  },
-
-  async resendEmailVerification(email) {
-    const user = DB.getUserByEmail(email);
-    if (!user) return { success: false, message: 'No account found with this email' };
-    if (user.emailVerified) return { success: false, message: 'Email already verified' };
-
-    const { error } = await SupabaseAuth.resendVerification(email);
-    if (error) {
-      return { success: false, message: error.message || 'Failed to resend verification email.' };
-    }
-    return { success: true, message: `Verification email sent to ${email}` };
   },
 
   // ═══════════════════════════════════════════════════════

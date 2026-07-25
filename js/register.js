@@ -154,10 +154,8 @@ function showRegProgress(steps) {
     3: 'Checking mobile number',
     4: 'Checking email',
     5: 'Creating account',
-    6: 'Uploading photo',
-    7: 'Saving profile',
-    8: 'Saving locally',
-    9: 'Complete'
+    6: 'Storing registration data',
+    7: 'Complete'
   };
   container.innerHTML = steps.map(s => {
     const icon = s.status === 'started' ? '⏳' : s.status === 'success' ? '✅' : '❌';

@@ -1,5 +1,3 @@
-let pendingVerificationEmail = '';
-
 function handleLogin(e) {
   e.preventDefault();
   const identifier = document.getElementById('loginIdentifier').value.trim();
@@ -18,7 +16,6 @@ function handleLogin(e) {
   }
 
   showLoginLoading(true);
-  document.getElementById('emailVerificationRequired').style.display = 'none';
 
   setTimeout(async () => {
     const result = await Auth.login(identifier, password, { rememberMe });
@@ -43,45 +40,6 @@ function handleLogin(e) {
   }, 600);
 
   return false;
-}
-
-function showEmailVerificationRequired(email) {
-  const el = document.getElementById('emailVerificationRequired');
-  const msg = document.getElementById('verificationEmailMsg');
-  msg.textContent = `"${email}" को इमेल सत्यापन भएको छैन। कृपया इमेलमा पठाइएको सत्यापन लिंकमा क्लिक गर्नुहोस्।`;
-  el.style.display = 'block';
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  document.getElementById('resendVerificationSuccess').classList.add('hidden');
-  document.getElementById('resendVerificationError').classList.add('hidden');
-}
-
-async function resendVerificationEmail() {
-  const email = pendingVerificationEmail;
-  if (!email) return;
-
-  const btn = document.getElementById('resendVerificationBtn');
-  const text = document.getElementById('resendVerificationText');
-  const successEl = document.getElementById('resendVerificationSuccess');
-  const errorEl = document.getElementById('resendVerificationError');
-
-  btn.disabled = true;
-  text.textContent = 'पठाइँदैछ...';
-  successEl.classList.add('hidden');
-  errorEl.classList.add('hidden');
-
-  const result = await AuthSystem.resendEmailVerification(email);
-  btn.disabled = false;
-  text.textContent = '🔄 पुन: सत्यापन इमेल पठाउनुहोस्';
-
-  if (result.success) {
-    successEl.textContent = `सत्यापन कोड ${email} मा पठाइयो!`;
-    successEl.classList.remove('hidden');
-    errorEl.classList.add('hidden');
-  } else {
-    errorEl.textContent = result.message;
-    errorEl.classList.remove('hidden');
-    successEl.classList.add('hidden');
-  }
 }
 
 function showLoginError(msg) {

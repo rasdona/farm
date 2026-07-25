@@ -352,13 +352,13 @@ function clearOTP() {
 // ============================================
 async function sendOTP() {
   if (currentMethod === 'email') {
-    // Email verification via Supabase Auth
+    // Email OTP via Supabase Auth
     if (currentIdentifier) {
-      const result = await AuthSystem.resendEmailVerification(currentIdentifier);
-      if (result.success) {
-        showMessage('msgBox', lang === 'np' ? 'सत्यापन लिंक इमेलमा पठाइयो!' : 'Verification link sent to email!', 'success');
+      const { error } = await SupabaseAuth.sendEmailOtp(currentIdentifier);
+      if (error) {
+        showMessage('msgBox', error.message || 'Failed to send OTP', 'error');
       } else {
-        showMessage('msgBox', result.message || 'Failed to send verification email', 'error');
+        showMessage('msgBox', lang === 'np' ? 'OTP कोड इमेलमा पठाइयो!' : 'OTP code sent to email!', 'success');
       }
     }
     startResendCooldown(60);
