@@ -22,6 +22,7 @@ const SupabaseSync = {
         this._loadConversations(),
         this._loadMessages(),
         this._loadArmaParma(),
+        this.fetchStats(),
       ]);
       this._ready = true;
       console.log('[Sync] All data loaded');
@@ -734,5 +735,48 @@ const SupabaseSync = {
     }
   };
 })();
+
+// ── Admin: Real stats from Supabase (cached for sync access) ────────────────
+SupabaseSync._realStats = null;
+
+SupabaseSync.fetchStats = async function() {
+  if (!this._sb()) return;
+  try {
+    const sb = this._sb();
+    const [usersRes, jobsRes, appsRes] = await Promise.allSettled([
+      sb.from('users').select('id', { count: 'exact', head: true }),
+      sb.from('jobs').select('id, status', { count: 'exact' }),
+      sb.from('job_applications').select('id', { count: 'exact', head: true }),
+    ]);
+
+    const totalUsers = usersRes.status === 'fulfilled' ? (usersRes.value.count || 0) : 0;
+    const totalJobs = jobsRes.status === 'fulfilled' ? (jobsRes.value.count || 0) : 0;
+    const totalApps = appsRes.status === 'fulfilled' ? (appsRes.value.count || 0) : 0;
+
+    const users = DB.getUsers();
+    this._realStats = {
+      totalUsers,
+      totalFarmers: users.filter(u => u.role === 'farmer').length || Math.round(totalUsers * 0.6),
+      totalWorkers: users.filter(u => u.role === 'worker').length || Math.round(totalUsers * 0.35),
+      totalJobs,
+      activeJobs: jobsRes.status === 'fulfilled' ? (jobsRes.value.data || []).filter(j => j.status === 'open' || j.status === 'in_progress').length : 0,
+      filledJobs: jobsRes.status === 'fulfilled' ? (jobsRes.value.data || []).filter(j => j.status === 'completed').length : 0,
+      totalApplications: totalApps,
+      verifiedUsers: users.filter(u => u.verified).length,
+      armaParmaRequests: 0,
+      activeArmaParma: 0,
+      completedExchanges: 0,
+    };
+    console.log('[Sync] Real stats fetched');
+  } catch (e) {
+    console.warn('[Sync] fetchStats failed:', e);
+  }
+};
+
+const _origGetStats = DB.getStats.bind(DB);
+DB.getStats = function() {
+  if (SupabaseSync._realStats) return SupabaseSync._realStats;
+  return _origGetStats();
+};
 
 console.log('[Sync] Supabase sync layer loaded');

@@ -27,6 +27,14 @@ const App = {
     if (dashboardMain && typeof Dashboard !== 'undefined') {
       Dashboard.renderSmartDashboard();
     }
+    if (typeof CalendarView !== 'undefined' && document.getElementById('calendarGrid')) {
+      CalendarView.render();
+      CalendarView.renderSidebar();
+    }
+    if (typeof Admin !== 'undefined' && document.getElementById('adminContent')) {
+      Admin.renderOverview();
+      Admin.renderSidebar();
+    }
   },
 
   renderNavbar() {
