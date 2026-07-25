@@ -1,101 +1,291 @@
 const SupabaseAuth = {
   client: null,
+  SUPABASE_URL: 'https://yutjmviwwikvwousgtjy.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u',
+  BUCKET_NAME: 'avatars',
+  _initialized: false,
 
   init() {
+    console.log('[SupabaseAuth] Initializing...');
     if (!window.supabase) {
-      console.error('[SupabaseAuth] Supabase JS library not loaded');
+      console.error('[SupabaseAuth] CRITICAL: Supabase JS library not loaded from CDN');
       return this;
     }
-    this.client = window.supabase.createClient(
-      'https://yutjmviwwikvwousgtjy.supabase.co',
-      'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u'
-    );
-    console.log('[SupabaseAuth] Client initialized');
+    try {
+      this.client = window.supabase.createClient(this.SUPABASE_URL, this.SUPABASE_ANON_KEY);
+      this._initialized = true;
+      console.log('[SupabaseAuth] Client initialized OK');
+    } catch (err) {
+      console.error('[SupabaseAuth] CRITICAL: Failed to create client:', err.message);
+    }
     return this;
   },
 
+  _guard() {
+    if (!this._initialized || !this.client) {
+      throw new Error('Supabase client not initialized. Check CDN load and API key.');
+    }
+  },
+
+  async checkConnection() {
+    console.log('[SupabaseAuth] Checking connection...');
+    this._guard();
+    try {
+      const { data, error } = await this.client.auth.getSession();
+      if (error) {
+        console.error('[SupabaseAuth] Connection check failed:', error.message);
+        return { ok: false, error: error.message };
+      }
+      console.log('[SupabaseAuth] Connection OK');
+      return { ok: true };
+    } catch (err) {
+      console.error('[SupabaseAuth] Connection check exception:', err.message);
+      return { ok: false, error: err.message };
+    }
+  },
+
+  async checkBucket() {
+    console.log('[SupabaseAuth] Checking storage bucket:', this.BUCKET_NAME);
+    this._guard();
+    try {
+      const { data: buckets, error: listErr } = await this.client.storage.listBuckets();
+      if (listErr) {
+        console.error('[SupabaseAuth] Bucket list failed:', listErr.message);
+        return { exists: false, error: listErr.message };
+      }
+      const found = buckets && buckets.some(b => b.name === this.BUCKET_NAME);
+      if (found) {
+        console.log('[SupabaseAuth] Bucket "' + this.BUCKET_NAME + '" exists');
+        return { exists: true };
+      } else {
+        const names = buckets ? buckets.map(b => b.name).join(', ') : 'none';
+        console.error('[SupabaseAuth] Bucket "' + this.BUCKET_NAME + '" NOT found. Available:', names);
+        return { exists: false, error: 'Bucket "' + this.BUCKET_NAME + '" not found. Available: ' + names };
+      }
+    } catch (err) {
+      console.error('[SupabaseAuth] Bucket check exception:', err.message);
+      return { exists: false, error: err.message };
+    }
+  },
+
   async signUp(email, password, metadata = {}) {
-    console.log('[SupabaseAuth] signUp:', email);
-    return this.client.auth.signUp({
-      email,
-      password,
-      options: { data: metadata }
-    });
+    this._guard();
+    console.log('[SupabaseAuth] signUp started:', email);
+    try {
+      const result = await this.client.auth.signUp({
+        email,
+        password,
+        options: { data: metadata }
+      });
+      if (result.error) {
+        console.error('[SupabaseAuth] signUp failed:', result.error.message);
+      } else {
+        console.log('[SupabaseAuth] signUp success, user id:', result.data?.user?.id);
+      }
+      return result;
+    } catch (err) {
+      console.error('[SupabaseAuth] signUp exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
   },
 
   async signIn(email, password) {
-    console.log('[SupabaseAuth] signIn:', email);
-    return this.client.auth.signInWithPassword({ email, password });
+    this._guard();
+    console.log('[SupabaseAuth] signIn started:', email);
+    try {
+      const result = await this.client.auth.signInWithPassword({ email, password });
+      if (result.error) {
+        console.error('[SupabaseAuth] signIn failed:', result.error.message);
+      } else {
+        console.log('[SupabaseAuth] signIn success');
+      }
+      return result;
+    } catch (err) {
+      console.error('[SupabaseAuth] signIn exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
   },
 
   async signOut() {
+    this._guard();
     console.log('[SupabaseAuth] signOut');
-    return this.client.auth.signOut();
+    try {
+      return await this.client.auth.signOut();
+    } catch (err) {
+      console.error('[SupabaseAuth] signOut exception:', err.message);
+      return { error: err };
+    }
   },
 
   async getSession() {
-    return this.client.auth.getSession();
+    this._guard();
+    try {
+      return await this.client.auth.getSession();
+    } catch (err) {
+      console.error('[SupabaseAuth] getSession exception:', err.message);
+      return { data: { session: null }, error: err };
+    }
   },
 
   async getUser() {
-    return this.client.auth.getUser();
+    this._guard();
+    try {
+      return await this.client.auth.getUser();
+    } catch (err) {
+      console.error('[SupabaseAuth] getUser exception:', err.message);
+      return { data: { user: null }, error: err };
+    }
   },
 
   async resendVerification(email) {
+    this._guard();
     console.log('[SupabaseAuth] resendVerification:', email);
-    return this.client.auth.resend({ type: 'signup', email });
+    try {
+      return await this.client.auth.resend({ type: 'signup', email });
+    } catch (err) {
+      console.error('[SupabaseAuth] resendVerification exception:', err.message);
+      return { error: { message: err.message } };
+    }
   },
 
   async resetPassword(email, redirectTo) {
+    this._guard();
     console.log('[SupabaseAuth] resetPassword:', email);
-    return this.client.auth.resetPasswordForEmail(email, { redirectTo });
+    try {
+      return await this.client.auth.resetPasswordForEmail(email, { redirectTo });
+    } catch (err) {
+      console.error('[SupabaseAuth] resetPassword exception:', err.message);
+      return { error: { message: err.message } };
+    }
   },
 
   async exchangeCodeForSession(code) {
-    return this.client.auth.exchangeCodeForSession(code);
+    this._guard();
+    try {
+      return await this.client.auth.exchangeCodeForSession(code);
+    } catch (err) {
+      console.error('[SupabaseAuth] exchangeCodeForSession exception:', err.message);
+      return { error: { message: err.message } };
+    }
   },
 
   async updatePassword(newPassword) {
-    return this.client.auth.updateUser({ password: newPassword });
+    this._guard();
+    try {
+      return await this.client.auth.updateUser({ password: newPassword });
+    } catch (err) {
+      console.error('[SupabaseAuth] updatePassword exception:', err.message);
+      return { error: { message: err.message } };
+    }
   },
 
   async saveProfile(profileData) {
-    console.log('[SupabaseAuth] saveProfile:', profileData.user_id);
-    const { data, error } = await this.client
-      .from('profiles')
-      .upsert(profileData, { onConflict: 'user_id' });
-    if (error) console.error('[SupabaseAuth] saveProfile error:', error);
-    return { data, error };
+    this._guard();
+    console.log('[SupabaseAuth] saveProfile started for user:', profileData.user_id);
+    try {
+      const { data, error } = await this.client
+        .from('profiles')
+        .upsert(profileData, { onConflict: 'user_id' });
+      if (error) {
+        console.error('[SupabaseAuth] saveProfile SQL error:', error.message, error.details || '', error.hint || '');
+      } else {
+        console.log('[SupabaseAuth] saveProfile success');
+      }
+      return { data, error };
+    } catch (err) {
+      console.error('[SupabaseAuth] saveProfile exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
   },
 
   async getProfile(userId) {
-    const { data, error } = await this.client
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    if (error) console.error('[SupabaseAuth] getProfile error:', error);
-    return { profile: data, error };
+    this._guard();
+    try {
+      const { data, error } = await this.client
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      if (error) console.error('[SupabaseAuth] getProfile error:', error.message);
+      return { profile: data, error };
+    } catch (err) {
+      console.error('[SupabaseAuth] getProfile exception:', err.message);
+      return { profile: null, error: { message: err.message } };
+    }
   },
 
   async getProfileByMobile(mobile) {
-    const { data, error } = await this.client
-      .from('profiles')
-      .select('*')
-      .eq('mobile_number', mobile)
-      .single();
-    return { profile: data, error };
+    this._guard();
+    console.log('[SupabaseAuth] getProfileByMobile:', mobile);
+    try {
+      const { data, error } = await this.client
+        .from('profiles')
+        .select('*')
+        .eq('mobile_number', mobile)
+        .single();
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('[SupabaseAuth] No profile found for mobile:', mobile);
+        } else {
+          console.error('[SupabaseAuth] getProfileByMobile error:', error.message);
+        }
+      }
+      return { profile: data, error };
+    } catch (err) {
+      console.error('[SupabaseAuth] getProfileByMobile exception:', err.message);
+      return { profile: null, error: { message: err.message } };
+    }
   },
 
   async updateProfile(userId, updates) {
-    const { data, error } = await this.client
-      .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('user_id', userId);
-    return { data, error };
+    this._guard();
+    try {
+      const { data, error } = await this.client
+        .from('profiles')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
+      return { data, error };
+    } catch (err) {
+      console.error('[SupabaseAuth] updateProfile exception:', err.message);
+      return { data: null, error: { message: err.message } };
+    }
+  },
+
+  async uploadAvatar(userId, file) {
+    this._guard();
+    console.log('[SupabaseAuth] uploadAvatar started for user:', userId);
+    try {
+      const ext = (file.name && file.name.split('.').pop()) || 'jpg';
+      const path = userId + '/avatar.' + ext;
+      const contentType = file.type || 'image/jpeg';
+
+      console.log('[SupabaseAuth] Uploading to bucket:', this.BUCKET_NAME, 'path:', path, 'size:', file.size || 'unknown', 'type:', contentType);
+      const { error: upErr } = await this.client.storage
+        .from(this.BUCKET_NAME)
+        .upload(path, file, { upsert: true, contentType });
+
+      if (upErr) {
+        console.error('[SupabaseAuth] uploadAvatar upload failed:', upErr.message, upErr);
+        return { url: null, error: upErr.message };
+      }
+
+      const { data: urlData } = this.client.storage.from(this.BUCKET_NAME).getPublicUrl(path);
+      const publicUrl = urlData ? urlData.publicUrl + '?t=' + Date.now() : null;
+
+      if (publicUrl) {
+        console.log('[SupabaseAuth] uploadAvatar success:', publicUrl);
+      } else {
+        console.warn('[SupabaseAuth] uploadAvatar got no public URL');
+      }
+      return { url: publicUrl, error: null };
+    } catch (err) {
+      console.error('[SupabaseAuth] uploadAvatar exception:', err.message);
+      return { url: null, error: err.message };
+    }
   },
 
   onAuthStateChange(callback) {
+    this._guard();
     return this.client.auth.onAuthStateChange(callback);
   }
 };

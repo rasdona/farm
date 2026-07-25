@@ -139,6 +139,48 @@ function updateDistricts() {
     (prov ? prov.districts.map(d => `<option value="${d}">${d}</option>`).join('') : '');
 }
 
+function showRegProgress(steps) {
+  let container = document.getElementById('regProgress');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'regProgress';
+    container.style.cssText = 'margin:16px 0;padding:12px;background:var(--bg-alt);border-radius:8px;font-size:0.82rem;max-height:200px;overflow-y:auto;';
+    const errEl = document.getElementById('regError');
+    errEl.parentNode.insertBefore(container, errEl.nextSibling);
+  }
+  const labels = {
+    1: 'Validating form',
+    2: 'Checking server connection',
+    3: 'Checking mobile number',
+    4: 'Checking email',
+    5: 'Creating account',
+    6: 'Uploading photo',
+    7: 'Saving profile',
+    8: 'Saving locally',
+    9: 'Complete'
+  };
+  container.innerHTML = steps.map(s => {
+    const icon = s.status === 'started' ? '⏳' : s.status === 'success' ? '✅' : '❌';
+    const color = s.status === 'success' ? '#059669' : s.status === 'failed' ? '#dc2626' : '#6b7280';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:3px 0;color:' + color + '">'
+      + '<span>' + icon + '</span>'
+      + '<span style="flex:1">' + (labels[s.step] || 'Step ' + s.step) + '</span>'
+      + (s.detail ? '<span style="font-size:0.75rem;opacity:0.7;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + s.detail.replace(/"/g, '&quot;') + '">' + s.detail + '</span>' : '')
+      + '</div>';
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function hideRegProgress() {
+  const el = document.getElementById('regProgress');
+  if (el) el.style.display = 'none';
+}
+
+function resetRegProgress() {
+  const el = document.getElementById('regProgress');
+  if (el) el.remove();
+}
+
 async function handleRegister() {
   if (!validateCurrentStep()) return;
   const errEl = document.getElementById('regError');
@@ -164,39 +206,54 @@ async function handleRegister() {
     dob: document.getElementById('regDob').value,
     citizenshipNumber: document.getElementById('regCitizenship').value.trim(),
     preferredLanguage: 'ne',
-    photoDataUrl: regPhotoDataUrl || null
+    photoDataUrl: regPhotoDataUrl || null,
+    photoFile: regPhotoFile || null
   };
 
   const btn = document.getElementById('regSubmitBtn');
+  const origText = 'दर्ता गर्नुहोस्';
   btn.disabled = true;
   btn.textContent = 'दर्ता हुँदैछ...';
 
-  let registered = false;
+  resetRegProgress();
+  errEl.classList.add('hidden');
+
   try {
+    console.log('[Registration] Starting registration flow for:', data.email);
+
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+      setTimeout(() => reject(new Error('TIMEOUT')), 45000)
     );
     const result = await Promise.race([AuthSystem.register(data), timeoutPromise]);
 
+    if (result.steps) showRegProgress(result.steps);
+
     if (result.success) {
-      registered = true;
+      console.log('[Registration] Registration succeeded');
+
       sessionStorage.setItem('agri_pendingEmail', data.email.trim().toLowerCase());
 
-      if (regPhotoDataUrl) {
+      if (regPhotoDataUrl && !result.user.profilePhotoUrl) {
         try {
           DB.updateUser(result.user.id, {
             profilePhotoUrl: regPhotoDataUrl,
             profilePhotoVerified: true,
             requiresPhotoUpload: false
           });
+          console.log('[Registration] Photo saved to localStorage as fallback');
         } catch (photoErr) {
-          console.warn('[Registration] Photo save to localStorage failed:', photoErr.message);
+          console.warn('[Registration] Photo localStorage save failed (non-blocking):', photoErr.message);
         }
       }
 
       Utils.toast('दर्ता सफल भयो! इमेल सत्यापन पठाइँदैछ...');
-      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 800);
+      btn.textContent = 'दर्ता सफल! ✓';
+      btn.style.background = '#059669';
+
+      setTimeout(() => { window.location.href = 'verify-email.html?email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 1500);
     } else {
+      console.error('[Registration] Registration failed:', result.message || JSON.stringify(result.errors));
+
       if (result.errors && result.errors.length) {
         const firstErr = result.errors[0];
         showRegError(firstErr.message);
@@ -206,21 +263,27 @@ async function handleRegister() {
           if (fieldId) document.getElementById(fieldId)?.focus();
         }
       } else {
-        showRegError(result.message || 'दर्ता असफल भयो');
+        showRegError(result.message || 'दर्ता असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।');
       }
+
       btn.disabled = false;
-      btn.textContent = 'दर्ता गर्नुहोस्';
+      btn.textContent = origText;
     }
   } catch (err) {
-    console.error('[Registration] Error:', err);
+    console.error('[Registration] Unhandled error:', err);
+
     if (err.message === 'TIMEOUT') {
-      showRegError('सर्भरसँग सम्पर्क गर्न असफल भयो। कृपया इन्टरनेट जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।');
-    } else if (!registered) {
-      showRegError('एउटा त्रुटि भयो। कृपया फेरि प्रयास गर्नुहोस्।');
+      showRegError('सर्भरसँग सम्पर्क गर्न असफल भयो (समय सकियो)। कृपया इन्टरनेट जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।');
+    } else {
+      showRegError('एउटा अप्रत्याशित त्रुटि भयो: ' + (err.message || 'Unknown error') + '। कृपया फेरि प्रयास गर्नुहोस्।');
     }
-    if (!registered) {
+
+    btn.disabled = false;
+    btn.textContent = origText;
+  } finally {
+    if (btn.textContent === 'दर्ता हुँदैछ...') {
       btn.disabled = false;
-      btn.textContent = 'दर्ता गर्नुहोस्';
+      btn.textContent = origText;
     }
   }
 }
@@ -252,7 +315,14 @@ async function handleRegPhotoSelect(input) {
         return;
       }
       regPhotoDataUrl = compressed;
-      regPhotoFile = file;
+
+      const byteStr = atob(compressed.split(',')[1]);
+      const ab = new ArrayBuffer(byteStr.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+      regPhotoFile = new Blob([ab], { type: 'image/jpeg' });
+      regPhotoFile.name = 'avatar.jpg';
+
       document.getElementById('regPhotoPreview').src = compressed;
       document.getElementById('regPhotoPreview').style.display = 'block';
       document.getElementById('regPhotoPlaceholder').style.display = 'none';

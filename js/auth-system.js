@@ -27,45 +27,128 @@ const AuthSystem = {
   // ═══════════════════════════════════════════════════════
 
   async register(data) {
+    const steps = [];
+    const log = (step, status, detail) => {
+      const entry = { step, status, detail: detail || '', time: new Date().toISOString() };
+      steps.push(entry);
+      const icon = status === 'started' ? '▶' : status === 'success' ? '✓' : '✗';
+      console.log('[Reg ' + icon + '] Step ' + step + ': ' + status + (detail ? ' — ' + detail : ''));
+    };
+
+    // ── Step 1: Validate ──
+    log(1, 'started', 'Validating form data');
     const validation = this.validateRegistration(data);
-    if (validation.length > 0) return { success: false, errors: validation };
+    if (validation.length > 0) {
+      log(1, 'failed', validation[0].message);
+      return { success: false, errors: validation, steps };
+    }
+    log(1, 'success', 'Validation passed');
 
     const phone = data.phone.replace(/\s/g, '');
     const email = data.email.trim().toLowerCase();
 
-    // Check duplicates in Supabase profiles table
-    const { profile: existingMobile } = await SupabaseAuth.getProfileByMobile(phone);
-    if (existingMobile) return { success: false, errors: [{ field: 'phone', message: 'Mobile number already registered' }] };
-
-    // Check localStorage for quick feedback
-    if (DB.getUserByEmail(email)) return { success: false, errors: [{ field: 'email', message: 'Email already registered' }] };
-
-    console.log('[Registration] Creating user via Supabase Auth...');
-
-    // Create user in Supabase Auth
-    const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
-    const { data: authData, error: authError } = await SupabaseAuth.signUp(email, data.password, {
-      full_name: data.name.trim(),
-      mobile_number: phone,
-      role: userRoles[0],
-      roles: JSON.stringify(userRoles)
-    });
-
-    if (authError) {
-      console.error('[Registration] Supabase Auth error:', authError.message);
-      if (authError.message.includes('already registered')) {
-        return { success: false, errors: [{ field: 'email', message: 'Email already registered' }] };
+    // ── Step 2: Check Supabase client ──
+    log(2, 'started', 'Checking Supabase client');
+    try {
+      if (!SupabaseAuth._initialized) {
+        SupabaseAuth.init();
       }
-      return { success: false, message: authError.message || 'Registration failed. Please try again.' };
+      SupabaseAuth._guard();
+      log(2, 'success', 'Supabase client ready');
+    } catch (err) {
+      log(2, 'failed', err.message);
+      return { success: false, message: 'Cannot connect to server. Please refresh the page and try again.', steps };
     }
 
-    if (!authData.user) {
-      return { success: false, message: 'Registration failed. Please try again.' };
+    // ── Step 3: Duplicate check (mobile) ──
+    log(3, 'started', 'Checking mobile number: ' + phone);
+    try {
+      const { profile: existingMobile, error: mobileErr } = await SupabaseAuth.getProfileByMobile(phone);
+      if (mobileErr && mobileErr.message && !mobileErr.message.includes('PGRST116')) {
+        log(3, 'failed', 'Mobile check error: ' + mobileErr.message);
+      }
+      if (existingMobile) {
+        log(3, 'failed', 'Mobile number already registered');
+        return { success: false, errors: [{ field: 'phone', message: 'यो फोन नम्बर पहिले नै दर्ता भएको छ' }], steps };
+      }
+      log(3, 'success', 'Mobile number available');
+    } catch (err) {
+      log(3, 'failed', 'Mobile check exception: ' + err.message);
     }
 
-    console.log('[Registration] User created. Supabase will send verification email.');
+    // ── Step 4: Duplicate check (email, localStorage) ──
+    log(4, 'started', 'Checking email in local storage');
+    try {
+      if (DB.getUserByEmail(email)) {
+        log(4, 'failed', 'Email already registered locally');
+        return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ' }], steps };
+      }
+      log(4, 'success', 'Email available locally');
+    } catch (err) {
+      log(4, 'failed', 'Email check exception: ' + err.message);
+    }
 
-    // Save additional profile data to Supabase profiles table
+    // ── Step 5: Supabase Auth signUp ──
+    const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
+    log(5, 'started', 'Creating Supabase Auth user for: ' + email);
+    let authData = null;
+    try {
+      const result = await SupabaseAuth.signUp(email, data.password, {
+        full_name: data.name.trim(),
+        mobile_number: phone,
+        role: userRoles[0],
+        roles: JSON.stringify(userRoles)
+      });
+
+      if (result.error) {
+        const msg = result.error.message || 'Sign up failed';
+        log(5, 'failed', msg);
+        if (msg.includes('already registered') || msg.includes('already been registered')) {
+          return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ' }], steps };
+        }
+        return { success: false, message: 'Account creation failed: ' + msg, steps };
+      }
+
+      authData = result.data;
+      if (!authData || !authData.user) {
+        log(5, 'failed', 'No user returned from signUp');
+        return { success: false, message: 'Account creation failed. No user data returned.', steps };
+      }
+      log(5, 'success', 'Auth user created, id: ' + authData.user.id);
+    } catch (err) {
+      log(5, 'failed', 'SignUp exception: ' + err.message);
+      return { success: false, message: 'Account creation failed: ' + err.message, steps };
+    }
+
+    // ── Step 6: Upload photo to Storage (if provided) ──
+    let profilePhotoUrl = '';
+    if (data.photoDataUrl) {
+      log(6, 'started', 'Uploading profile photo to storage');
+      try {
+        if (data.photoFile) {
+          const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(authData.user.id, data.photoFile);
+          if (url) {
+            profilePhotoUrl = url;
+            log(6, 'success', 'Photo uploaded to storage: ' + url);
+          } else {
+            log(6, 'failed', 'Storage upload failed: ' + (uploadErr || 'unknown'));
+            console.warn('[Registration] Photo storage upload failed, continuing without photo:', uploadErr);
+          }
+        } else if (data.photoDataUrl && data.photoDataUrl.startsWith('http')) {
+          profilePhotoUrl = data.photoDataUrl;
+          log(6, 'success', 'Using existing photo URL');
+        } else {
+          log(6, 'failed', 'No photo file to upload');
+        }
+      } catch (err) {
+        log(6, 'failed', 'Photo upload exception: ' + err.message);
+        console.warn('[Registration] Photo upload failed, continuing without photo:', err.message);
+      }
+    } else {
+      log(6, 'success', 'No photo to upload (skipped)');
+    }
+
+    // ── Step 7: Save profile to Supabase DB ──
     const profileData = {
       user_id: authData.user.id,
       full_name: data.name.trim(),
@@ -81,22 +164,26 @@ const AuthSystem = {
       citizenship_number: data.citizenshipNumber || '',
       preferred_language: data.preferredLanguage || 'ne'
     };
-
-    // Only store photo URL if it's an HTTP URL (not base64 DataURL)
-    if (data.photoDataUrl && data.photoDataUrl.startsWith('http')) {
-      profileData.profile_picture_url = data.photoDataUrl;
+    if (profilePhotoUrl) {
+      profileData.profile_picture_url = profilePhotoUrl;
     }
 
+    log(7, 'started', 'Saving profile to database');
     try {
-      const profileResult = await SupabaseAuth.saveProfile(profileData);
-      if (profileResult.error) {
-        console.error('[Registration] Profile save failed:', profileResult.error.message || profileResult.error);
+      const { data: profileResult, error: profileErr } = await SupabaseAuth.saveProfile(profileData);
+      if (profileErr) {
+        log(7, 'failed', 'Profile save SQL error: ' + (profileErr.message || JSON.stringify(profileErr)));
+        console.error('[Registration] Profile save failed (non-blocking):', profileErr);
+      } else {
+        log(7, 'success', 'Profile saved to database');
       }
-    } catch (profileErr) {
-      console.error('[Registration] Profile save exception:', profileErr.message || profileErr);
+    } catch (err) {
+      log(7, 'failed', 'Profile save exception: ' + err.message);
+      console.error('[Registration] Profile save exception (non-blocking):', err.message);
     }
 
-    // Cache in localStorage for backward compatibility
+    // ── Step 8: Cache user in localStorage ──
+    log(8, 'started', 'Caching user in localStorage');
     const localUser = {
       id: 'USR' + Date.now(),
       supabase_id: authData.user.id,
@@ -115,7 +202,9 @@ const AuthSystem = {
       citizenshipNumber: data.citizenshipNumber || '',
       preferredLanguage: data.preferredLanguage || 'ne',
       avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.name.trim()),
-      profilePhotoUrl: '',
+      profilePhotoUrl: profilePhotoUrl || '',
+      profilePhotoVerified: false,
+      requiresPhotoUpload: !profilePhotoUrl,
       verified: false,
       suspended: false,
       emailVerified: false,
@@ -125,13 +214,24 @@ const AuthSystem = {
       createdAt: new Date().toISOString()
     };
 
-    DB.addUser(localUser);
+    try {
+      DB.addUser(localUser);
+      log(8, 'success', 'User cached in localStorage, id: ' + localUser.id);
+    } catch (err) {
+      log(8, 'failed', 'localStorage write failed: ' + err.message);
+      console.error('[Registration] localStorage write failed (non-blocking):', err.message);
+    }
+
+    // ── Step 9: Done ──
+    log(9, 'success', 'Registration complete');
+    console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
 
     return {
       success: true,
       user: localUser,
       message: 'Your account has been created successfully. Please check your email and click the verification link before logging in.',
-      requiresEmailVerification: true
+      requiresEmailVerification: true,
+      steps
     };
   },
 
