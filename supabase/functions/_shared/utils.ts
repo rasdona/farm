@@ -1,5 +1,5 @@
 // ============================================================
-// KrishiConnect Nepal — Shared Utilities
+// AgriConnect Nepal — Shared Utilities
 // Production-grade: No mock data, real providers
 // ============================================================
 
@@ -12,11 +12,11 @@ const ENV = {
   SUPABASE_URL: Deno.env.get("SUPABASE_URL")!,
   SUPABASE_SERVICE_ROLE_KEY: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   SUPABASE_ANON_KEY: Deno.env.get("SUPABASE_ANON_KEY")!,
-  APP_URL: Deno.env.get("APP_URL") || "https://krishiconnect.com.np",
+  APP_URL: Deno.env.get("APP_URL") || "https://agriconnect.com.np",
   SMS_API_KEY: Deno.env.get("SMS_PROVIDER_API_KEY") || "",
-  SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "KrishiConnect",
+  SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "AgriConnect",
   EMAIL_API_KEY: Deno.env.get("EMAIL_PROVIDER_API_KEY") || "",
-  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "noreply@krishiconnect.com.np",
+  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "AgriConnect Nepal <noreply@agriconnect.com.np>",
   RECAPTCHA_SECRET: Deno.env.get("RECAPTCHA_SECRET") || "",
   OTP_DEV_MODE: Deno.env.get("OTP_DEV_MODE") === "true",
 };
@@ -36,7 +36,7 @@ export function getSupabase() {
 export function corsHeaders(origin?: string): Record<string, string> {
   const allowedOrigins = [
     ENV.APP_URL,
-    "https://krishiconnect.com.np",
+    "https://agriconnect.com.np",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5174",
@@ -304,68 +304,189 @@ export function smsOTPTemplate(code: string, purpose: string): string {
     email_change: "email change",
     login: "login verification",
   };
-  return `KrishiConnect: Your verification code is ${code}. Purpose: ${purposes[purpose] || purpose}. Valid for 5 minutes. Do not share this code.`;
+  return `AgriConnect: Your verification code is ${code}. Purpose: ${purposes[purpose] || purpose}. Valid for 5 minutes. Do not share this code.`;
 }
 
-export function emailOTPTemplate(code: string, purpose: string): string {
+export function emailOTPTemplate(code: string, purpose: string, userName?: string): string {
+  const purposeLabel: Record<string, string> = {
+    registration: "account registration",
+    email_verify: "email verification",
+    password_reset: "password reset",
+    mobile_verify: "mobile verification",
+    login: "login verification",
+    mobile_change: "phone number change",
+    email_change: "email change",
+  };
+  const greeting = userName ? `Hello ${userName},` : "Hello,";
+  const purposeText = purposeLabel[purpose] || purpose.replace(/_/g, " ");
+  const year = new Date().getFullYear();
   return `
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8faf8; margin: 0; padding: 20px;">
-<div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-  <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 30px; text-align: center;">
-    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">KrishiConnect Nepal</h1>
-    <p style="color: #dcfce7; margin: 8px 0 0;">Agriculture Platform</p>
-  </div>
-  <div style="padding: 30px;">
-    <h2 style="color: #1a1a1a; margin: 0 0 15px; font-size: 18px;">Your Verification Code</h2>
-    <p style="color: #555; line-height: 1.6; margin: 0 0 20px;">
-      Use the code below to complete your ${purpose.replace(/_/g, " ")}:
-    </p>
-    <div style="background: #f0fdf4; border: 2px dashed #16a34a; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-      <span style="font-size: 32px; font-weight: bold; color: #16a34a; letter-spacing: 8px; font-family: 'Courier New', monospace;">${code}</span>
-    </div>
-    <p style="color: #999; font-size: 13px; margin: 15px 0 0;">This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
-  </div>
-  <div style="background: #f8faf8; padding: 15px 30px; text-align: center;">
-    <p style="color: #999; font-size: 12px; margin: 0;">KrishiConnect Nepal &copy; ${new Date().getFullYear()}. For farmers, by farmers.</p>
-  </div>
-</div>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f5f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f5f1;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+
+      <!-- Header -->
+      <tr><td style="background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);padding:36px 32px;text-align:center;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+          <tr>
+            <td style="padding-right:12px;vertical-align:middle;">
+              <div style="width:48px;height:48px;background:#ffffff;border-radius:12px;text-align:center;line-height:48px;font-size:26px;">🌾</div>
+            </td>
+            <td style="vertical-align:middle;">
+              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">AgriConnect Nepal</div>
+              <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Agriculture Platform</div>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <!-- Body -->
+      <tr><td style="padding:36px 32px 24px;">
+        <p style="color:#1a1a1a;font-size:16px;margin:0 0 8px;font-weight:600;">${greeting}</p>
+        <p style="color:#555555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+          Welcome to AgriConnect Nepal. Use the following code to complete your <strong>${purposeText}</strong>:
+        </p>
+
+        <!-- OTP Code Box -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr><td style="background:#f0fdf4;border:2px dashed #16a34a;border-radius:12px;padding:24px;text-align:center;">
+            <p style="color:#166534;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 8px;">Your Verification Code</p>
+            <p style="color:#15803d;font-size:36px;font-weight:800;letter-spacing:10px;font-family:'Courier New',Courier,monospace;margin:0;">${code}</p>
+          </td></tr>
+        </table>
+
+        <!-- Expiry Notice -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top:24px;">
+          <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;">
+            <p style="color:#92400e;font-size:13px;margin:0;">
+              ⏱️ This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Security Notice -->
+      <tr><td style="padding:0 32px 24px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
+            <p style="color:#64748b;font-size:12px;margin:0;">
+              🔒 <strong>Security Notice:</strong> If you did not request this verification code, please ignore this email. Your account security is important to us.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
+        <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-align:center;">
+          Need help? Contact us at <a href="mailto:support@agriconnect.com.np" style="color:#16a34a;text-decoration:none;">support@agriconnect.com.np</a>
+        </p>
+        <p style="color:#cbd5e1;font-size:11px;margin:0;text-align:center;">
+          &copy; ${year} AgriConnect Nepal. All rights reserved.<br>
+          Connecting Nepal's farms with skilled workers.
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`;
 }
 
-export function emailLinkTemplate(url: string, purpose: string): string {
+export function emailLinkTemplate(url: string, purpose: string, userName?: string): string {
   const title =
     purpose === "password_reset" ? "Reset Your Password" : "Verify Your Email";
   const btnText =
     purpose === "password_reset" ? "Reset Password" : "Verify Email";
+  const greeting = userName ? `Hello ${userName},` : "Hello,";
+  const purposeText = purpose === "password_reset"
+    ? "to reset your password for AgriConnect Nepal"
+    : "to verify your email address for AgriConnect Nepal";
+  const year = new Date().getFullYear();
   return `
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8faf8; margin: 0; padding: 20px;">
-<div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
-  <div style="background: linear-gradient(135deg, #16a34a, #22c55e); padding: 30px; text-align: center;">
-    <h1 style="color: #ffffff; margin: 0; font-size: 24px;">KrishiConnect Nepal</h1>
-    <p style="color: #dcfce7; margin: 8px 0 0;">Agriculture Platform</p>
-  </div>
-  <div style="padding: 30px;">
-    <h2 style="color: #1a1a1a; margin: 0 0 15px; font-size: 18px;">${title}</h2>
-    <p style="color: #555; line-height: 1.6; margin: 0 0 20px;">
-      Click the button below to ${purpose.replace(/_/g, " ")}:
-    </p>
-    <div style="text-align: center; margin: 25px 0;">
-      <a href="${url}" style="background: #16a34a; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px; display: inline-block;">${btnText}</a>
-    </div>
-    <p style="color: #999; font-size: 13px; margin: 15px 0 0;">This link expires in <strong>10 minutes</strong>. If you didn't request this, ignore this email.</p>
-    <p style="color: #ccc; font-size: 12px; margin: 10px 0 0; word-break: break-all;">Link: ${url}</p>
-  </div>
-  <div style="background: #f8faf8; padding: 15px 30px; text-align: center;">
-    <p style="color: #999; font-size: 12px; margin: 0;">KrishiConnect Nepal &copy; ${new Date().getFullYear()}. For farmers, by farmers.</p>
-  </div>
-</div>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f0f5f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f0f5f1;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+
+      <!-- Header -->
+      <tr><td style="background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);padding:36px 32px;text-align:center;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+          <tr>
+            <td style="padding-right:12px;vertical-align:middle;">
+              <div style="width:48px;height:48px;background:#ffffff;border-radius:12px;text-align:center;line-height:48px;font-size:26px;">🌾</div>
+            </td>
+            <td style="vertical-align:middle;">
+              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">AgriConnect Nepal</div>
+              <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Agriculture Platform</div>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+
+      <!-- Body -->
+      <tr><td style="padding:36px 32px 24px;">
+        <p style="color:#1a1a1a;font-size:16px;margin:0 0 8px;font-weight:600;">${greeting}</p>
+        <p style="color:#555555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+          Click the button below ${purposeText}:
+        </p>
+
+        <!-- CTA Button -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr><td align="center" style="padding:8px 0 24px;">
+            <a href="${url}" style="background:#16a34a;color:#ffffff;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;letter-spacing:0.3px;box-shadow:0 2px 8px rgba(22,163,74,0.3);">${btnText}</a>
+          </td></tr>
+        </table>
+
+        <!-- Expiry Notice -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr><td style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;">
+            <p style="color:#92400e;font-size:13px;margin:0;">
+              ⏱️ This link expires in <strong>10 minutes</strong>. If you didn't request this, please ignore this email.
+            </p>
+          </td></tr>
+        </table>
+
+        <!-- Fallback Link -->
+        <p style="color:#94a3b8;font-size:12px;margin:20px 0 0;word-break:break-all;">
+          Button not working? Copy and paste this link into your browser:<br>
+          <a href="${url}" style="color:#16a34a;text-decoration:underline;">${url}</a>
+        </p>
+      </td></tr>
+
+      <!-- Security Notice -->
+      <tr><td style="padding:0 32px 24px;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr><td style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
+            <p style="color:#64748b;font-size:12px;margin:0;">
+              🔒 <strong>Security Notice:</strong> If you did not request this, please ignore this email. Your account remains secure.
+            </p>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- Footer -->
+      <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
+        <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-align:center;">
+          Need help? Contact us at <a href="mailto:support@agriconnect.com.np" style="color:#16a34a;text-decoration:none;">support@agriconnect.com.np</a>
+        </p>
+        <p style="color:#cbd5e1;font-size:11px;margin:0;text-align:center;">
+          &copy; ${year} AgriConnect Nepal. All rights reserved.<br>
+          Connecting Nepal's farms with skilled workers.
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`;
 }

@@ -131,7 +131,7 @@ serve(async (req: Request): Promise<Response> => {
     if (password) {
       const { data: authData, error: signInErr } =
         await sb.auth.admin.signInWithPassword({
-          email: user.email || `${user.mobile_number}@krishiconnect.placeholder`,
+          email: user.email || `${user.mobile_number}@agriconnect.placeholder`,
           password,
         });
 

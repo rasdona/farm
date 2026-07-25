@@ -121,7 +121,7 @@ serve(async (req: Request): Promise<Response> => {
     } else {
       deliveryResult = await sendEmail(
         normalizedIdentifier,
-        `Your KrishiConnect Verification Code: ${otp_code}`,
+        `Verify Your Email - AgriConnect Nepal`,
         emailOTPTemplate(otp_code, purpose)
       );
     }
