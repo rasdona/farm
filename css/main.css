@@ -269,6 +269,7 @@ strong { font-weight: 600; }
 .btn-icon.btn-sm { padding: 8px; }
 .btn-block { width: 100%; }
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-pill { border-radius: var(--radius-full); }
 
 /* Badges */
 .badge {
@@ -587,30 +588,40 @@ tr:hover td { background: var(--bg-alt); }
 
 /* ══════════════════════════════════════════════════════════
    LANGUAGE SWITCHER
+   (Core styles defined in components.css — NAVBAR section)
    ══════════════════════════════════════════════════════════ */
-.lang-switcher { position: relative; }
-.lang-btn {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--bg-alt); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 6px 12px;
-  font-size: 0.85rem; font-weight: 600; color: var(--text);
-  cursor: pointer; transition: all 0.2s ease; white-space: nowrap;
+
+/* ── Role Switcher ─────────────────────────────────────── */
+/* (Core styles defined in components.css — NAVBAR section) */
+
+/* ── Mobile Role Switcher ──────────────────────────────── */
+/* (Core styles defined in components.css — NAVBAR section) */
+
+/* ── Weather Widget ────────────────────────────────────── */
+.weather-widget { background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
+.weather-current { padding: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.weather-main { display: flex; align-items: center; gap: 16px; }
+.weather-icon { font-size: 3rem; line-height: 1; }
+.weather-temp { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+.weather-condition { font-size: 0.9rem; color: var(--text-secondary); margin-top: 2px; }
+.weather-location { font-size: 0.8rem; color: var(--text-tertiary); margin-top: 2px; }
+.weather-details { display: flex; gap: 16px; }
+.weather-detail { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: var(--text-secondary); }
+.weather-tips { padding: 0 20px 16px; }
+.weather-tips-title { font-size: 0.8rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.weather-tip-item { font-size: 0.82rem; color: var(--text-secondary); padding: 3px 0; }
+.weather-forecast { padding: 16px 20px; border-top: 1px solid var(--border); }
+.weather-forecast-title { font-size: 0.8rem; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.weather-forecast-grid { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.weather-forecast-day {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 14px; background: var(--bg-alt); border-radius: var(--radius);
+  min-width: 64px; flex-shrink: 0;
 }
-.lang-btn:hover { border-color: var(--primary); background: var(--primary-50); }
-.lang-flag { font-size: 1.1rem; }
-.lang-label { font-size: 0.82rem; }
-.lang-arrow { font-size: 0.7rem; color: var(--text-tertiary); }
-.lang-dropdown {
-  display: none; position: absolute; top: calc(100% + 6px); right: 0;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); box-shadow: var(--shadow-lg);
-  min-width: 140px; z-index: var(--z-dropdown); overflow: hidden;
-}
-.lang-dropdown.show { display: block; }
-.lang-option {
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; padding: 10px 14px; border: none; background: none;
-  font-size: 0.85rem; font-weight: 500; color: var(--text);
-  cursor: pointer; transition: background 0.15s ease; text-align: left;
-}
-.lang-option:hover { background: var(--bg-alt); color: var(--primary); }
+.weather-day-name { font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+.weather-day-icon { font-size: 1.4rem; }
+.weather-day-temp { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.weather-day-rain { font-size: 0.68rem; color: var(--text-tertiary); }
+
+/* ── Availability Badge ────────────────────────────────── */
+.availability-badge { display: inline-flex; align-items: center; gap: 4px; }

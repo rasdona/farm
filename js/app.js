@@ -20,112 +20,226 @@ const App = {
     const unreadChats = 2;
     const T = typeof I18N !== 'undefined' ? I18N : null;
     const t = T ? (key => T.get(key)) : (key => key);
+    const activeRole = user ? Auth.getActiveRole() : null;
+    const roleMeta = (typeof AUTH_ROLES !== 'undefined') ? AUTH_ROLES : (typeof DB !== 'undefined' ? (DB.getRoles() || []) : []);
+    const allRoles = user ? (user.roles || []) : [];
+    const activeRoleInfo = roleMeta.find(r => r.id === activeRole) || { icon: '👤', name: activeRole || 'user', nameNe: activeRole || 'user' };
+    const langFlag = T ? (T.lang === 'ne' ? '🇳🇵' : '🇬🇧') : '🇳🇵';
+    const langLabel = T ? (T.lang === 'ne' ? 'नेपाली' : 'English') : 'नेपाली';
 
     nav.innerHTML = `
-      <div class="container">
-        <a href="index.html" class="navbar-brand">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
-          AgriConnect
-        </a>
-        <nav class="navbar-nav">
-          <a href="index.html" class="${this.isActive('index')}">${t('nav.home')}</a>
-          <a href="jobs.html" class="${this.isActive('jobs')}">${t('nav.findJobs')}</a>
-          <a href="workers.html" class="${this.isActive('workers')}">${t('nav.findWorkers')}</a>
-          <a href="community.html" class="${this.isActive('community')}">${t('nav.community')}</a>
-          <a href="about.html" class="${this.isActive('about')}">${t('nav.about')}</a>
-        </nav>
-        <div class="navbar-search">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
-        </div>
-        <div class="navbar-actions">
-          <div class="lang-switcher" id="navLangSwitcher">
-            <button class="navbar-btn lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
-              <span class="lang-flag" id="langFlag">${T ? (T.lang === 'ne' ? '🇳🇵' : '🇬🇧') : '🇳🇵'}</span>
-              <span class="lang-label" id="langLabel">${T ? (T.lang === 'ne' ? 'नेपाली' : 'English') : 'नेपाली'}</span>
-              <span class="lang-arrow">▾</span>
-            </button>
-            <div class="lang-dropdown" id="langDropdown">
-              <button class="lang-option" onclick="App.setLanguage('ne')">🇳🇵 नेपाली</button>
-              <button class="lang-option" onclick="App.setLanguage('en')">🇬🇧 English</button>
-            </div>
-          </div>
-          ${user ? `
-            ${AuthSystem.requiresPhotoUpload(user) ? `<a href="photo-gate.html" class="navbar-btn tooltip" data-tooltip="Upload Photo" style="color:#f59e0b;font-size:1.1rem">⚠️📸</a>` : ''}
-            <div style="position:relative">
-              <button class="navbar-btn" onclick="this.nextElementSibling.classList.toggle('show')" id="notifBtn">
-                🔔${unreadNotifs > 0 ? `<span class="badge-count">${unreadNotifs}</span>` : ''}
-              </button>
-              <div class="notification-dropdown" id="notifDropdown">
-                <div class="notification-dropdown-header"><h4>${t('nav.notifTitle')}</h4><button class="btn btn-ghost btn-sm" onclick="App.markAllRead()">${t('nav.markAllRead')}</button></div>
-                <div id="notifList">${this.renderNotifications(user.id)}</div>
-              </div>
-            </div>
-            <a href="chat.html" class="navbar-btn tooltip" data-tooltip="Messages">
-              💬${unreadChats > 0 ? `<span class="badge-count">${unreadChats}</span>` : ''}
+      <div class="navbar-inner">
+        <div class="container navbar-container">
+          <div class="navbar-left">
+            <a href="index.html" class="navbar-brand">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
+              <span class="navbar-brand-text">AgriConnect</span>
             </a>
-            <div style="position:relative">
-              <div class="navbar-profile" onclick="this.nextElementSibling.classList.toggle('show')">
-                ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
-                <span class="name">${user.name.split(' ')[0]}</span>
-              </div>
-              <div class="navbar-dropdown" id="profileDropdown">
-                <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
-                <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
-                <a href="photo-gate.html">📸 ${t('nav.profilePhoto')}</a>
-                <a href="jobs.html?mode=arma-parma">🤝 ${t('nav.armacarma')}</a>
-                <a href="verify-identity.html">🪪 ${t('nav.verifyId')}</a>
-                <a href="settings.html">⚙️ ${t('nav.settings')}</a>
-                <div class="divider"></div>
-                <button class="danger" onclick="Auth.logout()">🚪 ${t('nav.logout')}</button>
+          </div>
+
+          <nav class="navbar-center">
+            <a href="index.html" class="nav-link ${this.isActive('index')}">${t('nav.home')}</a>
+            <a href="jobs.html" class="nav-link ${this.isActive('jobs')}">${t('nav.findWork')}</a>
+            <a href="workers.html" class="nav-link ${this.isActive('workers')}">${t('nav.findWorkers')}</a>
+            <a href="community.html" class="nav-link ${this.isActive('community')}">${t('nav.community')}</a>
+            <a href="about.html" class="nav-link nav-link-about ${this.isActive('about')}">${t('nav.about')}</a>
+          </nav>
+
+          <div class="navbar-right">
+            <div class="navbar-search">
+              <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
+            </div>
+
+            <div class="navbar-divider"></div>
+
+            <div class="lang-switcher" id="navLangSwitcher">
+              <button class="lang-btn" onclick="document.getElementById('langDropdown').classList.toggle('show')" id="langBtn" title="Language">
+                <span class="lang-flag" id="langFlag">${langFlag}</span>
+                <span class="lang-label" id="langLabel">${langLabel}</span>
+                <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="lang-dropdown" id="langDropdown">
+                <button class="lang-option ${T && T.lang === 'ne' ? 'active' : ''}" onclick="App.setLanguage('ne')">🇳🇵 नेपाली</button>
+                <button class="lang-option ${T && T.lang === 'en' ? 'active' : ''}" onclick="App.setLanguage('en')">🇬🇧 English</button>
               </div>
             </div>
-          ` : `
-            <a href="login.html" class="btn btn-outline btn-sm">${t('nav.login')}</a>
-            <a href="register.html" class="btn btn-primary btn-sm">${t('nav.signup')}</a>
-          `}
-          <div class="hamburger" onclick="App.toggleMobileMenu()">
-            <span></span>
+
+            ${user ? `
+              ${AuthSystem.requiresPhotoUpload(user) ? `<a href="photo-gate.html" class="nav-icon-btn warn" title="Upload Photo">⚠️</a>` : ''}
+              <div class="nav-icon-wrap">
+                <button class="nav-icon-btn" onclick="this.nextElementSibling.classList.toggle('show')" id="notifBtn" title="${t('nav.notifTitle')}">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  ${unreadNotifs > 0 ? `<span class="badge-count">${unreadNotifs}</span>` : ''}
+                </button>
+                <div class="notification-dropdown" id="notifDropdown">
+                  <div class="notification-dropdown-header"><h4>${t('nav.notifTitle')}</h4><button class="btn btn-ghost btn-sm" onclick="App.markAllRead()">${t('nav.markAllRead')}</button></div>
+                  <div id="notifList">${this.renderNotifications(user.id)}</div>
+                </div>
+              </div>
+              <a href="chat.html" class="nav-icon-btn" title="${t('nav.msgs')}">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                ${unreadChats > 0 ? `<span class="badge-count">${unreadChats}</span>` : ''}
+              </a>
+
+              <div class="navbar-divider"></div>
+
+              <div class="role-switcher-wrap">
+                <button class="role-switcher-btn" onclick="document.getElementById('roleSwitcherDropdown').classList.toggle('show')" title="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}">
+                  <span class="role-icon">${activeRoleInfo.icon}</span>
+                  <span class="role-label">${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
+                  <svg class="role-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="role-switcher-dropdown" id="roleSwitcherDropdown">
+                  <div class="role-switcher-header">${T ? (T.lang === 'ne' ? 'तपाईंको भूमिका' : 'Your Roles') : 'Your Roles'}</div>
+                  ${allRoles.map(roleId => {
+                    const rm = roleMeta.find(r => r.id === roleId) || { icon: '👤', name: roleId, nameNe: roleId };
+                    const isActive = roleId === activeRole;
+                    return `<button class="role-option ${isActive ? 'active' : ''}" onclick="App.switchRole('${roleId}')">${rm.icon} <span>${T ? (T.lang === 'ne' ? (rm.nameNe || rm.name) : rm.name) : rm.name}</span>${isActive ? ' ✓' : ''}</button>`;
+                  }).join('')}
+                  <div class="role-switcher-divider"></div>
+                  <button class="role-option add-role" onclick="window.location.href='settings.html#roles'">➕ ${T ? (T.lang === 'ne' ? 'अरू भूमिका थप्नुहोस्' : 'Add another role') : 'Add another role'}</button>
+                </div>
+              </div>
+
+              <div class="navbar-profile-wrap">
+                <div class="navbar-profile" onclick="document.getElementById('profileDropdown').classList.toggle('show')">
+                  ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'sm')}
+                  <span class="name">${user.name.split(' ')[0]}</span>
+                  <svg class="profile-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="navbar-dropdown" id="profileDropdown">
+                  <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
+                  <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
+                  <a href="photo-gate.html">📸 ${t('nav.profilePhoto')}</a>
+                  <a href="jobs.html?mode=arma-parma">🤝 ${t('nav.armacarma')}</a>
+                  <a href="verify-identity.html">🪪 ${t('nav.verifyId')}</a>
+                  <a href="settings.html">⚙️ ${t('nav.settings')}</a>
+                  <div class="dropdown-divider"></div>
+                  <button class="danger" onclick="Auth.logout()">🚪 ${t('nav.logout')}</button>
+                </div>
+              </div>
+            ` : `
+              <div class="navbar-auth-btns">
+                <a href="login.html" class="btn btn-outline btn-pill">${t('nav.login')}</a>
+                <a href="register.html" class="btn btn-primary btn-pill">${t('nav.signup')}</a>
+              </div>
+            `}
           </div>
+
+          <button class="hamburger" onclick="App.toggleMobileMenu()" aria-label="Menu">
+            <span></span>
+          </button>
         </div>
       </div>
+
       <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
-          <span style="font-weight:700;font-size:1.1rem;color:var(--primary)">AgriConnect</span>
-          <span class="mobile-menu-close" onclick="App.toggleMobileMenu()">✕</span>
+          <a href="index.html" class="mobile-menu-brand">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
+            AgriConnect
+          </a>
+          <button class="mobile-menu-close" onclick="App.toggleMobileMenu()" aria-label="Close">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
         <div class="mobile-menu-user">
           ${user ? `
-            <div style="display:flex;align-items:center;gap:12px;padding:16px;background:var(--bg-alt);border-radius:var(--radius-md);margin-bottom:16px">
+            <div class="mobile-menu-user-card">
               ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'md')}
               <div>
-                <div style="font-weight:700;font-size:0.95rem;color:var(--text)">${user.name}</div>
-                <div style="font-size:0.8rem;color:var(--text-secondary)">${user.role === 'farmer' ? '🌾 Farmer' : '👷 Worker'}</div>
+                <div class="mobile-menu-user-name">${user.name}</div>
+                <div class="mobile-menu-user-role">${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</div>
               </div>
             </div>
-          ` : ''}
-        </div>
-        <nav>
-          <a href="index.html">🏠 ${t('nav.home')}</a>
-          <a href="jobs.html">💼 ${t('nav.findJobs')}</a>
-          <a href="workers.html">👷 ${t('nav.findWorkers')}</a>
-          <a href="community.html">💬 ${t('nav.community')}</a>
-          ${user ? `
-            <a href="${Auth.getDashboardUrl()}">📊 ${t('nav.dashboard')}</a>
-            <a href="chat.html">💬 ${t('nav.msgs')}</a>
-            <a href="profile.html?id=${user.id}">👤 ${t('nav.myProfile')}</a>
-            <a href="settings.html">⚙️ ${t('nav.settings')}</a>
-            <hr class="divider" style="margin:8px 0">
-            <button onclick="Auth.logout()" style="display:flex;align-items:center;gap:10px;padding:12px 16px;width:100%;text-align:left;color:var(--danger);font-weight:600;border-radius:var(--radius);transition:var(--transition)" onmouseover="this.style.background='var(--bg-alt)'" onmouseout="this.style.background='transparent'">🚪 ${t('nav.logout')}</button>
+            <div class="mobile-role-switcher">
+              <div class="mobile-role-label">${T ? (T.lang === 'ne' ? 'भूमिका स्विच गर्नुहोस्' : 'Switch Role') : 'Switch Role'}</div>
+              <div class="mobile-role-list">
+                ${allRoles.map(roleId => {
+                  const rm = roleMeta.find(r => r.id === roleId) || { icon: '👤', name: roleId, nameNe: roleId };
+                  const isActive = roleId === activeRole;
+                  return `<button class="mobile-role-item ${isActive ? 'active' : ''}" onclick="App.switchRole('${roleId}')">${rm.icon} ${T ? (T.lang === 'ne' ? (rm.nameNe || rm.name) : rm.name) : rm.name}</button>`;
+                }).join('')}
+              </div>
+            </div>
           ` : `
-            <a href="login.html">🔑 ${t('nav.login')}</a>
-            <a href="register.html">📝 ${t('nav.signup')}</a>
+            <div class="mobile-menu-auth">
+              <a href="login.html" class="btn btn-outline btn-block">${t('nav.login')}</a>
+              <a href="register.html" class="btn btn-primary btn-block">${t('nav.signup')}</a>
+            </div>
+          `}
+        </div>
+        <nav class="mobile-menu-nav">
+          <a href="index.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            ${t('nav.home')}
+          </a>
+          <a href="jobs.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            ${t('nav.findWork')}
+          </a>
+          <a href="workers.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            ${t('nav.findWorkers')}
+          </a>
+          <a href="community.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            ${t('nav.community')}
+          </a>
+          <a href="about.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            ${t('nav.about')}
+          </a>
+          ${user ? `
+            <div class="mobile-menu-divider"></div>
+            <a href="${Auth.getDashboardUrl()}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              ${t('nav.dashboard')}
+            </a>
+            <a href="chat.html">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              ${t('nav.msgs')}
+            </a>
+            <a href="profile.html?id=${user.id}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${t('nav.myProfile')}
+            </a>
+            <a href="settings.html">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              ${t('nav.settings')}
+            </a>
+            <div class="mobile-menu-divider"></div>
+            <button class="mobile-menu-logout" onclick="Auth.logout()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              ${t('nav.logout')}
+            </button>
+          ` : `
+            <div class="mobile-menu-divider"></div>
+            <a href="login.html">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+              ${t('nav.login')}
+            </a>
+            <a href="register.html">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              ${t('nav.signup')}
+            </a>
           `}
         </nav>
       </div>
       <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="App.toggleMobileMenu()"></div>
     `;
     this.renderMobileBottomNav();
+  },
+
+  switchRole(role) {
+    const result = Auth.setActiveRole(role);
+    if (result && result.success) {
+      document.querySelectorAll('.role-switcher-dropdown, .role-switcher-dropdown.show').forEach(d => d.classList.remove('show'));
+      this.renderNavbar();
+      this.showToast(typeof I18N !== 'undefined' && I18N.lang === 'ne' ? 'भूमिका परिवर्तन भयो' : 'Role switched successfully', 'success');
+    } else if (result) {
+      this.showToast(result.message || 'Failed to switch role', 'error');
+    }
   },
 
   renderNotifications(userId) {
@@ -282,8 +396,10 @@ const App = {
   toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
     const overlay = document.getElementById('mobileMenuOverlay');
+    const hamburger = document.querySelector('.hamburger');
     if (menu) menu.classList.toggle('open');
     if (overlay) overlay.classList.toggle('active');
+    if (hamburger) hamburger.classList.toggle('active');
     document.body.style.overflow = menu?.classList.contains('open') ? 'hidden' : '';
   },
 
@@ -295,7 +411,7 @@ const App = {
       }, 100));
     }
     document.addEventListener('click', (e) => {
-      document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show').forEach(d => {
+      document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
         if (!d.parentElement.contains(e.target)) d.classList.remove('show');
       });
     });
