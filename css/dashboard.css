@@ -208,7 +208,7 @@
   .stats-grid { grid-template-columns: 1fr; gap: 10px; }
   .farmer-stats, .worker-stats { grid-template-columns: 1fr; }
   .stats-grid .stat-card { padding: 16px; }
-  .dashboard-main { padding: 12px 10px; }
+  .dashboard-main { padding: 12px 10px 80px 10px; }
   .admin-stats { grid-template-columns: 1fr; }
   .admin-table th, .admin-table td { padding: 10px 8px; font-size: 0.8rem; }
 }

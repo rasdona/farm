@@ -142,7 +142,10 @@ a, button { touch-action: manipulation; }
 
   /* ── Mobile Bottom Nav ──────────────────────────────── */
   .mobile-bottom-nav { display: block; }
-  body { padding-bottom: 68px; }
+  body { padding-bottom: 80px; }
+
+  /* ── Non-dashboard pages: ensure content isn't hidden behind bottom nav ── */
+  main:not(.dashboard-main):not(.admin-main) { padding-bottom: 80px !important; }
 
   /* ── Mobile FAB ─────────────────────────────────────── */
   .fab-container { display: block; }
@@ -869,17 +872,18 @@ a, button { touch-action: manipulation; }
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0);
     z-index: calc(var(--z-modal) - 1);
     opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, background 0.3s ease;
   }
   .dashboard-sidebar-backdrop.active {
     opacity: 1;
-    visibility: visible;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
   }
   .dashboard-main { margin-left: 0; padding: 12px 10px 80px 56px; }
 }
