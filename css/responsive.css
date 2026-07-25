@@ -114,6 +114,7 @@ a, button { touch-action: manipulation; }
 
   /* ── Navbar ─────────────────────────────────────────── */
   .navbar { height: 56px; }
+  .navbar.scrolled { height: 56px; }
   :root { --navbar-height: 56px; }
   .navbar-container { gap: 12px; }
   .navbar-brand { font-size: 1.1rem; gap: 8px; }
@@ -146,6 +147,9 @@ a, button { touch-action: manipulation; }
 
   /* ── Non-dashboard pages: ensure content isn't hidden behind bottom nav ── */
   main:not(.dashboard-main):not(.admin-main) { padding-bottom: 80px !important; }
+
+  /* ── Ensure all non-dashboard main content starts below fixed header ── */
+  main:not(.dashboard-main):not(.admin-main):not(.auth-page) { margin-top: var(--navbar-height) !important; }
 
   /* ── Mobile FAB ─────────────────────────────────────── */
   .fab-container { display: block; }
