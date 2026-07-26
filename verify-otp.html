@@ -146,15 +146,33 @@
             clearOtpInputs();
           } else {
             showOtpSuccess('इमेल सत्यापन सफल भयो! प्रोफाइल तयार हुँदैछ...');
-            // Complete registration — upload photo, save profile, cache user
-            const completeResult = await AuthSystem.completeRegistrationAfterOtp();
+            document.getElementById('otpVerifyBtn').disabled = true;
+            document.getElementById('otpBtnText').textContent = 'प्रोफाइल तयार हुँदैछ...';
+
+            let completeResult;
+            try {
+              const COMPLETION_TIMEOUT_MS = 60000;
+              const completionPromise = AuthSystem.completeRegistrationAfterOtp();
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('COMPLETION_TIMEOUT')), COMPLETION_TIMEOUT_MS)
+              );
+              completeResult = await Promise.race([completionPromise, timeoutPromise]);
+            } catch (completionErr) {
+              console.error('[OTP] completeRegistrationAfterOtp error:', completionErr);
+              completeResult = { success: false, message: completionErr.message || 'Profile completion failed' };
+            }
+
             if (completeResult.success) {
-              sessionStorage.removeItem('agri_pendingPhoto');
+              try { sessionStorage.removeItem('agri_pendingPhoto'); } catch (e) {}
               showOtpSuccess('दर्ता पूरा भयो! ड्यासबोर्डमा लगिँदैछ...');
               setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1200);
             } else {
-              showOtpSuccess('इमेल सत्यापन भयो, तर प्रोफाइल सेभ गर्दा समस्या भयो। लगइन गर्नुहोस्।');
-              setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+              if (completeResult.message && completeResult.message.includes('timed out')) {
+                showOtpError('Profile picture upload failed. Your account was created. Please log in and upload a photo from settings.');
+              } else {
+                showOtpSuccess('इमेल सत्यापन भयो, तर प्रोफाइल सेभ गर्दा समस्या भयो। लगइन गर्नुहोस्।');
+              }
+              setTimeout(() => { window.location.href = 'login.html'; }, 2500);
             }
           }
         }

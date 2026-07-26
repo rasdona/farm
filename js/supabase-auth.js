@@ -290,9 +290,17 @@ const SupabaseAuth = {
       const contentType = file.type || 'image/jpeg';
 
       console.log('[SupabaseAuth] Uploading to bucket:', this.BUCKET_NAME, 'path:', path, 'size:', file.size || 'unknown', 'type:', contentType);
-      const { error: upErr } = await this.client.storage
+
+      const UPLOAD_TIMEOUT_MS = 30000;
+      const uploadPromise = this.client.storage
         .from(this.BUCKET_NAME)
         .upload(path, file, { upsert: true, contentType });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), UPLOAD_TIMEOUT_MS)
+      );
+
+      const { error: upErr } = await Promise.race([uploadPromise, timeoutPromise]);
 
       if (upErr) {
         console.error('[SupabaseAuth] uploadAvatar upload failed:', upErr.message, upErr);
@@ -310,7 +318,10 @@ const SupabaseAuth = {
       return { url: publicUrl, error: null };
     } catch (err) {
       console.error('[SupabaseAuth] uploadAvatar exception:', err.message);
-      return { url: null, error: err.message };
+      const msg = err.message && err.message.includes('timed out')
+        ? 'Profile picture upload failed. Please try again.'
+        : err.message;
+      return { url: null, error: msg };
     }
   },
 

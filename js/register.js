@@ -208,6 +208,18 @@ async function handleRegister() {
     photoFile: regPhotoFile || null
   };
 
+  if (data.photoDataUrl) {
+    try {
+      sessionStorage.setItem('agri_pendingPhoto', data.photoDataUrl);
+    } catch (e) {
+      console.warn('[Registration] Could not store photo in sessionStorage:', e.message);
+      showRegPhotoError('फोटो स्टोर गर्न असफल। दर्ता बिना फोटो जारी राखिनेछ।');
+      data.photoDataUrl = null;
+      regPhotoDataUrl = null;
+      regPhotoFile = null;
+    }
+  }
+
   const btn = document.getElementById('regSubmitBtn');
   const origText = 'दर्ता गर्नुहोस्';
   btn.disabled = true;
@@ -228,14 +240,6 @@ async function handleRegister() {
 
     if (result.success) {
       console.log('[Registration] Registration succeeded');
-
-      if (regPhotoDataUrl) {
-        try {
-          sessionStorage.setItem('agri_pendingPhoto', regPhotoDataUrl);
-        } catch (e) {
-          console.warn('[Registration] Could not store photo in sessionStorage:', e.message);
-        }
-      }
 
       Utils.toast('दर्ता सफल भयो! OTP पठाइँदैछ...');
       btn.textContent = 'दर्ता सफल! ✓';
@@ -259,6 +263,7 @@ async function handleRegister() {
 
       btn.disabled = false;
       btn.textContent = origText;
+      btn.style.background = '';
     }
   } catch (err) {
     console.error('[Registration] Unhandled error:', err);
@@ -271,10 +276,12 @@ async function handleRegister() {
 
     btn.disabled = false;
     btn.textContent = origText;
+    btn.style.background = '';
   } finally {
     if (btn.textContent === 'दर्ता हुँदैछ...') {
       btn.disabled = false;
       btn.textContent = origText;
+      btn.style.background = '';
     }
   }
 }
@@ -299,35 +306,52 @@ async function handleRegPhotoSelect(input) {
 
     const compressed = await compressPhoto(file, 400, 400, 0.75);
 
-    const img = new Image();
-    img.onload = () => {
-      if (img.width < 100 || img.height < 100) {
-        showRegPhotoError('फोटो कम्तिमा 100x100 पिक्सेल हुनुपर्छ।');
-        return;
-      }
-      regPhotoDataUrl = compressed;
+    const validated = await new Promise((resolve, reject) => {
+      const img = new Image();
+      const loadTimeout = setTimeout(() => reject(new Error('Image load timeout')), 10000);
+      img.onload = () => {
+        clearTimeout(loadTimeout);
+        if (img.width < 100 || img.height < 100) {
+          reject(new Error('Image too small: ' + img.width + 'x' + img.height));
+          return;
+        }
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(loadTimeout);
+        reject(new Error('Image load failed'));
+      };
+      img.src = compressed;
+    });
 
-      const byteStr = atob(compressed.split(',')[1]);
-      const ab = new ArrayBuffer(byteStr.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
-      regPhotoFile = new Blob([ab], { type: 'image/jpeg' });
-      regPhotoFile.name = 'avatar.jpg';
+    regPhotoDataUrl = compressed;
 
-      document.getElementById('regPhotoPreview').src = compressed;
-      document.getElementById('regPhotoPreview').style.display = 'block';
-      document.getElementById('regPhotoPlaceholder').style.display = 'none';
-      document.getElementById('regPhotoRing').style.borderStyle = 'solid';
-      document.getElementById('regPhotoRing').style.borderColor = 'var(--primary)';
-      document.getElementById('regPhotoHint').innerHTML = '<span style="color:var(--primary);font-weight:600">✓ फोटो छानियो!</span> <span style="color:var(--text-tertiary)">फोटो बदल्न यहाँ क्लिक गर्नुहोस्</span>';
-      document.getElementById('regPhotoError').classList.add('hidden');
-      const sizeKB = Math.round(compressed.length * 0.75 / 1024);
-      document.getElementById('regPhotoSuccess').textContent = 'फोटो तयार छ! (' + sizeKB + 'KB) दर्ता गर्दा अपलोड हुनेछ।';
-      document.getElementById('regPhotoSuccess').classList.remove('hidden');
-    };
-    img.src = compressed;
+    const byteStr = atob(compressed.split(',')[1]);
+    const ab = new ArrayBuffer(byteStr.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+    regPhotoFile = new Blob([ab], { type: 'image/jpeg' });
+    regPhotoFile.name = 'avatar.jpg';
+
+    document.getElementById('regPhotoPreview').src = compressed;
+    document.getElementById('regPhotoPreview').style.display = 'block';
+    document.getElementById('regPhotoPlaceholder').style.display = 'none';
+    document.getElementById('regPhotoRing').style.borderStyle = 'solid';
+    document.getElementById('regPhotoRing').style.borderColor = 'var(--primary)';
+    document.getElementById('regPhotoHint').innerHTML = '<span style="color:var(--primary);font-weight:600">✓ फोटो छानियो!</span> <span style="color:var(--text-tertiary)">फोटो बदल्न यहाँ क्लिक गर्नुहोस्</span>';
+    document.getElementById('regPhotoError').classList.add('hidden');
+    const sizeKB = Math.round(compressed.length * 0.75 / 1024);
+    document.getElementById('regPhotoSuccess').textContent = 'फोटो तयार छ! (' + sizeKB + 'KB) दर्ता गर्दा अपलोड हुनेछ।';
+    document.getElementById('regPhotoSuccess').classList.remove('hidden');
   } catch (err) {
-    showRegPhotoError('फोटो प्रशोधन गर्न असफल। कृपया फेरि प्रयास गर्नुहोस्।');
+    console.error('[RegPhoto] Processing failed:', err.message);
+    regPhotoDataUrl = null;
+    regPhotoFile = null;
+    if (err.message && err.message.includes('too small')) {
+      showRegPhotoError('फोटो कम्तिमा 100x100 पिक्सेल हुनुपर्छ।');
+    } else {
+      showRegPhotoError('फोटो प्रशोधन गर्न असफल। कृपया फेरि प्रयास गर्नुहोस्।');
+    }
     document.getElementById('regPhotoSuccess').classList.add('hidden');
   }
 }

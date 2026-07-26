@@ -229,6 +229,10 @@ const AuthSystem = {
       log(3, 'success', 'No photo to upload');
     }
 
+    try {
+      sessionStorage.removeItem('agri_pendingPhoto');
+    } catch (e) {}
+
     // ── Step 4: Save profile to Supabase DB ──
     const profileData = {
       user_id: pendingData.supabaseUserId,
