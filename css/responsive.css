@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE.CSS — Mobile-First Redesign
-   Breakpoints: 320 / 375 / 425 / 768 / 1024 / 1280
+   Breakpoints: 320 / 375 / 425 / 768 / 1024 / 1280 / 1366 / 1440 / 1920
    ══════════════════════════════════════════════════════════ */
 
 /* ── Base Mobile Resets (all widths) ────────────────── */
@@ -50,6 +50,39 @@ a, button { touch-action: manipulation; }
 .mobile-menu-user { display: none; }
 @media (max-width: 1024px) {
   .mobile-menu-user { display: block; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ≥ 1920px — Ultra-wide desktops
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 1920px) {
+  :root { --container-max: 1400px; }
+  .container { max-width: 1400px; }
+  .navbar-search { width: 480px; }
+  .navbar-center { gap: 8px; }
+  .nav-link { padding: 8px 20px; font-size: 0.875rem; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ≥ 1440px — Large desktops
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  :root { --container-max: 1320px; }
+  .container { max-width: 1320px; }
+  .navbar-search { width: 440px; }
+  .navbar-center { gap: 6px; }
+  .nav-link { padding: 8px 18px; font-size: 0.875rem; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   1366px — Common laptop resolution
+   ══════════════════════════════════════════════════════════ */
+@media (min-width: 1366px) and (max-width: 1439px) {
+  :root { --container-max: 1240px; }
+  .container { max-width: 1240px; }
+  .navbar-search { width: 400px; }
+  .navbar-center { gap: 5px; }
+  .nav-link { padding: 8px 16px; font-size: 0.86rem; }
 }
 
 /* ══════════════════════════════════════════════════════════

@@ -111,6 +111,7 @@
   transition: opacity 0.25s ease; pointer-events: none;
 }
 .nav-link:hover::before { opacity: 1; }
+.nav-link:focus-visible::before { opacity: 1; }
 
 /* Dropdown entrance */
 .navbar-dropdown.show,
