@@ -241,6 +241,41 @@
         if (!SupabaseAuth._initialized) SupabaseAuth.init();
         SupabaseAuth._guard();
 
+        if (!Auth.currentUser) {
+          console.warn('[PhotoGate] Auth.currentUser is null, attempting recovery...');
+          try {
+            const { data: { session } } = await SupabaseAuth.getSession();
+            if (session && session.user) {
+              let localUser = DB.getUserByEmail(session.user.email);
+              if (!localUser) {
+                console.log('[PhotoGate] User not in local DB, creating minimal record from session');
+                localUser = {
+                  email: session.user.email,
+                  name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                  phone: session.user.user_metadata?.phone || '',
+                  role: 'farmer',
+                  roles: ['farmer'],
+                  profilePhotoUrl: '',
+                  supabase_id: session.user.id,
+                  emailVerified: true
+                };
+                localUser = DB.addUser(localUser);
+                console.log('[PhotoGate] Created local user:', localUser.id, 'supabase_id:', session.user.id);
+              }
+              Auth.currentUser = localUser;
+              localStorage.setItem('agri_currentUser', localUser.id);
+              console.log('[PhotoGate] Recovery successful, user:', localUser.id);
+            }
+          } catch (e) {
+            console.error('[PhotoGate] Session recovery failed:', e);
+          }
+        }
+        if (!Auth.currentUser) {
+          showMsg('कृपया पहिले लगइन गर्नुहोस्। Redirecting to login...', 'error');
+          setTimeout(() => { window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href); }, 1200);
+          return;
+        }
+
         const supabaseUserId = Auth.currentUser.supabase_id || Auth.currentUser.id;
         console.log('[PhotoGate] Uploading for user:', supabaseUserId);
 

@@ -299,6 +299,8 @@ const AuthSystem = {
 
     try {
       DB.addUser(localUser);
+      localStorage.setItem('agri_currentUser', localUser.id);
+      Auth.currentUser = localUser;
       log(5, 'success', 'User cached in localStorage, id: ' + localUser.id);
     } catch (err) {
       log(5, 'failed', 'localStorage write failed: ' + err.message);
