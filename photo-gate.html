@@ -241,16 +241,50 @@
         if (!SupabaseAuth._initialized) SupabaseAuth.init();
         SupabaseAuth._guard();
 
-        const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(Auth.currentUser.supabase_id || Auth.currentUser.id, photoFile);
+        const supabaseUserId = Auth.currentUser.supabase_id || Auth.currentUser.id;
+        console.log('[PhotoGate] Uploading for user:', supabaseUserId);
+
+        const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(supabaseUserId, photoFile);
 
         if (url) {
+          console.log('[PhotoGate] Upload successful, URL:', url);
+
+          // Update localStorage
           DB.updateUser(Auth.currentUser.id, {
             profilePhotoUrl: url,
             profilePhotoVerified: true,
             requiresPhotoUpload: false
           });
           Auth.currentUser = DB.getUserById(Auth.currentUser.id);
-          showMsg('फोटो सफलतापूर्वक अपलोड भयो! 🎉', 'success');
+
+          // Also update Supabase users table
+          try {
+            const { error: dbErr } = await SupabaseAuth.client
+              .from('users')
+              .update({
+                profile_photo_url: url,
+                profile_photo_verified: true,
+                requires_photo_upload: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', supabaseUserId);
+            if (dbErr) {
+              console.warn('[PhotoGate] users table update failed:', dbErr.message);
+              // Try profiles table as fallback
+              const { error: profErr } = await SupabaseAuth.client
+                .from('profiles')
+                .update({ profile_picture_url: url, updated_at: new Date().toISOString() })
+                .eq('user_id', supabaseUserId);
+              if (profErr) console.warn('[PhotoGate] profiles table update also failed:', profErr.message);
+              else console.log('[PhotoGate] Updated profiles table as fallback');
+            } else {
+              console.log('[PhotoGate] Updated users table successfully');
+            }
+          } catch (dbEx) {
+            console.warn('[PhotoGate] DB sync exception:', dbEx.message);
+          }
+
+          showMsg('Photo uploaded successfully!', 'success');
           document.getElementById('progressBar').classList.remove('visible');
           document.getElementById('actionRow').style.display = 'none';
           document.getElementById('avatarPreview').src = url;
@@ -259,19 +293,30 @@
           document.getElementById('avatarRing').classList.add('has-photo');
           setTimeout(() => redirectAfterPhoto(), 1200);
         } else {
+          console.error('[PhotoGate] Upload failed:', uploadErr);
           document.getElementById('progressBar').classList.remove('visible');
-          showMsg('अपलोड असफल: ' + (uploadErr || 'अज्ञात त्रुटि') + '। कृपया फेरि प्रयास गर्नुहोस्।', 'error');
+          let errMsg = uploadErr || 'Unknown error';
+          if (errMsg.includes('Bucket') || errMsg.includes('bucket')) {
+            errMsg = 'Storage bucket not found. Please contact support.';
+          } else if (errMsg.includes('timed out')) {
+            errMsg = 'Upload timed out. Please try again.';
+          } else if (errMsg.includes('network') || errMsg.includes('fetch')) {
+            errMsg = 'Network error. Please check your connection.';
+          }
+          showMsg('Upload failed: ' + errMsg + '. Please try again.', 'error');
           btn.disabled = false;
           text.style.display = 'inline';
           spinner.style.display = 'none';
         }
       } catch (err) {
-        console.error('[PhotoGate] Upload error:', err);
+        console.error('[PhotoGate] Upload exception:', err);
         document.getElementById('progressBar').classList.remove('visible');
         if (err.message && err.message.includes('timed out')) {
-          showMsg('फोटो अपलोड गर्दा समय बित्यो। कृपया फेरि प्रयास गर्नुहोस्।', 'error');
+          showMsg('Upload timed out. Please try again.', 'error');
+        } else if (err.message && err.message.includes('not initialized')) {
+          showMsg('Server connection not ready. Please refresh the page.', 'error');
         } else {
-          showMsg('अपलोड असफल भयो। कृपया फेरि प्रयास गर्नुहोस्।', 'error');
+          showMsg('Upload failed: ' + (err.message || 'Unknown error') + '. Please try again.', 'error');
         }
         btn.disabled = false;
         text.style.display = 'inline';

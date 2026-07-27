@@ -40,18 +40,50 @@ serve(async (req: Request): Promise<Response> => {
     if (!authHeader) return errorResp("Unauthorized", 401, origin);
 
     const token = authHeader.replace("Bearer ", "");
+    if (!token || token.length < 10) {
+      return errorResp("Invalid authentication token. Please log in again.", 401, origin);
+    }
+
     const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: { user }, error: authErr } = await sb.auth.getUser(token);
-    if (authErr || !user) return errorResp("Unauthorized", 401, origin);
+    if (authErr) {
+      console.error("[photo-status] Auth error:", authErr.message);
+      return errorResp("Authentication failed: " + authErr.message, 401, origin);
+    }
+    if (!user) return errorResp("User not found. Please log in again.", 401, origin);
 
-    // Get user profile
-    const { data: profile } = await sb.from("users")
+    console.log("[photo-status] Authenticated user:", user.id);
+
+    // Get user profile from users table
+    const { data: profile, error: profileErr } = await sb.from("users")
       .select("profile_photo_url, profile_photo_verified, profile_completed, requires_photo_upload, mobile_verified, email_verified")
       .eq("id", user.id)
       .single();
+
+    // Fallback: also check profiles table
+    let photoUrl = profile?.profile_photo_url;
+    let photoVerified = profile?.profile_photo_verified;
+
+    if (!photoUrl) {
+      const { data: profilesData } = await sb.from("profiles")
+        .select("profile_picture_url")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profilesData?.profile_picture_url) {
+        photoUrl = profilesData.profile_picture_url;
+        console.log("[photo-status] Found photo in profiles table:", photoUrl);
+        // Sync back to users table
+        await sb.from("users").update({
+          profile_photo_url: photoUrl,
+          profile_photo_verified: true,
+          requires_photo_upload: false,
+        }).eq("id", user.id).catch(() => {});
+      }
+    }
 
     // Get trust badges
     const { data: badges } = await sb.rpc("get_trust_badges", { p_user_id: user.id });
@@ -69,8 +101,8 @@ serve(async (req: Request): Promise<Response> => {
     return jsonResp({
       success: true,
       profile: {
-        photo_url: profile?.profile_photo_url,
-        photo_verified: profile?.profile_photo_verified,
+        photo_url: photoUrl,
+        photo_verified: photoVerified,
         profile_completed: profile?.profile_completed,
         requires_photo: profile?.requires_photo_upload,
         mobile_verified: profile?.mobile_verified,

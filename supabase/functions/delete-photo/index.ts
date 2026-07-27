@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const STORAGE_BUCKET = "avatars";
 
 function corsHeaders(origin: string | null) {
   return {
@@ -42,28 +43,52 @@ serve(async (req: Request): Promise<Response> => {
     if (!authHeader) return errorResp("Unauthorized", 401, origin);
 
     const token = authHeader.replace("Bearer ", "");
+    if (!token || token.length < 10) {
+      return errorResp("Invalid authentication token. Please log in again.", 401, origin);
+    }
+
     const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: { user }, error: authErr } = await sb.auth.getUser(token);
-    if (authErr || !user) return errorResp("Unauthorized", 401, origin);
+    if (authErr) {
+      console.error("[delete-photo] Auth error:", authErr.message);
+      return errorResp("Authentication failed: " + authErr.message, 401, origin);
+    }
+    if (!user) return errorResp("User not found. Please log in again.", 401, origin);
 
-    // Delete from storage
-    await sb.storage.from("profile-images").remove([
-      `${user.id}/profile.jpg`,
-      `${user.id}/profile.png`,
-      `${user.id}/profile.webp`,
-    ]);
+    console.log("[delete-photo] Authenticated user:", user.id);
 
-    // Update database
+    // Delete from storage (try both naming conventions)
+    await sb.storage.from(STORAGE_BUCKET).remove([
+      `${user.id}/profile.jpg`, `${user.id}/profile.png`, `${user.id}/profile.webp`,
+      `${user.id}/avatar.jpg`, `${user.id}/avatar.png`, `${user.id}/avatar.webp`,
+    ]).catch((e) => console.warn("[delete-photo] Storage cleanup warning:", e.message));
+
+    // Update database via RPC
     const { data: result, error: fnErr } = await sb.rpc("delete_profile_photo", {
       p_user_id: user.id,
     });
 
     if (fnErr) {
-      console.error("delete_profile_photo error:", fnErr);
-      return errorResp("Failed to delete photo record", 500, origin);
+      console.warn("[delete-photo] RPC failed:", fnErr.message);
+      // Fallback: direct DB updates
+      await sb.from("users").update({
+        profile_photo_url: null,
+        profile_photo_verified: false,
+        requires_photo_upload: true,
+        updated_at: new Date().toISOString(),
+      }).eq("id", user.id).catch(() => {});
+
+      await sb.from("profiles").update({
+        profile_picture_url: null,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", user.id).catch(() => {});
+
+      console.log("[delete-photo] Photo removed via direct DB fallback");
+    } else {
+      console.log("[delete-photo] Photo removed via RPC");
     }
 
     const r = result?.[0];

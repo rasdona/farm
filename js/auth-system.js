@@ -312,6 +312,12 @@ const AuthSystem = {
         log(6, 'failed', 'No active session after OTP verification: ' + (sessionErr?.message || 'unknown'));
       } else {
         log(6, 'success', 'Active session confirmed');
+        // Store access token for standalone pages
+        try {
+          if (sessionData.session.access_token) {
+            localStorage.setItem('sb_token', sessionData.session.access_token);
+          }
+        } catch (e) {}
       }
     } catch (err) {
       log(6, 'failed', 'Session check exception: ' + err.message);
@@ -390,6 +396,14 @@ const AuthSystem = {
         email: email
       };
     }
+
+    // Store access token for standalone pages (profile-photo.html etc.)
+    try {
+      if (data.session && data.session.access_token) {
+        localStorage.setItem('sb_token', data.session.access_token);
+        console.log('[Login] Stored access token for standalone pages');
+      }
+    } catch (e) { console.warn('[Login] Could not store sb_token:', e.message); }
 
     // Fetch profile from Supabase and cache in localStorage
     const { profile } = await SupabaseAuth.getProfile(data.user.id);

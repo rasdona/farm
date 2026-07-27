@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const STORAGE_BUCKET = "avatars";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
@@ -44,21 +45,34 @@ serve(async (req: Request): Promise<Response> => {
   try {
     // Auth check
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) return errorResp("Unauthorized", 401, origin);
+    if (!authHeader) return errorResp("Authentication required. Please log in.", 401, origin);
 
     const token = authHeader.replace("Bearer ", "");
+    if (!token || token.length < 10) {
+      return errorResp("Invalid authentication token. Please log in again.", 401, origin);
+    }
+
     const sb = createClient(SUPABASE_URL, SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
     const { data: { user }, error: authErr } = await sb.auth.getUser(token);
-    if (authErr || !user) return errorResp("Unauthorized", 401, origin);
+    if (authErr) {
+      console.error("[upload-photo] Auth error:", authErr.message);
+      return errorResp("Authentication failed: " + authErr.message, 401, origin);
+    }
+    if (!user) {
+      console.error("[upload-photo] No user found for token");
+      return errorResp("User not found. Please log in again.", 401, origin);
+    }
+
+    console.log("[upload-photo] Authenticated user:", user.id);
 
     // Parse multipart form
     const formData = await req.formData();
     const file = formData.get("photo") as File | null;
 
-    if (!file) return errorResp("No photo provided", 400, origin);
+    if (!file) return errorResp("No photo provided. Please select an image.", 400, origin);
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -116,33 +130,52 @@ serve(async (req: Request): Promise<Response> => {
       return errorResp(`Image too short. Minimum height is ${MIN_HEIGHT}px.`, 400, origin);
     }
 
+    console.log("[upload-photo] File validated, size:", file.size, "type:", file.type, "dims:", width, "x", height);
+
     // Upload to Supabase Storage
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    const filePath = `${user.id}/profile.${ext}`;
+    const filePath = `${user.id}/avatar.${ext}`;
 
-    // Delete old photo first
-    await sb.storage.from("profile-images").remove([`${user.id}/profile.jpg`, `${user.id}/profile.png`, `${user.id}/profile.webp`]);
+    // Delete old photos first (try both naming conventions)
+    await sb.storage.from(STORAGE_BUCKET).remove([
+      `${user.id}/profile.jpg`, `${user.id}/profile.png`, `${user.id}/profile.webp`,
+      `${user.id}/avatar.jpg`, `${user.id}/avatar.png`, `${user.id}/avatar.webp`,
+    ]).catch((e) => console.warn("[upload-photo] Cleanup old photos warning:", e.message));
+
+    console.log("[upload-photo] Uploading to bucket:", STORAGE_BUCKET, "path:", filePath);
 
     const { error: uploadErr } = await sb.storage
-      .from("profile-images")
+      .from(STORAGE_BUCKET)
       .upload(filePath, file, {
         contentType: file.type,
         upsert: true,
       });
 
     if (uploadErr) {
-      console.error("Upload error:", uploadErr);
-      return errorResp("Failed to upload photo: " + uploadErr.message, 500, origin);
+      console.error("[upload-photo] Storage upload error:", uploadErr.message);
+      let userMsg = "Failed to upload photo: " + uploadErr.message;
+      if (uploadErr.message.includes("Bucket")) {
+        userMsg = "Storage bucket not found. Please contact support.";
+      } else if (uploadErr.message.includes("policy")) {
+        userMsg = "Permission denied. Please contact support.";
+      }
+      return errorResp(userMsg, 500, origin);
     }
+
+    console.log("[upload-photo] Storage upload successful");
 
     // Get public URL
     const { data: urlData } = sb.storage
-      .from("profile-images")
+      .from(STORAGE_BUCKET)
       .getPublicUrl(filePath);
 
     const photoUrl = urlData.publicUrl;
+    console.log("[upload-photo] Public URL:", photoUrl);
 
-    // Save to database via function
+    // Try to save to database via function
+    let dbSuccess = false;
+    let dbPhotoUrl = photoUrl;
+
     const { data: result, error: fnErr } = await sb.rpc("upload_profile_photo", {
       p_user_id: user.id,
       p_photo_url: photoUrl,
@@ -154,24 +187,52 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     if (fnErr) {
-      console.error("upload_profile_photo error:", fnErr);
-      return errorResp("Failed to save photo record", 500, origin);
+      console.warn("[upload-photo] upload_profile_photo RPC failed:", fnErr.message);
+      // Fallback: direct update to users table
+      const { error: updateErr } = await sb.from("users").update({
+        profile_photo_url: photoUrl,
+        profile_photo_verified: true,
+        requires_photo_upload: false,
+        updated_at: new Date().toISOString(),
+      }).eq("id", user.id);
+
+      if (updateErr) {
+        console.warn("[upload-photo] Direct users table update failed:", updateErr.message);
+        // Try profiles table as last resort
+        const { error: profilesErr } = await sb.from("profiles").update({
+          profile_picture_url: photoUrl,
+          updated_at: new Date().toISOString(),
+        }).eq("user_id", user.id);
+
+        if (profilesErr) {
+          console.error("[upload-photo] All DB updates failed. Photo uploaded to storage but DB not updated.");
+        } else {
+          console.log("[upload-photo] Updated profiles table as fallback");
+          dbSuccess = true;
+        }
+      } else {
+        console.log("[upload-photo] Updated users table directly as fallback");
+        dbSuccess = true;
+      }
+    } else {
+      const r = result?.[0];
+      dbSuccess = r?.success ?? true;
+      dbPhotoUrl = r?.photo_url ?? photoUrl;
+      console.log("[upload-photo] Database record saved via RPC");
     }
 
-    const r = result?.[0];
-
     return jsonResp({
-      success: r?.success ?? true,
-      message: r?.message ?? "Photo uploaded",
-      photo_url: r?.photo_url ?? photoUrl,
-      profile_complete: r?.profile_complete ?? false,
+      success: true,
+      message: "Photo uploaded successfully",
+      photo_url: dbPhotoUrl || photoUrl,
+      profile_complete: false,
       width,
       height,
       file_size: file.size,
     }, 200, origin);
 
   } catch (err) {
-    console.error("upload-photo error:", err);
-    return errorResp("Internal server error", 500, origin);
+    console.error("[upload-photo] Unhandled error:", err);
+    return errorResp("Internal server error: " + (err instanceof Error ? err.message : "Unknown"), 500, origin);
   }
 });

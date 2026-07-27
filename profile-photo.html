@@ -161,12 +161,66 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
   </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://yutjmviwwikvwousgtjy.supabase.co';
 const ANON_KEY = 'sb_publishable_eBxM3at_prpKRUy8MkG9UQ_kLdlLQ5u';
+const STORAGE_BUCKET = 'avatars';
 let currentFile = null;
 let rotationDeg = 0;
 let rawImageData = null;
+let isUploading = false;
+let supabaseClient = null;
+
+function getSupabaseClient() {
+  if (supabaseClient) return supabaseClient;
+  try {
+    if (window.supabase && window.supabase.createClient) {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, ANON_KEY);
+      console.log('[PhotoUpload] Supabase client initialized');
+      return supabaseClient;
+    }
+    console.error('[PhotoUpload] Supabase JS library not loaded from CDN');
+    return null;
+  } catch (err) {
+    console.error('[PhotoUpload] Failed to create Supabase client:', err.message);
+    return null;
+  }
+}
+
+async function getAccessToken() {
+  const client = getSupabaseClient();
+  if (!client) {
+    console.error('[PhotoUpload] No Supabase client available');
+    return null;
+  }
+  try {
+    const { data: { session }, error } = await client.auth.getSession();
+    if (error) {
+      console.error('[PhotoUpload] getSession error:', error.message);
+      return null;
+    }
+    if (!session || !session.access_token) {
+      console.error('[PhotoUpload] No active session or access_token');
+      return null;
+    }
+    console.log('[PhotoUpload] Got access token, user:', session.user?.id);
+    return session.access_token;
+  } catch (err) {
+    console.error('[PhotoUpload] getAccessToken exception:', err.message);
+    return null;
+  }
+}
+
+async function getUserId() {
+  const client = getSupabaseClient();
+  if (!client) return null;
+  try {
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error || !user) return null;
+    return user.id;
+  } catch { return null; }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   loadStatus();
@@ -251,7 +305,16 @@ function cancelUpload() {
 }
 
 async function confirmUpload() {
-  if (!currentFile) return;
+  if (!currentFile || isUploading) return;
+
+  const token = await getAccessToken();
+  if (!token) {
+    showMessage('Authentication failed. Please log in again.', 'error');
+    console.error('[PhotoUpload] Cannot proceed: no valid session token');
+    return;
+  }
+
+  isUploading = true;
   const btn = document.getElementById('uploadBtn');
   btn.classList.add('loading');
   showProgress(true);
@@ -265,18 +328,22 @@ async function confirmUpload() {
       }, 'image/jpeg', 0.85);
     });
 
+    console.log('[PhotoUpload] Blob created, size:', blob.size, 'bytes');
+
     const formData = new FormData();
     formData.append('photo', blob, 'profile.jpg');
 
     simulateProgress();
 
     const controller = new AbortController();
-    const uploadTimeout = setTimeout(() => controller.abort(), 30000);
+    const uploadTimeout = setTimeout(() => controller.abort(), 60000);
+
+    console.log('[PhotoUpload] Sending request to Edge Function...');
 
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/upload-photo`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
+        'Authorization': `Bearer ${token}`,
         'apikey': ANON_KEY,
       },
       body: formData,
@@ -284,9 +351,12 @@ async function confirmUpload() {
     });
 
     clearTimeout(uploadTimeout);
-    const data = await resp.json();
+    console.log('[PhotoUpload] Response status:', resp.status);
 
-    if (data.success) {
+    const data = await resp.json();
+    console.log('[PhotoUpload] Response data:', JSON.stringify(data));
+
+    if (resp.ok && data.success) {
       showMessage('Photo uploaded successfully!', 'success');
       document.getElementById('avatarImg').src = data.photo_url;
       document.getElementById('avatarImg').style.display = 'block';
@@ -305,15 +375,31 @@ async function confirmUpload() {
         Auth.currentUser = DB.getUserById(Auth.currentUser.id);
       }
     } else {
-      showMessage(data.error || data.message || 'Upload failed', 'error');
+      const errMsg = data.error || data.message || 'Upload failed';
+      console.error('[PhotoUpload] Upload failed:', errMsg, 'status:', resp.status);
+      if (resp.status === 401) {
+        showMessage('Session expired. Please log in again and retry.', 'error');
+      } else if (resp.status === 413 || errMsg.includes('too large')) {
+        showMessage('File too large. Maximum size is 5MB.', 'error');
+      } else if (errMsg.includes('Invalid file type') || errMsg.includes('not a valid image')) {
+        showMessage(errMsg, 'error');
+      } else if (errMsg.includes('Bucket') || errMsg.includes('bucket') || errMsg.includes('not found')) {
+        showMessage('Storage configuration error. Please contact support.', 'error');
+      } else {
+        showMessage(errMsg, 'error');
+      }
     }
   } catch (err) {
+    console.error('[PhotoUpload] Exception:', err.name, err.message);
     if (err.name === 'AbortError') {
-      showMessage('Profile picture upload timed out. Please try again.', 'error');
+      showMessage('Upload timed out. Please check your connection and try again.', 'error');
+    } else if (err.message && err.message.includes('Failed to fetch')) {
+      showMessage('Network error. Please check your internet connection.', 'error');
     } else {
-      showMessage('Upload failed. Please try again.', 'error');
+      showMessage('Upload failed: ' + (err.message || 'Unknown error'), 'error');
     }
   } finally {
+    isUploading = false;
     btn.classList.remove('loading');
     showProgress(false);
   }
@@ -322,11 +408,17 @@ async function confirmUpload() {
 async function deletePhoto() {
   if (!confirm('Remove your profile photo? You will need to upload a new one.')) return;
 
+  const token = await getAccessToken();
+  if (!token) {
+    showMessage('Authentication failed. Please log in again.', 'error');
+    return;
+  }
+
   try {
     const resp = await fetch(`${SUPABASE_URL}/functions/v1/delete-photo`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
+        'Authorization': `Bearer ${token}`,
         'apikey': ANON_KEY,
       },
     });
@@ -348,22 +440,31 @@ async function deletePhoto() {
         });
         Auth.currentUser = DB.getUserById(Auth.currentUser.id);
       }
+    } else {
+      showMessage(data.error || 'Failed to remove photo.', 'error');
     }
   } catch (err) {
-    showMessage('Failed to remove photo.', 'error');
+    console.error('[PhotoUpload] Delete error:', err);
+    showMessage('Network error. Please try again.', 'error');
   }
 }
 
 async function loadStatus() {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/photo-status`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('sb_token') || ''}`,
-        'apikey': ANON_KEY,
-      },
-    });
+    const token = await getAccessToken();
+    if (!token) {
+      console.warn('[PhotoUpload] loadStatus: no token, trying without auth');
+    }
+
+    const headers = { 'apikey': ANON_KEY };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/photo-status`, { headers });
     const data = await resp.json();
-    if (!data.success) return;
+    if (!data.success) {
+      console.warn('[PhotoUpload] loadStatus failed:', data.error);
+      return;
+    }
 
     const p = data.profile;
     if (p.photo_url) {
@@ -375,20 +476,18 @@ async function loadStatus() {
     }
 
     if (p.profile_completed) {
-      document.getElementById('infoBanner').innerHTML = '<strong>✅ Profile Completed!</strong> Your profile is verified and complete.';
+      document.getElementById('infoBanner').innerHTML = '<strong>Profile Completed!</strong> Your profile is verified and complete.';
     }
 
-    // Badges
     const bc = document.getElementById('badgesContainer');
     bc.innerHTML = '';
     (data.badges || []).forEach(b => {
       const el = document.createElement('div');
       el.className = 'badge ' + (b.is_active ? 'active' : 'inactive');
-      el.innerHTML = `${b.badge_icon || '🏅'} ${b.badge_name}`;
+      el.innerHTML = `${b.badge_icon || ''} ${b.badge_name}`;
       bc.appendChild(el);
     });
 
-    // History
     if (data.history && data.history.length > 0) {
       document.getElementById('historySection').style.display = 'block';
       const hl = document.getElementById('historyList');
@@ -397,17 +496,17 @@ async function loadStatus() {
         const isDelete = h.action === 'delete' || h.action === 'admin_remove';
         hl.innerHTML += `
           <div class="history-item">
-            <div class="history-icon ${isDelete ? 'delete' : 'upload'}">${isDelete ? '🗑️' : '📸'}</div>
+            <div class="history-icon ${isDelete ? 'delete' : 'upload'}">${isDelete ? '' : ''}</div>
             <div class="history-info">
               <div class="action">${h.action.charAt(0).toUpperCase() + h.action.slice(1)}</div>
-              <div class="detail">${h.file_name || ''} ${h.file_size ? '· ' + h.file_size : ''}</div>
+              <div class="detail">${h.file_name || ''} ${h.file_size ? '- ' + h.file_size : ''}</div>
             </div>
             <div class="history-time">${new Date(h.created_at).toLocaleDateString()}</div>
           </div>`;
       });
     }
   } catch (err) {
-    console.error('loadStatus error:', err);
+    console.error('[PhotoUpload] loadStatus error:', err);
   }
 }
 
