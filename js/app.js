@@ -65,24 +65,31 @@ const App = {
           </div>
 
           <nav class="navbar-center">
-            <a href="index.html" class="nav-link ${this.isActive('index')}">${t('nav.home')}</a>
-            <a href="jobs.html" class="nav-link ${this.isActive('jobs')}">${t('nav.findWork')}</a>
-            <a href="workers.html" class="nav-link ${this.isActive('workers')}">${t('nav.findWorkers')}</a>
-            <a href="community.html" class="nav-link ${this.isActive('community')}">${t('nav.community')}</a>
-            <a href="about.html" class="nav-link nav-link-about ${this.isActive('about')}">${t('nav.about')}</a>
+            <a href="index.html" class="nav-link ${this.isActive('index')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>${t('nav.home')}</span></a>
+            <a href="jobs.html" class="nav-link ${this.isActive('jobs')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>${t('nav.findWork')}</span></a>
+            <a href="workers.html" class="nav-link ${this.isActive('workers')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>${t('nav.findWorkers')}</span></a>
+            <a href="community.html" class="nav-link ${this.isActive('community')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${t('nav.community')}</span></a>
+            <a href="about.html" class="nav-link nav-link-about ${this.isActive('about')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>${t('nav.about')}</span></a>
+            <div class="nav-active-indicator"></div>
           </nav>
 
           <div class="navbar-right">
             <div class="navbar-search">
               <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
+              <button class="nav-search-mic" type="button" aria-label="Voice search" onclick="alert('Voice search coming soon')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
+              <button class="nav-search-filter" type="button" aria-label="Search filters" onclick="window.location.href='jobs.html'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              </button>
             </div>
 
             <div class="navbar-divider"></div>
 
             <div class="lang-switcher" id="navLangSwitcher">
               <button class="lang-btn" onclick="App.toggleLangDropdown()" id="langBtn" title="Language" aria-label="Switch language">
-                <span class="lang-globe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                <span class="lang-flag-icon">${T && T.lang === 'ne' ? '🇳🇵' : '🇬🇧'}</span>
                 <span class="lang-label" id="langLabel">${langLabel}</span>
                 <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </button>

@@ -58,7 +58,8 @@ a, button { touch-action: manipulation; }
 @media (min-width: 1920px) {
   :root { --container-max: 1400px; }
   .container { max-width: 1400px; }
-  .navbar-search { width: 480px; }
+  .navbar { left: 24px; right: 24px; max-width: 1480px; }
+  .navbar-search { width: 420px; }
   .navbar-center { gap: 8px; }
   .nav-link { padding: 8px 20px; font-size: 0.875rem; }
 }
@@ -69,7 +70,7 @@ a, button { touch-action: manipulation; }
 @media (min-width: 1440px) and (max-width: 1919px) {
   :root { --container-max: 1320px; }
   .container { max-width: 1320px; }
-  .navbar-search { width: 440px; }
+  .navbar-search { width: 380px; }
   .navbar-center { gap: 6px; }
   .nav-link { padding: 8px 18px; font-size: 0.875rem; }
 }
@@ -80,7 +81,7 @@ a, button { touch-action: manipulation; }
 @media (min-width: 1366px) and (max-width: 1439px) {
   :root { --container-max: 1240px; }
   .container { max-width: 1240px; }
-  .navbar-search { width: 400px; }
+  .navbar-search { width: 350px; }
   .navbar-center { gap: 5px; }
   .nav-link { padding: 8px 16px; font-size: 0.86rem; }
 }
@@ -91,7 +92,7 @@ a, button { touch-action: manipulation; }
 @media (max-width: 1280px) {
   :root { --container-max: 1140px; }
   .container { max-width: 1140px; }
-  .navbar-search { width: 360px; }
+  .navbar-search { width: 300px; }
   .navbar-center { gap: 4px; }
   .nav-link { padding: 8px 14px; font-size: 0.85rem; }
 }
@@ -118,9 +119,10 @@ a, button { touch-action: manipulation; }
   .chat-sidebar { width: 300px; }
 
   /* ── Navbar: Tablet adjustments ───────────────────── */
+  .navbar { top: 0; left: 0; right: 0; border-radius: 0; max-width: 100%; }
   .navbar-center { display: none; }
-  .navbar-search { width: 280px; }
-  .navbar-right { gap: 8px; }
+  .navbar-search { width: 240px; }
+  .navbar-right { gap: 6px; }
   .nav-link-about { display: none; }
   .navbar-divider { display: none; }
   .hamburger { display: flex; }
@@ -128,8 +130,9 @@ a, button { touch-action: manipulation; }
   .navbar-profile { padding: 4px; border-radius: 50%; gap: 0; }
   .navbar-profile:hover { transform: none; border-color: transparent; }
   .navbar-profile .profile-arrow { display: none; }
-  .nav-profile-avatar { width: 38px; height: 38px; border-width: 2px; }
+  .nav-profile-avatar { width: 36px; height: 36px; border-width: 2px; }
   .nav-profile-avatar.online::after { width: 10px; height: 10px; border-width: 2px; bottom: 0; right: 0; }
+  .navbar-container { padding: 0 10px; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -152,28 +155,21 @@ a, button { touch-action: manipulation; }
   .gap-6 { gap: 16px; }
 
   /* ── Navbar ─────────────────────────────────────────── */
-  .navbar { height: 56px; }
+  .navbar { height: 56px; top: 0; left: 0; right: 0; border-radius: 0; max-width: 100%; }
   .navbar.scrolled { height: 56px; }
   :root { --navbar-height: 56px; }
-  .navbar-container { gap: 12px; }
-  .navbar-brand { font-size: 1.1rem; gap: 8px; }
-  .navbar-brand svg, .navbar-brand img { height: 28px; width: 28px; }
+  .navbar-container { gap: 10px; padding: 0 8px; }
+  .navbar-brand { font-size: 1rem; gap: 6px; }
+  .navbar-brand svg, .navbar-brand img { height: 26px; width: 26px; }
   .navbar-center { display: none; }
   .navbar-search { display: none; }
-  .navbar-right { gap: 6px; }
+  .navbar-right { gap: 4px; }
   .navbar-divider { display: none; }
   .lang-label { display: none; }
-  .lang-btn { padding: 6px 10px; border: none; background: none; height: 34px; }
-  .lang-btn:hover { background: none; transform: none; }
-  .lang-dropdown { right: -8px; min-width: 130px; }
-  .role-switcher-wrap { display: none; }
-  .nav-profile-info { display: none; }
+  .lang-btn { padding: 6px 10px; gap: 0; }
+  .lang-switcher { display: none !important; }
+  .hamburger { display: flex; }
   .navbar-profile-wrap { display: none; }
-  .navbar-profile { padding: 4px; border-radius: 50%; gap: 0; }
-  .navbar-profile:hover { transform: none; border-color: transparent; }
-  .navbar-profile .profile-arrow { display: none; }
-  .nav-profile-avatar { width: 36px; height: 36px; border-width: 2px; }
-  .nav-profile-avatar.online::after { width: 9px; height: 9px; border-width: 2px; bottom: 0; right: 0; }
   .navbar-auth-btns { display: none; }
   .nav-icon-btn { width: 36px; height: 36px; }
   .nav-icon-btn svg { width: 18px; height: 18px; }

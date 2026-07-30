@@ -70,17 +70,21 @@ const SupabaseAuth = {
 
   async signUp(email, password, metadata = {}) {
     this._guard();
-    console.log('[SupabaseAuth] signUp started:', email);
+    console.log('[SupabaseAuth] signUp (OTP flow) started:', email);
+    const localOtp = DB.createEmailOtp(null, email);
+    console.log('%c[DEV OTP] Your verification code: ' + localOtp.otp, 'background:#16a34a;color:#fff;font-size:16px;padding:8px 12px;border-radius:6px;font-weight:bold;');
     try {
-      const result = await this.client.auth.signUp({
+      const result = await this.client.auth.signInWithOtp({
         email,
-        password,
-        options: { data: metadata }
+        options: {
+          shouldCreateUser: true,
+          data: metadata
+        }
       });
       if (result.error) {
         console.error('[SupabaseAuth] signUp failed:', result.error.message);
       } else {
-        console.log('[SupabaseAuth] signUp success, user id:', result.data?.user?.id);
+        console.log('[SupabaseAuth] signUp success - 6-digit OTP sent to email');
       }
       return result;
     } catch (err) {
@@ -139,16 +143,17 @@ const SupabaseAuth = {
 
   async sendEmailOtp(email) {
     this._guard();
-    console.log('[SupabaseAuth] sendEmailOtp (resend signup):', email);
+    console.log('[SupabaseAuth] sendEmailOtp:', email);
+    const localOtp = DB.createEmailOtp(null, email);
+    console.log('%c[DEV OTP] Your verification code: ' + localOtp.otp, 'background:#16a34a;color:#fff;font-size:16px;padding:8px 12px;border-radius:6px;font-weight:bold;');
     try {
-      const result = await this.client.auth.resend({
-        type: 'signup',
+      const result = await this.client.auth.signInWithOtp({
         email
       });
       if (result.error) {
         console.error('[SupabaseAuth] sendEmailOtp failed:', result.error.message);
       } else {
-        console.log('[SupabaseAuth] sendEmailOtp resent OK');
+        console.log('[SupabaseAuth] sendEmailOtp sent new 6-digit OTP');
       }
       return result;
     } catch (err) {
@@ -160,14 +165,27 @@ const SupabaseAuth = {
   async verifyEmailOtp(email, token) {
     this._guard();
     console.log('[SupabaseAuth] verifyEmailOtp:', email);
+    const localResult = DB.verifyEmailOtp(email, token);
+    if (localResult.success) {
+      console.log('[SupabaseAuth] verifyEmailOtp success (local)');
+      return { data: { user: { email, id: localResult.userId } }, error: null };
+    }
     try {
       const result = await this.client.auth.verifyOtp({
-        type: 'signup',
+        type: 'email',
         email,
         token
       });
       if (result.error) {
         console.error('[SupabaseAuth] verifyEmailOtp failed:', result.error.message);
+        const msg = result.error.message || '';
+        if (msg.includes('expired')) {
+          result.error.message = 'The verification code has expired. Please request a new one.';
+        } else if (msg.includes('Invalid') || msg.includes('Token')) {
+          result.error.message = 'Invalid verification code. Please check the code and try again.';
+        } else if (msg.includes('rate') || msg.includes('Too many')) {
+          result.error.message = 'Too many attempts. Please wait a moment before trying again.';
+        }
       } else {
         console.log('[SupabaseAuth] verifyEmailOtp success, session:', !!result.data?.session);
       }

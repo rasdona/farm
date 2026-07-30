@@ -88,10 +88,9 @@ const AuthSystem = {
       log(4, 'failed', 'Email check exception: ' + err.message);
     }
 
-    // ── Step 5: Supabase Auth signUp ──
+    // ── Step 5: Send 6-digit OTP via Supabase OTP flow ──
     const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
-    log(5, 'started', 'Creating Supabase Auth user for: ' + email);
-    let authData = null;
+    log(5, 'started', 'Sending 6-digit OTP to: ' + email);
     try {
       const result = await SupabaseAuth.signUp(email, data.password, {
         full_name: data.name.trim(),
@@ -101,20 +100,21 @@ const AuthSystem = {
       });
 
       if (result.error) {
-        const msg = result.error.message || 'Sign up failed';
+        const msg = result.error.message || 'Failed to send OTP';
         log(5, 'failed', msg);
-        if (msg.includes('already registered') || msg.includes('already been registered')) {
+        if (msg.includes('registered') || msg.includes('already')) {
           return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ' }], steps };
         }
-        return { success: false, message: 'Account creation failed: ' + msg, steps };
+        if (msg.includes('rate') || msg.includes('too many') || msg.includes('over') || msg.includes('limit')) {
+          return { success: false, message: 'धेरै पटक अनुरोध भयो। केही समय पर्खेर पुन: प्रयास गर्नुहोस्।', steps };
+        }
+        if (msg.includes('smtp') || msg.includes('send') || msg.includes('delivery') || msg.includes('provider')) {
+          return { success: false, message: 'इमेल पठाउन समस्या भयो। पछि फेरि प्रयास गर्नुहोस्।', steps };
+        }
+        return { success: false, message: 'OTP पठाउन असफल: ' + msg, steps };
       }
 
-      authData = result.data;
-      if (!authData || !authData.user) {
-        log(5, 'failed', 'No user returned from signUp');
-        return { success: false, message: 'Account creation failed. No user data returned.', steps };
-      }
-      log(5, 'success', 'Auth user created, id: ' + authData.user.id);
+      log(5, 'success', '6-digit OTP sent to: ' + email);
     } catch (err) {
       log(5, 'failed', 'SignUp exception: ' + err.message);
       return { success: false, message: 'Account creation failed: ' + err.message, steps };
@@ -123,10 +123,10 @@ const AuthSystem = {
     // ── Step 6: Store pending registration data for OTP completion ──
     log(6, 'started', 'Storing pending registration data');
     const pendingData = {
-      supabaseUserId: authData.user.id,
       name: data.name.trim(),
       phone: phone,
       email: email,
+      password: data.password,
       roles: userRoles,
       province: data.province || '',
       district: data.district || '',
@@ -146,13 +146,13 @@ const AuthSystem = {
     }
 
     // ── Step 7: Done ──
-    log(7, 'success', 'Account created, OTP sent. Awaiting verification.');
+    log(7, 'success', 'OTP sent. Awaiting verification.');
     console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
 
     return {
       success: true,
-      user: { supabase_id: authData.user.id, email, name: data.name.trim() },
-      message: 'OTP sent to your email. Please enter the 6-digit code.',
+      user: { email, name: data.name.trim() },
+      message: 'A 6-digit verification code has been sent to your email. Please check your inbox (and spam folder).',
       requiresOtp: true,
       steps
     };
@@ -187,18 +187,43 @@ const AuthSystem = {
       return { success: false, message: 'Invalid registration state. Please register again.', steps };
     }
 
-    // ── Step 2: Verify Supabase client ──
-    log(2, 'started', 'Checking Supabase client');
+    // ── Step 2: Verify Supabase client and get session ──
+    log(2, 'started', 'Checking Supabase client and session');
+    let supabaseUserId = null;
     try {
       if (!SupabaseAuth._initialized) SupabaseAuth.init();
       SupabaseAuth._guard();
-      log(2, 'success', 'Supabase client ready');
+      const { data: { session } } = await SupabaseAuth.getSession();
+      if (session && session.user) {
+        supabaseUserId = session.user.id;
+        log(2, 'success', 'Got user from session: ' + supabaseUserId);
+      } else {
+        log(2, 'failed', 'No active session after OTP verification');
+        return { success: false, message: 'Session not found. Please log in.', steps };
+      }
     } catch (err) {
-      log(2, 'failed', err.message);
-      return { success: false, message: 'Server connection failed. Please refresh and try again.', steps };
+      log(2, 'failed', 'Session error: ' + err.message);
+      return { success: false, message: 'Failed to get session: ' + err.message, steps };
     }
 
-    // ── Step 3: Upload photo to Storage (if provided) ──
+    // ── Step 3: Set password for the user ──
+    if (pendingData.password) {
+      log(3, 'started', 'Setting password for user');
+      try {
+        const { error: pwdErr } = await SupabaseAuth.updatePassword(pendingData.password);
+        if (pwdErr) {
+          log(3, 'failed', 'Password set error: ' + pwdErr.message);
+        } else {
+          log(3, 'success', 'Password set successfully');
+        }
+      } catch (err) {
+        log(3, 'failed', 'Password set exception: ' + err.message);
+      }
+    } else {
+      log(3, 'success', 'No password to set');
+    }
+
+    // ── Step 4: Upload photo to Storage (if provided) ──
     let profilePhotoUrl = '';
     let pendingPhotoDataUrl = null;
     try {
@@ -206,7 +231,7 @@ const AuthSystem = {
     } catch (e) {}
 
     if (pendingPhotoDataUrl) {
-      log(3, 'started', 'Uploading profile photo');
+      log(4, 'started', 'Uploading profile photo');
       try {
         const byteStr = atob(pendingPhotoDataUrl.split(',')[1]);
         const ab = new ArrayBuffer(byteStr.length);
@@ -215,27 +240,27 @@ const AuthSystem = {
         const photoFile = new Blob([ab], { type: 'image/jpeg' });
         photoFile.name = 'avatar.jpg';
 
-        const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(pendingData.supabaseUserId, photoFile);
+        const { url, error: uploadErr } = await SupabaseAuth.uploadAvatar(supabaseUserId, photoFile);
         if (url) {
           profilePhotoUrl = url;
-          log(3, 'success', 'Photo uploaded: ' + url);
+          log(4, 'success', 'Photo uploaded: ' + url);
         } else {
-          log(3, 'failed', 'Upload failed: ' + (uploadErr || 'unknown'));
+          log(4, 'failed', 'Upload failed: ' + (uploadErr || 'unknown'));
         }
       } catch (err) {
-        log(3, 'failed', 'Photo upload exception: ' + err.message);
+        log(4, 'failed', 'Photo upload exception: ' + err.message);
       }
     } else {
-      log(3, 'success', 'No photo to upload');
+      log(4, 'success', 'No photo to upload');
     }
 
     try {
       sessionStorage.removeItem('agri_pendingPhoto');
     } catch (e) {}
 
-    // ── Step 4: Save profile to Supabase DB ──
+    // ── Step 5: Save profile to Supabase DB ──
     const profileData = {
-      user_id: pendingData.supabaseUserId,
+      user_id: supabaseUserId,
       full_name: pendingData.name,
       mobile_number: pendingData.phone,
       role: pendingData.roles[0],
@@ -253,23 +278,23 @@ const AuthSystem = {
       profileData.profile_picture_url = profilePhotoUrl;
     }
 
-    log(4, 'started', 'Saving profile to database');
+    log(5, 'started', 'Saving profile to database');
     try {
       const { error: profileErr } = await SupabaseAuth.saveProfile(profileData);
       if (profileErr) {
-        log(4, 'failed', 'Profile save error: ' + (profileErr.message || JSON.stringify(profileErr)));
+        log(5, 'failed', 'Profile save error: ' + (profileErr.message || JSON.stringify(profileErr)));
       } else {
-        log(4, 'success', 'Profile saved to database');
+        log(5, 'success', 'Profile saved to database');
       }
     } catch (err) {
-      log(4, 'failed', 'Profile save exception: ' + err.message);
+      log(5, 'failed', 'Profile save exception: ' + err.message);
     }
 
-    // ── Step 5: Cache user in localStorage ──
-    log(5, 'started', 'Caching user in localStorage');
+    // ── Step 6: Cache user in localStorage ──
+    log(6, 'started', 'Caching user in localStorage');
     const localUser = {
       id: 'USR' + Date.now(),
-      supabase_id: pendingData.supabaseUserId,
+      supabase_id: supabaseUserId,
       name: pendingData.name,
       phone: pendingData.phone,
       email: pendingData.email,
@@ -301,41 +326,36 @@ const AuthSystem = {
       DB.addUser(localUser);
       localStorage.setItem('agri_currentUser', localUser.id);
       Auth.currentUser = localUser;
-      log(5, 'success', 'User cached in localStorage, id: ' + localUser.id);
+      log(6, 'success', 'User cached in localStorage, id: ' + localUser.id);
     } catch (err) {
-      log(5, 'failed', 'localStorage write failed: ' + err.message);
+      log(6, 'failed', 'localStorage write failed: ' + err.message);
     }
 
-    // ── Step 6: Sign in to get active session ──
-    log(6, 'started', 'Signing in via Supabase Auth');
+    // ── Step 7: Store access token for standalone pages ──
+    log(7, 'started', 'Storing session tokens');
     try {
-      const { data: sessionData, error: sessionErr } = await SupabaseAuth.getSession();
-      if (sessionErr || !sessionData?.session) {
-        log(6, 'failed', 'No active session after OTP verification: ' + (sessionErr?.message || 'unknown'));
+      const { data: sessionData } = await SupabaseAuth.getSession();
+      if (sessionData?.session?.access_token) {
+        localStorage.setItem('sb_token', sessionData.session.access_token);
+        log(7, 'success', 'Access token stored');
       } else {
-        log(6, 'success', 'Active session confirmed');
-        // Store access token for standalone pages
-        try {
-          if (sessionData.session.access_token) {
-            localStorage.setItem('sb_token', sessionData.session.access_token);
-          }
-        } catch (e) {}
+        log(7, 'failed', 'No access token found');
       }
     } catch (err) {
-      log(6, 'failed', 'Session check exception: ' + err.message);
+      log(7, 'failed', 'Token store exception: ' + err.message);
     }
 
-    // ── Step 7: Cleanup and done ──
-    log(7, 'started', 'Cleaning up pending data');
+    // ── Step 8: Cleanup and done ──
+    log(8, 'started', 'Cleaning up pending data');
     try {
       sessionStorage.removeItem('agri_pendingRegistration');
       sessionStorage.removeItem('agri_pendingEmail');
-      log(7, 'success', 'Pending data cleared');
+      log(8, 'success', 'Pending data cleared');
     } catch (err) {
-      log(7, 'failed', 'Cleanup failed: ' + err.message);
+      log(8, 'failed', 'Cleanup failed: ' + err.message);
     }
 
-    log(8, 'success', 'Registration complete after OTP verification');
+    log(9, 'success', 'Registration complete after OTP verification');
     console.log('[RegComplete] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
 
     return { success: true, user: localUser, steps };
