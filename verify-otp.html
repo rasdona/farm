@@ -54,7 +54,7 @@
       </div>
     </div>
   </main>
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/email-service.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/app.js"></script>
   <script>
     let resendTimer = null;
     let attemptCount = 0;
@@ -127,21 +127,22 @@
             clearOtpInputs();
           }
         } else {
-          // Email OTP — verify via Supabase Auth
-          const { data, error } = await SupabaseAuth.verifyEmailOtp(otpEmail, otp);
+          // Email OTP — verify via Edge Function
+          const result = await EmailService.verifyEmailOtp(otpEmail, otp, 'email_verify');
           showOtpLoading(false);
 
-          if (error) {
-            attemptCount++;
-            const msg = error.message || '';
-            if (msg.includes('expired')) {
-              showOtpError('कोडको म्याद सकिएको छ। नयाँ कोड पठाउनुहोस्।');
-            } else if (msg.includes('invalid') || msg.includes('Token')) {
-              showOtpError('गलत कोड। फेरि प्रयास गर्नुहोस्। (' + attemptCount + '/' + maxAttempts + ')');
-            } else if (msg.includes('rate') || msg.includes('Too many')) {
+          if (!result.success) {
+            const errMsg = (result.data && result.data.message) || result.message || 'सत्यापन असफल';
+            const data = result.data || {};
+            if (data.locked) {
               showOtpError('धेरै पटक प्रयास भयो। केही समय पर्खनुहोस्।');
+            } else if (errMsg.includes('expired')) {
+              showOtpError('कोडको म्याद सकिएको छ। नयाँ कोड पठाउनुहोस्।');
+            } else if (errMsg.includes('invalid') || errMsg.includes('Incorrect')) {
+              attemptCount++;
+              showOtpError('गलत कोड। फेरि प्रयास गर्नुहोस्। (' + attemptCount + '/' + maxAttempts + ')');
             } else {
-              showOtpError('सत्यापन असफल: ' + msg);
+              showOtpError('सत्यापन असफल: ' + errMsg);
             }
             clearOtpInputs();
           } else {
@@ -199,17 +200,17 @@
           showOtpError(result?.message || 'OTP पठाउन असफल भयो।');
         }
       } else {
-        // Email OTP — resend via Supabase Auth
+        // Email OTP — resend via Edge Function
         showOtpLoading(true);
         try {
-          const { error } = await SupabaseAuth.sendEmailOtp(otpEmail);
+          const result = await EmailService.resendOtp(otpEmail, 'email_verify');
           showOtpLoading(false);
-          if (error) {
-            showOtpError('OTP पठाउन असफल: ' + (error.message || 'अज्ञात त्रुटि'));
-          } else {
+          if (result.success) {
             showOtpSuccess('नयाँ OTP कोड ' + otpEmail + ' मा पठाइयो!');
             attemptCount = 0;
             startResendTimer();
+          } else {
+            showOtpError('OTP पठाउन असफल: ' + (result.message || 'अज्ञात त्रुटि'));
           }
         } catch (err) {
           showOtpLoading(false);

@@ -84,6 +84,17 @@ serve(async (req: Request): Promise<Response> => {
       await sb.rpc("complete_mobile_verification", { p_user_id: user_id });
     } else if (purpose === "email_verify") {
       await sb.rpc("complete_email_verification", { p_user_id: user_id });
+      // Confirm email in Supabase Auth so signInWithPassword works
+      try {
+        await sb.auth.admin.updateUserById(user_id, { email_confirm: true });
+      } catch (authErr) {
+        console.error("Failed to confirm email in Supabase Auth:", authErr);
+      }
+      // Also update profiles table for frontend compatibility
+      await sb.from("profiles").update({
+        email_verified: true,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", user_id);
     } else if (purpose === "password_reset") {
       // Generate reset token
       const { data: tokenResult } = await sb.rpc("create_verification_token", {

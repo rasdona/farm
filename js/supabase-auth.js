@@ -70,7 +70,7 @@ const SupabaseAuth = {
 
   async signUp(email, password, metadata = {}) {
     this._guard();
-    console.log('[SupabaseAuth] signUp (OTP flow) started:', email);
+    console.warn('[SupabaseAuth] DEPRECATED — use EmailService.registerUser() instead.');
     const localOtp = DB.createEmailOtp(null, email);
     console.log('%c[DEV OTP] Your verification code: ' + localOtp.otp, 'background:#16a34a;color:#fff;font-size:16px;padding:8px 12px;border-radius:6px;font-weight:bold;');
     try {
@@ -84,7 +84,7 @@ const SupabaseAuth = {
       if (result.error) {
         console.error('[SupabaseAuth] signUp failed:', result.error.message);
       } else {
-        console.log('[SupabaseAuth] signUp success - 6-digit OTP sent to email');
+        console.warn('[SupabaseAuth] signUp: OTP sent via Supabase email (may not arrive on free tier)');
       }
       return result;
     } catch (err) {
@@ -143,19 +143,19 @@ const SupabaseAuth = {
 
   async sendEmailOtp(email) {
     this._guard();
-    console.log('[SupabaseAuth] sendEmailOtp:', email);
+    console.warn('[SupabaseAuth] sendEmailOtp DEPRECATED — use EmailService.sendEmailOtp() instead.');
     const localOtp = DB.createEmailOtp(null, email);
     console.log('%c[DEV OTP] Your verification code: ' + localOtp.otp, 'background:#16a34a;color:#fff;font-size:16px;padding:8px 12px;border-radius:6px;font-weight:bold;');
     try {
-      const result = await this.client.auth.signInWithOtp({
-        email
-      });
-      if (result.error) {
-        console.error('[SupabaseAuth] sendEmailOtp failed:', result.error.message);
+      const result = await EmailService.sendEmailOtp(email, 'email_verify');
+      if (!result.success) {
+        console.error('[SupabaseAuth] sendEmailOtp via Edge Function failed:', result.message);
       } else {
-        console.log('[SupabaseAuth] sendEmailOtp sent new 6-digit OTP');
+        console.log('[SupabaseAuth] sendEmailOtp sent new 6-digit OTP via Resend');
       }
-      return result;
+      return result.success
+        ? { data: { otp_id: result.data?.otp_id }, error: null }
+        : { data: null, error: { message: result.message } };
     } catch (err) {
       console.error('[SupabaseAuth] sendEmailOtp exception:', err.message);
       return { data: null, error: { message: err.message } };
@@ -164,32 +164,22 @@ const SupabaseAuth = {
 
   async verifyEmailOtp(email, token) {
     this._guard();
-    console.log('[SupabaseAuth] verifyEmailOtp:', email);
+    console.warn('[SupabaseAuth] verifyEmailOtp DEPRECATED — use EmailService.verifyEmailOtp() instead.');
     const localResult = DB.verifyEmailOtp(email, token);
     if (localResult.success) {
-      console.log('[SupabaseAuth] verifyEmailOtp success (local)');
+      console.log('[SupabaseAuth] verifyEmailOtp success (local fallback)');
       return { data: { user: { email, id: localResult.userId } }, error: null };
     }
     try {
-      const result = await this.client.auth.verifyOtp({
-        type: 'email',
-        email,
-        token
-      });
-      if (result.error) {
-        console.error('[SupabaseAuth] verifyEmailOtp failed:', result.error.message);
-        const msg = result.error.message || '';
-        if (msg.includes('expired')) {
-          result.error.message = 'The verification code has expired. Please request a new one.';
-        } else if (msg.includes('Invalid') || msg.includes('Token')) {
-          result.error.message = 'Invalid verification code. Please check the code and try again.';
-        } else if (msg.includes('rate') || msg.includes('Too many')) {
-          result.error.message = 'Too many attempts. Please wait a moment before trying again.';
-        }
+      const result = await EmailService.verifyEmailOtp(email, token, 'email_verify');
+      if (result.success) {
+        console.log('[SupabaseAuth] verifyEmailOtp success via Edge Function');
+        return { data: { user: { email } }, error: null };
       } else {
-        console.log('[SupabaseAuth] verifyEmailOtp success, session:', !!result.data?.session);
+        const errMsg = result.data?.message || result.message || 'Verification failed';
+        console.error('[SupabaseAuth] verifyEmailOtp failed:', errMsg);
+        return { data: null, error: { message: errMsg } };
       }
-      return result;
     } catch (err) {
       console.error('[SupabaseAuth] verifyEmailOtp exception:', err.message);
       return { data: null, error: { message: err.message } };

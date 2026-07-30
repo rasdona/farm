@@ -189,6 +189,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
 <script src="js/utils.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/supabase-auth.js"></script>
+<script src="js/email-service.js"></script>
 <script src="js/auth-system.js"></script>
 <script>
 const SUPABASE_URL = 'https://yutjmviwwikvwousgtjy.supabase.co';
@@ -352,11 +353,11 @@ function clearOTP() {
 // ============================================
 async function sendOTP() {
   if (currentMethod === 'email') {
-    // Email OTP via Supabase Auth
+    // Email OTP via Edge Function (Resend)
     if (currentIdentifier) {
-      const { error } = await SupabaseAuth.sendEmailOtp(currentIdentifier);
-      if (error) {
-        showMessage('msgBox', error.message || 'Failed to send OTP', 'error');
+      const result = await EmailService.sendEmailOtp(currentIdentifier, currentPurpose);
+      if (!result.success) {
+        showMessage('msgBox', result.message || 'Failed to send OTP', 'error');
       } else {
         showMessage('msgBox', lang === 'np' ? 'OTP कोड इमेलमा पठाइयो!' : 'OTP code sent to email!', 'success');
       }
@@ -397,9 +398,34 @@ async function verifyOTP() {
   if (otp.length !== 6) return;
 
   if (currentMethod === 'email') {
-    // Email verification now uses link-based flow via Supabase Auth
-    showMessage('msgBox', lang === 'np' ? 'इमेल सत्यापन अब लिंकमार्फत हुन्छ। कृपया इमेल इनबक्स जाँच गर्नुहोस्।' : 'Email verification now uses a link. Please check your email inbox.', 'success');
-    return;
+    // Email OTP verification via Edge Function
+    try {
+      const result = await EmailService.verifyEmailOtp(currentIdentifier, otp, currentPurpose);
+      if (result.success) {
+        showSuccess(
+          lang === 'np' ? 'प्रमाणित भयो!' : 'Verified!',
+          lang === 'np' ? 'तपाईंको इमेल सफलतापूर्वक प्रमाणित भयो।' : 'Your email has been verified successfully.'
+        );
+        return;
+      } else {
+        const data = result.data || {};
+        if (data.locked) {
+          showMessage('msgBox',
+            lang === 'np' ? 'धेरै गलत प्रयास। कृपया 15 मिनेट पर्खनुहोस्।' : 'Too many attempts. Please wait 15 minutes.',
+            'error'
+          );
+          clearOTP();
+          stopTimer();
+        } else {
+          showMessage('msgBox', data.message || result.message || 'Invalid OTP', 'error');
+          clearOTP();
+        }
+        return;
+      }
+    } catch (err) {
+      showMessage('msgBox', 'Verification failed. Please try again.', 'error');
+      return;
+    }
   }
 
   const btn = document.getElementById('verifyBtn');

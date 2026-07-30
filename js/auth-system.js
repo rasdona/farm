@@ -88,74 +88,83 @@ const AuthSystem = {
       log(4, 'failed', 'Email check exception: ' + err.message);
     }
 
-    // ── Step 5: Send 6-digit OTP via Supabase OTP flow ──
+    // ── Step 5: Create user + send 6-digit OTP via Edge Function (Resend) ──
     const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
-    log(5, 'started', 'Sending 6-digit OTP to: ' + email);
+    log(5, 'started', 'Creating account and sending OTP to: ' + email);
     try {
-      const result = await SupabaseAuth.signUp(email, data.password, {
-        full_name: data.name.trim(),
-        mobile_number: phone,
-        role: userRoles[0],
-        roles: JSON.stringify(userRoles)
+      const result = await EmailService.registerUser({
+        name: data.name.trim(),
+        email: email,
+        phone: phone,
+        password: data.password,
+        roles: userRoles,
+        province: data.province || '',
+        district: data.district || '',
+        municipality: data.municipality || '',
+        ward: data.ward || '',
+        gender: data.gender || '',
+        dob: data.dob || '',
+        citizenshipNumber: data.citizenshipNumber || '',
+        preferredLanguage: data.preferredLanguage || 'ne'
       });
 
-      if (result.error) {
-        const msg = result.error.message || 'Failed to send OTP';
+      if (!result.success) {
+        const msg = result.message || result.data?.error || 'Failed to create account';
         log(5, 'failed', msg);
-        if (msg.includes('registered') || msg.includes('already')) {
+        if (msg.includes('already registered') || msg.includes('already exists')) {
           return { success: false, errors: [{ field: 'email', message: 'यो इमेल पहिले नै दर्ता भएको छ' }], steps };
         }
         if (msg.includes('rate') || msg.includes('too many') || msg.includes('over') || msg.includes('limit')) {
           return { success: false, message: 'धेरै पटक अनुरोध भयो। केही समय पर्खेर पुन: प्रयास गर्नुहोस्।', steps };
         }
-        if (msg.includes('smtp') || msg.includes('send') || msg.includes('delivery') || msg.includes('provider')) {
-          return { success: false, message: 'इमेल पठाउन समस्या भयो। पछि फेरि प्रयास गर्नुहोस्।', steps };
-        }
-        return { success: false, message: 'OTP पठाउन असफल: ' + msg, steps };
+        return { success: false, message: 'खाता बनाउन असफल: ' + msg, steps };
       }
 
-      log(5, 'success', '6-digit OTP sent to: ' + email);
+      log(5, 'success', 'Account created, 6-digit OTP sent to: ' + email);
+      const supabaseUserId = result.data?.user_id;
+
+      // ── Step 6: Store pending registration data for OTP completion ──
+      log(6, 'started', 'Storing pending registration data');
+      const pendingData = {
+        name: data.name.trim(),
+        phone: phone,
+        email: email,
+        password: data.password,
+        roles: userRoles,
+        supabaseUserId: supabaseUserId,
+        province: data.province || '',
+        district: data.district || '',
+        municipality: data.municipality || '',
+        ward: data.ward || '',
+        gender: data.gender || '',
+        dob: data.dob || '',
+        citizenshipNumber: data.citizenshipNumber || '',
+        preferredLanguage: data.preferredLanguage || 'ne'
+      };
+      try {
+        sessionStorage.setItem('agri_pendingRegistration', JSON.stringify(pendingData));
+        log(6, 'success', 'Pending data stored in sessionStorage');
+      } catch (err) {
+        log(6, 'failed', 'SessionStorage write failed: ' + err.message);
+        return { success: false, message: 'Failed to save registration state. Please try again.', steps };
+      }
+
+      // ── Step 7: Done ──
+      log(7, 'success', 'OTP sent. Awaiting verification.');
+      console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
+
+      return {
+        success: true,
+        user: { email, name: data.name.trim() },
+        message: 'A 6-digit verification code has been sent to your email. Please check your inbox (and spam folder).',
+        requiresOtp: true,
+        steps
+      };
+
     } catch (err) {
-      log(5, 'failed', 'SignUp exception: ' + err.message);
+      log(5, 'failed', 'Registration exception: ' + err.message);
       return { success: false, message: 'Account creation failed: ' + err.message, steps };
     }
-
-    // ── Step 6: Store pending registration data for OTP completion ──
-    log(6, 'started', 'Storing pending registration data');
-    const pendingData = {
-      name: data.name.trim(),
-      phone: phone,
-      email: email,
-      password: data.password,
-      roles: userRoles,
-      province: data.province || '',
-      district: data.district || '',
-      municipality: data.municipality || '',
-      ward: data.ward || '',
-      gender: data.gender || '',
-      dob: data.dob || '',
-      citizenshipNumber: data.citizenshipNumber || '',
-      preferredLanguage: data.preferredLanguage || 'ne'
-    };
-    try {
-      sessionStorage.setItem('agri_pendingRegistration', JSON.stringify(pendingData));
-      log(6, 'success', 'Pending data stored in sessionStorage');
-    } catch (err) {
-      log(6, 'failed', 'SessionStorage write failed: ' + err.message);
-      return { success: false, message: 'Failed to save registration state. Please try again.', steps };
-    }
-
-    // ── Step 7: Done ──
-    log(7, 'success', 'OTP sent. Awaiting verification.');
-    console.log('[Registration] ALL STEPS:', steps.map(s => s.step + ':' + s.status).join(' → '));
-
-    return {
-      success: true,
-      user: { email, name: data.name.trim() },
-      message: 'A 6-digit verification code has been sent to your email. Please check your inbox (and spam folder).',
-      requiresOtp: true,
-      steps
-    };
   },
 
   // ═══════════════════════════════════════════════════════
@@ -187,40 +196,43 @@ const AuthSystem = {
       return { success: false, message: 'Invalid registration state. Please register again.', steps };
     }
 
-    // ── Step 2: Verify Supabase client and get session ──
-    log(2, 'started', 'Checking Supabase client and session');
+    // ── Step 2: Log in to Supabase Auth (user created by Edge Function) ──
+    log(2, 'started', 'Logging in to Supabase Auth');
     let supabaseUserId = null;
     try {
       if (!SupabaseAuth._initialized) SupabaseAuth.init();
       SupabaseAuth._guard();
-      const { data: { session } } = await SupabaseAuth.getSession();
-      if (session && session.user) {
-        supabaseUserId = session.user.id;
-        log(2, 'success', 'Got user from session: ' + supabaseUserId);
+      const { data: signInData, error: signInErr } = await SupabaseAuth.signIn(
+        pendingData.email,
+        pendingData.password
+      );
+      if (signInErr) {
+        log(2, 'failed', 'Login error: ' + signInErr.message);
+        return { success: false, message: 'Login after verification failed: ' + signInErr.message, steps };
+      }
+      if (signInData?.user) {
+        supabaseUserId = signInData.user.id;
+        log(2, 'success', 'Logged in, user ID: ' + supabaseUserId);
       } else {
-        log(2, 'failed', 'No active session after OTP verification');
-        return { success: false, message: 'Session not found. Please log in.', steps };
+        log(2, 'failed', 'No user returned after login');
+        return { success: false, message: 'Login after verification failed.', steps };
       }
     } catch (err) {
-      log(2, 'failed', 'Session error: ' + err.message);
-      return { success: false, message: 'Failed to get session: ' + err.message, steps };
+      log(2, 'failed', 'Login exception: ' + err.message);
+      return { success: false, message: 'Login failed: ' + err.message, steps };
     }
 
-    // ── Step 3: Set password for the user ──
-    if (pendingData.password) {
-      log(3, 'started', 'Setting password for user');
-      try {
-        const { error: pwdErr } = await SupabaseAuth.updatePassword(pendingData.password);
-        if (pwdErr) {
-          log(3, 'failed', 'Password set error: ' + pwdErr.message);
-        } else {
-          log(3, 'success', 'Password set successfully');
-        }
-      } catch (err) {
-        log(3, 'failed', 'Password set exception: ' + err.message);
+    // ── Step 3: Fetch profile from Supabase ──
+    log(3, 'started', 'Fetching user profile');
+    try {
+      const { profile } = await SupabaseAuth.getProfile(supabaseUserId);
+      if (profile) {
+        log(3, 'success', 'Profile loaded for: ' + (profile.full_name || supabaseUserId));
+      } else {
+        log(3, 'success', 'No profile in profiles table (user may be in users table)');
       }
-    } else {
-      log(3, 'success', 'No password to set');
+    } catch (err) {
+      log(3, 'failed', 'Profile fetch error: ' + err.message);
     }
 
     // ── Step 4: Upload photo to Storage (if provided) ──

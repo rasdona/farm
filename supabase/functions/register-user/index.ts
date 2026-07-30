@@ -5,7 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   getSupabase, jsonResp, errorResp, parseBody, getIP, getUserAgent,
-  parseUserAgent, verifyCaptcha, isValidNepalMobile, isValidEmail,
+  verifyCaptcha, isValidNepalMobile, isValidEmail,
   normalizePhone, sendEmail, emailOTPTemplate,
 } from "../_shared/utils.ts";
 
@@ -37,6 +37,14 @@ serve(async (req: Request): Promise<Response> => {
       password,
       preferred_language = "en",
       captcha_token,
+      roles = ["farmer"],
+      province = "",
+      district = "",
+      municipality = "",
+      ward = "",
+      gender = "",
+      dob = "",
+      citizenship_number = "",
     } = body;
 
     // Validate email (mandatory)
@@ -69,7 +77,7 @@ serve(async (req: Request): Promise<Response> => {
       .from("users")
       .select("id")
       .eq("email", normalizedEmail)
-      .single();
+      .maybeSingle();
     if (existingEmail) {
       return errorResp("Email already registered", 409, origin);
     }
@@ -79,7 +87,7 @@ serve(async (req: Request): Promise<Response> => {
       .from("users")
       .select("id")
       .eq("mobile_number", normalizedMobile)
-      .single();
+      .maybeSingle();
     if (existingMobile) {
       return errorResp("Mobile number already registered", 409, origin);
     }
@@ -88,7 +96,7 @@ serve(async (req: Request): Promise<Response> => {
     const { data: authData, error: authErr } = await sb.auth.admin.createUser({
       email: normalizedEmail,
       password,
-      email_confirm: false, // Require email verification
+      email_confirm: false,
     });
 
     if (authErr) {
@@ -98,22 +106,32 @@ serve(async (req: Request): Promise<Response> => {
 
     const authUserId = authData.user.id;
 
-    // Create profile with all required and future-ready fields
+    const role = Array.isArray(roles) && roles.length > 0 ? roles[0] : "farmer";
+
+    // Create profile in users table
     const { error: profileErr } = await sb.from("users").insert({
       id: authUserId,
       full_name: full_name.trim(),
       mobile_number: normalizedMobile,
       email: normalizedEmail,
       preferred_language,
-      registration_method: "email", // Email is primary verification method
-      mobile_verified: false,       // Reserved for future SMS OTP
-      email_verified: false,        // Will be set to true after verification
+      role,
+      roles: JSON.stringify(roles),
+      province,
+      district,
+      municipality,
+      ward,
+      gender,
+      dob: dob || null,
+      citizenship_number: citizenship_number || null,
+      registration_method: "email",
+      mobile_verified: false,
+      email_verified: false,
       account_status: "pending_verification",
       verification_status: "unverified",
       requires_photo_upload: true,
       profile_photo_verified: false,
-      // Future-ready fields for SMS OTP
-      verification_method: "email",  // Current method: email
+      verification_method: "email",
       failed_otp_attempts: 0,
       otp_locked_until: null,
     });
@@ -122,6 +140,27 @@ serve(async (req: Request): Promise<Response> => {
       console.error("profile insert error:", profileErr);
       await sb.auth.admin.deleteUser(authUserId);
       return errorResp("Failed to create profile", 500, origin);
+    }
+
+    // Also insert into profiles table for frontend compatibility
+    const { error: legacyProfileErr } = await sb.from("profiles").insert({
+      user_id: authUserId,
+      full_name: full_name.trim(),
+      mobile_number: normalizedMobile,
+      role,
+      roles: Array.isArray(roles) ? roles : [role],
+      province,
+      district,
+      municipality,
+      ward,
+      gender,
+      dob: dob || null,
+      citizenship_number: citizenship_number || null,
+      preferred_language,
+    });
+
+    if (legacyProfileErr) {
+      console.error("legacy profile insert error:", legacyProfileErr);
     }
 
     // Send email verification OTP
@@ -142,7 +181,7 @@ serve(async (req: Request): Promise<Response> => {
       const emailResult = await sendEmail(
         normalizedEmail,
         `Verify Your Email - AgriConnect Nepal`,
-        emailOTPTemplate(otpResult[0].otp_code, "email_verify")
+        emailOTPTemplate(otpResult[0].otp_code, "email_verify", full_name.trim())
       );
       otpSent = emailResult.success;
 

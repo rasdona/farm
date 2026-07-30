@@ -14,8 +14,8 @@ const EmailService = {
 
   async _request(endpoint, body) {
     const url = `${this.SUPABASE_URL}/functions/v1/${endpoint}`;
+    console.log(`[EmailService] → ${endpoint}`, body);
     try {
-      this._log('info', `Email Sending Started: ${endpoint}`);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -25,16 +25,37 @@ const EmailService = {
         body: JSON.stringify(body),
       });
       const data = await response.json();
+      console.log(`[EmailService] ← ${endpoint}`, response.status, data);
       if (!response.ok) {
-        this._log('error', `Email Failed: ${endpoint}`, { status: response.status, data });
+        this._log('error', `Request Failed: ${endpoint}`, { status: response.status, data });
         return { success: false, message: data.error || data.message || `Server error (${response.status})`, data };
       }
-      this._log('info', `Email Sent Successfully: ${endpoint}`, { otpId: data.otp_id });
+      this._log('info', `Request Succeeded: ${endpoint}`, { otpId: data.otp_id || data.user_id });
       return { success: true, data };
     } catch (err) {
-      this._log('error', `Email Failed: ${endpoint}`, { error: err.message });
+      this._log('error', `Request Failed: ${endpoint}`, { error: err.message });
       return { success: false, message: 'Network error. Please check your connection and try again.', error: err.message };
     }
+  },
+
+  // ── Register user (creates auth user + profile + sends OTP via Resend) ──
+  async registerUser(registrationData) {
+    this._log('info', `Registering user: ${registrationData.email}`);
+    return this._request('register-user', {
+      full_name: registrationData.name,
+      email: registrationData.email,
+      mobile_number: registrationData.phone,
+      password: registrationData.password,
+      preferred_language: registrationData.preferredLanguage || 'ne',
+      roles: registrationData.roles || ['farmer'],
+      province: registrationData.province || '',
+      district: registrationData.district || '',
+      municipality: registrationData.municipality || '',
+      ward: registrationData.ward || '',
+      gender: registrationData.gender || '',
+      dob: registrationData.dob || '',
+      citizenship_number: registrationData.citizenshipNumber || '',
+    });
   },
 
   async sendEmailOtp(email, purpose) {
