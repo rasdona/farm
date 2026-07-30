@@ -562,7 +562,7 @@ tr:hover td { background: var(--bg-alt); }
 
 /* Hero Search Card – Glassmorphism */
 .hero-search-card {
-  max-width: 440px; width: 100%;
+  max-width: 320px; width: 100%;
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.25);
@@ -574,19 +574,19 @@ tr:hover td { background: var(--bg-alt); }
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
 }
 .hero-search-input {
-  flex: 1; min-width: 140px; padding: 10px 14px;
+  flex: 1; min-width: 100px; padding: 8px 10px;
   border: none; border-radius: 8px; font-size: 0.85rem;
   background: rgba(255,255,255,0.9); color: #1a1a1a; outline: none;
 }
 .hero-search-input::placeholder { color: #6b7280; }
 .hero-search-input:focus { box-shadow: 0 0 0 3px rgba(22,163,74,0.35); }
 .hero-search-select {
-  min-width: 120px; padding: 10px 12px;
+  min-width: 90px; padding: 8px 10px;
   border: none; border-radius: 8px; font-size: 0.82rem;
   background: rgba(255,255,255,0.9); color: #1a1a1a; outline: none; cursor: pointer;
 }
 .hero-search-btn {
-  padding: 10px 18px; border: none; border-radius: 8px;
+  padding: 8px 14px; border: none; border-radius: 8px;
   font-weight: 700; font-size: 0.85rem; cursor: pointer; white-space: nowrap;
 }
 .hero-stats { display: flex; gap: 40px; margin-top: 40px; }

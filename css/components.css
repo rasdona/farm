@@ -613,17 +613,17 @@ a.nav-icon-btn .badge-count {
 
 /* ===================== SEARCH BAR ===================== */
 .hero-search-card {
-  max-width: 440px; width: 100%;
+  max-width: 320px; width: 100%;
 }
 .hero-search-inner {
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
 }
 .hero-search-input, .hero-search-select {
-  flex: 1; padding: 10px 14px; border-radius: 8px; border: none;
+  flex: 1; padding: 8px 10px; border-radius: 8px; border: none;
   background: rgba(255,255,255,0.9); font-size: 0.82rem; color: #0f172a; outline: none;
 }
 .hero-search-input:focus, .hero-search-select:focus { box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
-.hero-search-btn { padding: 10px 18px; font-size: 0.85rem; }
+.hero-search-btn { padding: 8px 14px; font-size: 0.82rem; }
 .search-compact { display: flex; gap: 8px; align-items: center; background: var(--surface); padding: 8px; border-radius: var(--radius-md); border: 1px solid var(--border); }
 .search-compact input { flex: 1; border: none; padding: 10px 14px; font-size: 0.9rem; background: transparent; }
 .search-compact input:focus { outline: none; }
