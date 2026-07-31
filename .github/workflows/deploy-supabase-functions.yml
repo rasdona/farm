@@ -6,10 +6,28 @@ on:
     paths:
       - supabase/functions/**
       - supabase/config.toml
+      - supabase/migrations/**
       - .github/workflows/deploy-supabase-functions.yml
 
 jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply database migrations
+        run: |
+          DB_URL_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "${{ secrets.SUPABASE_DB_PASSWORD }}")
+          supabase db push --db-url "postgresql://postgres:${DB_URL_ENCODED}@db.${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co:5432/postgres" --include-all
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
   deploy:
+    needs: migrations
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
