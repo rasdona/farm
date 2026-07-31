@@ -9,6 +9,11 @@
 -- ============================================
 -- 1. USER VERIFICATION COLUMNS
 -- ============================================
+-- Drop legacy index names created by 00002 on otp_verification so the
+-- replacement indexes on otp_records can use these names.
+DROP INDEX IF EXISTS idx_otp_purpose;
+DROP INDEX IF EXISTS idx_otp_created;
+
 ALTER TABLE public.users
     ADD COLUMN IF NOT EXISTS mobile_verified BOOLEAN DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE,
