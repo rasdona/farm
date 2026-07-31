@@ -24,11 +24,29 @@ jobs:
           echo "=== All projects on this account ==="
           curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects" | python3 -c "import sys,json; [print(p['id'], '|', p['name'], '|', p['region']) for p in json.load(sys.stdin)]"
           REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}" | python3 -c "import sys,json; print(json.load(sys.stdin)['region'])")
-          echo "=== Applying migrations to ${{ secrets.SUPABASE_PROJECT_ID }} (region: $REGION) ==="
           DB_URL_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "${{ secrets.SUPABASE_DB_PASSWORD }}")
-          supabase db push --db-url "postgresql://postgres.${{ secrets.SUPABASE_PROJECT_ID }}:${DB_URL_ENCODED}@aws-0-${REGION}.pooler.supabase.com:5432/postgres" --include-all
+          WORK=""
+          echo "=== Testing pooler connection combos ==="
+          for USER in "postgres.${{ secrets.SUPABASE_PROJECT_ID }}" "postgres"; do
+            for PORT in 5432 6543; do
+              URL="postgresql://${USER}:${DB_URL_ENCODED}@aws-0-${REGION}.pooler.supabase.com:${PORT}/postgres"
+              if supabase db push --dry-run --db-url "$URL" >/tmp/dbtest.log 2>&1; then
+                echo "PASS: ${USER} @ port ${PORT}"
+                WORK="$URL"
+              else
+                echo "FAIL: ${USER} @ port ${PORT} -> $(tail -n1 /tmp/dbtest.log)"
+              fi
+            done
+          done
+          if [ -z "$WORK" ]; then
+            echo "ERROR: no working connection found"
+            exit 1
+          fi
+          echo "=== Applying migrations via $WORK ==="
+          supabase db push --db-url "$WORK" --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
   deploy:
     needs: migrations
