@@ -21,35 +21,39 @@ jobs:
 
       - name: Apply database migrations
         run: |
-          echo "=== All projects on this account ==="
-          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects" | python3 -c "import sys,json; [print(p['id'], '|', p['name'], '|', p['region'], '|', p['status']) for p in json.load(sys.stdin)]"
-          REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}" | python3 -c "import sys,json; print(json.load(sys.stdin)['region'])")
-          echo "=== Pooling config for ${{ secrets.SUPABASE_PROJECT_ID }} ==="
-          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}/config/database/pooling" | python3 -m json.tool
-          DB_URL_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "${{ secrets.SUPABASE_DB_PASSWORD }}")
-          WORK=""
-          echo "=== Testing pooler connection combos ==="
-          for USER in "postgres.${{ secrets.SUPABASE_PROJECT_ID }}" "postgres"; do
-            for PORT in 5432 6543; do
-              URL="postgresql://${USER}:${DB_URL_ENCODED}@aws-0-${REGION}.pooler.supabase.com:${PORT}/postgres"
-              if supabase db push --dry-run --db-url "$URL" >/tmp/dbtest.log 2>&1; then
-                echo "PASS: ${USER} @ port ${PORT}"
-                WORK="$URL"
-              else
-                ERR=$(grep -E "FATAL|failed to connect|password" /tmp/dbtest.log | head -n1)
-                echo "FAIL: ${USER} @ port ${PORT} -> ${ERR}"
-              fi
-            done
-          done
-          if [ -z "$WORK" ]; then
-            echo "ERROR: no working connection found"
-            exit 1
-          fi
-          echo "=== Applying migrations via $WORK ==="
-          supabase db push --db-url "$WORK" --include-all
+          echo "=== Applying migrations to ${{ secrets.SUPABASE_PROJECT_ID }} via Management API ==="
+          python3 - <<'PY'
+          import json, urllib.request, urllib.error, os, glob, sys
+
+          token = os.environ["SUPABASE_ACCESS_TOKEN"]
+          ref = os.environ["SUPABASE_PROJECT_ID"]
+          url = f"https://api.supabase.com/v1/projects/{ref}/database/query"
+          headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+          files = sorted(glob.glob("supabase/migrations/*.sql"))
+          if not files:
+              print("No migration files found")
+              sys.exit(1)
+
+          for f in files:
+              sql = open(f, encoding="utf-8").read()
+              body = json.dumps({"query": sql}).encode()
+              req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+              try:
+                  urllib.request.urlopen(req, timeout=180).read()
+                  print(f"OK   {f}")
+              except urllib.error.HTTPError as e:
+                  msg = e.read().decode(errors="replace")[:800]
+                  print(f"FAIL {f} -> HTTP {e.code}: {msg}")
+                  sys.exit(1)
+              except Exception as e:
+                  print(f"FAIL {f} -> {e}")
+                  sys.exit(1)
+          print("All migrations applied successfully")
+          PY
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
 
   deploy:
     needs: migrations
