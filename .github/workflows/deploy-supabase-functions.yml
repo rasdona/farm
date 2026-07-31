@@ -22,8 +22,10 @@ jobs:
       - name: Apply database migrations
         run: |
           echo "=== All projects on this account ==="
-          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects" | python3 -c "import sys,json; [print(p['id'], '|', p['name'], '|', p['region']) for p in json.load(sys.stdin)]"
+          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects" | python3 -c "import sys,json; [print(p['id'], '|', p['name'], '|', p['region'], '|', p['status']) for p in json.load(sys.stdin)]"
           REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}" | python3 -c "import sys,json; print(json.load(sys.stdin)['region'])")
+          echo "=== Pooling config for ${{ secrets.SUPABASE_PROJECT_ID }} ==="
+          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}/config/database/pooling" | python3 -m json.tool
           DB_URL_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "${{ secrets.SUPABASE_DB_PASSWORD }}")
           WORK=""
           echo "=== Testing pooler connection combos ==="
