@@ -32,6 +32,10 @@ const I18N = {
     'nav.noNotifs':      { en: 'No notifications', ne: 'सूचना छैन' },
     // Mobile menu
     'nav.msgs':          { en: 'Messages',   ne: 'सन्देश' },
+    'nav.more':          { en: 'More',       ne: 'थप' },
+    'nav.calendar':      { en: 'Calendar',   ne: 'पात्रो' },
+    'nav.nearbyFarmers': { en: 'Nearby Farmers', ne: 'नजिकका किसानहरू' },
+    'nav.contact':       { en: 'Contact',    ne: 'सम्पर्क' },
 
     // ── Footer ──────────────────────────────
     'footer.aboutText':  { en: "Connecting Nepal's farmers with skilled agricultural workers. Building a stronger agricultural community through technology and trust.", ne: 'नेपालका किसानलाई दक्ष कृषि श्रमिकसँग जोड्दै। प्रविधि र विश्वासमार्फत बलियो कृषि समुदाय निर्माण।' },

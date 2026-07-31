@@ -123,7 +123,6 @@ a, button { touch-action: manipulation; }
   .navbar-center { display: none; }
   .navbar-search { width: 240px; }
   .navbar-right { gap: 6px; }
-  .nav-link-about { display: none; }
   .navbar-divider { display: none; }
   .hamburger { display: flex; }
   .nav-profile-info { display: none; }

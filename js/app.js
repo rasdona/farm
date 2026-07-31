@@ -52,7 +52,6 @@ const App = {
     const roleMeta = (typeof AUTH_ROLES !== 'undefined') ? AUTH_ROLES : (typeof DB !== 'undefined' ? (DB.getRoles() || []) : []);
     const allRoles = user ? (user.roles || []) : [];
     const activeRoleInfo = roleMeta.find(r => r.id === activeRole) || { icon: '👤', name: activeRole || 'user', nameNe: activeRole || 'user' };
-    const langLabel = T ? (T.lang === 'ne' ? 'नेपाली' : 'English') : 'नेपाली';
 
     nav.innerHTML = `
       <div class="navbar-inner">
@@ -69,7 +68,21 @@ const App = {
             <a href="jobs.html" class="nav-link ${this.isActive('jobs')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg><span>${t('nav.findWork')}</span></a>
             <a href="workers.html" class="nav-link ${this.isActive('workers')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>${t('nav.findWorkers')}</span></a>
             <a href="community.html" class="nav-link ${this.isActive('community')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${t('nav.community')}</span></a>
-            <a href="about.html" class="nav-link nav-link-about ${this.isActive('about')}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>${t('nav.about')}</span></a>
+            <div class="nav-more-wrap">
+              <button class="nav-link nav-more-btn" onclick="App.toggleMoreDropdown()" aria-haspopup="true" aria-expanded="false" aria-label="${t('nav.more')}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>${t('nav.more')}</span>
+                <svg class="nav-more-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="nav-more-dropdown" id="moreDropdown">
+                <a href="about.html" class="nav-more-item ${this.isActive('about') ? 'active' : ''}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>${t('nav.about')}</a>
+                <a href="marketplace.html" class="nav-more-item ${this.isActive('marketplace') ? 'active' : ''}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>${t('nav.marketplace')}</a>
+                <a href="calendar.html" class="nav-more-item ${this.isActive('calendar') ? 'active' : ''}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${t('nav.calendar')}</a>
+                <a href="nearby-farmers.html" class="nav-more-item ${this.isActive('nearby-farmers') ? 'active' : ''}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${t('nav.nearbyFarmers')}</a>
+                <div class="nav-more-divider"></div>
+                <a href="contact.html" class="nav-more-item ${this.isActive('contact') ? 'active' : ''}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${t('nav.contact')}</a>
+              </div>
+            </div>
             <div class="nav-active-indicator"></div>
           </nav>
 
@@ -88,10 +101,8 @@ const App = {
             <div class="navbar-divider"></div>
 
             <div class="lang-switcher" id="navLangSwitcher">
-              <button class="lang-btn" onclick="App.toggleLangDropdown()" id="langBtn" title="Language" aria-label="Switch language">
+              <button class="lang-btn lang-btn-icon" onclick="App.toggleLangDropdown()" id="langBtn" title="${t('nav.language') || 'Language'}" aria-label="Switch language">
                 <span class="lang-flag-icon">${T && T.lang === 'ne' ? '🇳🇵' : '🇬🇧'}</span>
-                <span class="lang-label" id="langLabel">${langLabel}</span>
-                <svg class="lang-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="lang-dropdown" id="langDropdown">
                 <button class="lang-option ${T && T.lang === 'ne' ? 'active' : ''}" onclick="App.setLanguage('ne')">🇳🇵 नेपाली</button>
@@ -119,10 +130,8 @@ const App = {
               <div class="navbar-divider"></div>
 
               <div class="role-switcher-wrap">
-                <button class="role-switcher-btn" onclick="App.toggleRoleDropdown()" title="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-label="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-haspopup="true">
+                <button class="role-switcher-btn role-switcher-btn-icon" onclick="App.toggleRoleDropdown()" title="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-label="${T ? (T.lang === 'ne' ? 'भूमिका परिवर्तन' : 'Switch Role') : 'Switch Role'}" aria-haspopup="true">
                   <span class="role-icon">${activeRoleInfo.icon}</span>
-                  <span class="role-label">${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
-                  <svg class="role-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
                 <div class="role-switcher-dropdown" id="roleSwitcherDropdown">
                   <div class="role-switcher-header">${T ? (T.lang === 'ne' ? 'तपाईंको भूमिका' : 'Your Roles') : 'Your Roles'}</div>
@@ -137,15 +146,10 @@ const App = {
               </div>
 
               <div class="navbar-profile-wrap" id="profileWrap">
-                <div class="navbar-profile" onclick="App.toggleProfileDropdown()" role="button" aria-haspopup="true" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleProfileDropdown()}">
+                <div class="navbar-profile navbar-profile-icon" onclick="App.toggleProfileDropdown()" role="button" aria-haspopup="true" tabindex="0" title="${user.name}" aria-label="${user.name}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();App.toggleProfileDropdown()}">
                   <div class="nav-profile-avatar ${user.online ? 'online' : ''}">
                     ${Utils.avatarHTML(Utils.getUserPhoto(user), user.name, 'md')}
                   </div>
-                  <div class="nav-profile-info">
-                    <span class="nav-profile-name">${user.name.split(' ')[0]}</span>
-                    <span class="nav-profile-role">${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name}</span>
-                  </div>
-                  <svg class="profile-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 <div class="navbar-dropdown" id="profileDropdown" role="menu">
                   <div class="navbar-dropdown-user">
@@ -466,6 +470,18 @@ const App = {
     if (switcher) switcher.classList.toggle('open');
   },
 
+  toggleMoreDropdown() {
+    const dd = document.getElementById('moreDropdown');
+    const wrap = dd ? dd.closest('.nav-more-wrap') : null;
+    const btn = document.querySelector('.nav-more-btn');
+    if (dd) dd.classList.toggle('show');
+    if (wrap) wrap.classList.toggle('open');
+    if (btn) {
+      const expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', !expanded);
+    }
+  },
+
   toggleRoleDropdown() {
     const dd = document.getElementById('roleSwitcherDropdown');
     if (dd) dd.classList.toggle('show');
@@ -728,7 +744,7 @@ const App = {
       }, 100));
     }
     document.addEventListener('click', (e) => {
-      document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
+      document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show, .nav-more-dropdown.show').forEach(d => {
         if (!d.parentElement.contains(e.target)) {
           d.classList.remove('show');
           if (d.parentElement.classList) d.parentElement.classList.remove('open');
@@ -742,7 +758,7 @@ const App = {
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show').forEach(d => {
+        document.querySelectorAll('.navbar-dropdown.show, .lang-dropdown.show, .notification-dropdown.show, .role-switcher-dropdown.show, .nav-more-dropdown.show').forEach(d => {
           d.classList.remove('show');
           if (d.parentElement.classList) d.parentElement.classList.remove('open');
         });
@@ -889,8 +905,6 @@ const App = {
 
   applyLanguage(lang) {
     if (typeof I18N !== 'undefined') I18N.lang = lang;
-    const labelEl = document.getElementById('langLabel');
-    if (labelEl) labelEl.textContent = lang === 'ne' ? 'नेपाली' : 'English';
 
     // Update all elements with data-ne / data-en attributes
     document.querySelectorAll('[data-ne]').forEach(el => {
