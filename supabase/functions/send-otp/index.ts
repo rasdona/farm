@@ -102,7 +102,7 @@ serve(async (req: Request): Promise<Response> => {
 
     if (otpErr) {
       console.error("create_otp error:", otpErr);
-      return errorResp("Failed to create OTP", 500, origin);
+      return errorResp(`Failed to create OTP: ${otpErr.message}`, 500, origin);
     }
 
     if (!otpResult || otpResult.length === 0) {
