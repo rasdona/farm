@@ -139,7 +139,7 @@ VALUES
     ('auth_sms_verification_enabled', 'false', 'auth', 'Enable SMS OTP verification (future feature)', FALSE),
     ('auth_sms_verification_required', 'false', 'auth', 'Require SMS OTP verification (future feature)', FALSE),
     ('auth_login_requires_email_verified', 'true', 'auth', 'Require verified email to login', FALSE),
-    ('auth_registration_method', 'email', 'auth', 'Default registration verification method', FALSE),
+    ('auth_registration_method', '"email"', 'auth', 'Default registration verification method', FALSE),
     ('auth_password_min_length', '8', 'auth', 'Minimum password length', TRUE),
     ('auth_password_require_uppercase', 'true', 'auth', 'Require uppercase in password', TRUE),
     ('auth_password_require_lowercase', 'true', 'auth', 'Require lowercase in password', TRUE),
