@@ -34,16 +34,29 @@ jobs:
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
           }
 
+          import time
+
           def run_query(sql):
               body = json.dumps({"query": sql}).encode()
-              req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-              try:
-                  urllib.request.urlopen(req, timeout=180).read()
-                  return None
-              except urllib.error.HTTPError as e:
-                  return f"HTTP {e.code}: {e.read().decode(errors='replace')[:600]}"
-              except Exception as e:
-                  return f"{e}"
+              retryable = (429, 500, 502, 503, 504)
+              for attempt in range(6):
+                  req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+                  try:
+                      urllib.request.urlopen(req, timeout=180).read()
+                      return None
+                  except urllib.error.HTTPError as e:
+                      if e.code in retryable and attempt < 5:
+                          print(f"  retry {attempt+1}/5 on HTTP {e.code} (sleeping {2**attempt}s)")
+                          time.sleep(2 ** attempt)
+                          continue
+                      return f"HTTP {e.code}: {e.read().decode(errors='replace')[:600]}"
+                  except Exception as e:
+                      if attempt < 5:
+                          print(f"  retry {attempt+1}/5 on {e}")
+                          time.sleep(2 ** attempt)
+                          continue
+                      return f"{e}"
+              return "unreachable"
 
           files = sorted(glob.glob("supabase/migrations/*.sql"))
           if not files:
