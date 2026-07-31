@@ -28,7 +28,11 @@ jobs:
           token = os.environ["SUPABASE_ACCESS_TOKEN"]
           ref = os.environ["SUPABASE_PROJECT_ID"]
           url = f"https://api.supabase.com/v1/projects/{ref}/database/query"
-          headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+          headers = {
+              "Authorization": f"Bearer {token}",
+              "Content-Type": "application/json",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          }
 
           files = sorted(glob.glob("supabase/migrations/*.sql"))
           if not files:
