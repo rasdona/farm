@@ -58,7 +58,7 @@ SELECT
     o.id AS otp_id,
     o.user_id,
     u.full_name,
-    o.identifier_masked,
+    public.mask_identifier(o.identifier, o.identifier_type) AS identifier_masked,
     o.identifier_type,
     o.purpose,
     o.attempts,
