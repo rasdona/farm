@@ -34,7 +34,8 @@ jobs:
                 echo "PASS: ${USER} @ port ${PORT}"
                 WORK="$URL"
               else
-                echo "FAIL: ${USER} @ port ${PORT} -> $(tail -n1 /tmp/dbtest.log)"
+                ERR=$(grep -E "FATAL|failed to connect|password" /tmp/dbtest.log | head -n1)
+                echo "FAIL: ${USER} @ port ${PORT} -> ${ERR}"
               fi
             done
           done
