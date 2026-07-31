@@ -686,7 +686,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION search_products(
     search_query TEXT,
     category_slug TEXT DEFAULT NULL,
-    district_name TEXT DEFAULT NULL,
+    district_name_filter TEXT DEFAULT NULL,
     min_price NUMERIC DEFAULT NULL,
     max_price NUMERIC DEFAULT NULL,
     is_organic_filter BOOLEAN DEFAULT NULL,
@@ -730,7 +730,7 @@ BEGIN
         OR p.name ILIKE '%' || search_query || '%'
     )
     AND (category_slug IS NULL OR pc.slug = category_slug)
-    AND (district_name IS NULL OR d.name_en ILIKE '%' || district_name || '%')
+    AND (district_name_filter IS NULL OR d.name_en ILIKE '%' || district_name_filter || '%')
     AND (min_price IS NULL OR p.price >= min_price)
     AND (max_price IS NULL OR p.price <= max_price)
     AND (is_organic_filter IS NULL OR p.is_organic = is_organic_filter)
