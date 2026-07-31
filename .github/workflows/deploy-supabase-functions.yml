@@ -20,11 +20,19 @@ jobs:
 
       - name: Deploy all edge functions
         run: |
+          fail=0
           for fn in cleanup-otps delete-photo forgot-password get-verification-status login-user photo-status register-user request-contact-change resend-verification reset-password send-otp upload-photo verify-email-link verify-otp
           do
             echo "Deploying $fn..."
-            supabase functions deploy "$fn" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --no-verify-jwt || echo "Warning: $fn deploy failed"
+            if ! supabase functions deploy "$fn" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --no-verify-jwt; then
+              echo "ERROR: $fn deploy failed"
+              fail=1
+            fi
           done
+          if [ "$fail" -ne 0 ]; then
+            echo "One or more functions failed to deploy"
+            exit 1
+          fi
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
