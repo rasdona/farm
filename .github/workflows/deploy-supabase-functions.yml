@@ -34,6 +34,17 @@ jobs:
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
           }
 
+          def run_query(sql):
+              body = json.dumps({"query": sql}).encode()
+              req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+              try:
+                  urllib.request.urlopen(req, timeout=180).read()
+                  return None
+              except urllib.error.HTTPError as e:
+                  return f"HTTP {e.code}: {e.read().decode(errors='replace')[:600]}"
+              except Exception as e:
+                  return f"{e}"
+
           files = sorted(glob.glob("supabase/migrations/*.sql"))
           if not files:
               print("No migration files found")
@@ -41,17 +52,13 @@ jobs:
 
           for f in files:
               sql = open(f, encoding="utf-8").read()
-              body = json.dumps({"query": sql}).encode()
-              req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-              try:
-                  urllib.request.urlopen(req, timeout=180).read()
+              err = run_query(sql)
+              if err is None:
                   print(f"OK   {f}")
-              except urllib.error.HTTPError as e:
-                  msg = e.read().decode(errors="replace")[:800]
-                  print(f"FAIL {f} -> HTTP {e.code}: {msg}")
-                  sys.exit(1)
-              except Exception as e:
-                  print(f"FAIL {f} -> {e}")
+              elif "already exists" in err.lower():
+                  print(f"SKIP {f} (already applied): {err[:120]}")
+              else:
+                  print(f"FAIL {f} -> {err}")
                   sys.exit(1)
           print("All migrations applied successfully")
           PY

@@ -517,7 +517,7 @@ WHERE fp.status = 'active' AND fp.deleted_at IS NULL AND fp.gps_coordinates IS N
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_daily_platform_stats AS
 SELECT
     DATE(created_at) AS stat_date,
-    COUNT(DISTINCT user_id) AS total_users,
+    COUNT(DISTINCT id) AS total_users,
     COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE) AS new_users_today
 FROM public.users
 WHERE deleted_at IS NULL
