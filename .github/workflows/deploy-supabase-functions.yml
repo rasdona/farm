@@ -21,7 +21,10 @@ jobs:
 
       - name: Apply database migrations
         run: |
+          echo "=== All projects on this account ==="
+          curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects" | python3 -c "import sys,json; [print(p['id'], '|', p['name'], '|', p['region']) for p in json.load(sys.stdin)]"
           REGION=$(curl -s -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" "https://api.supabase.com/v1/projects/${{ secrets.SUPABASE_PROJECT_ID }}" | python3 -c "import sys,json; print(json.load(sys.stdin)['region'])")
+          echo "=== Applying migrations to ${{ secrets.SUPABASE_PROJECT_ID }} (region: $REGION) ==="
           DB_URL_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "${{ secrets.SUPABASE_DB_PASSWORD }}")
           supabase db push --db-url "postgresql://postgres.${{ secrets.SUPABASE_PROJECT_ID }}:${DB_URL_ENCODED}@aws-0-${REGION}.pooler.supabase.com:5432/postgres" --include-all
         env:
