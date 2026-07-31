@@ -4,7 +4,3 @@
 # Minimal on purpose: avoids schema errors on newer CLI versions
 # ============================================================
 project_id = "farm"
-
-[functions]
-enabled = true
-verify_jwt = false
