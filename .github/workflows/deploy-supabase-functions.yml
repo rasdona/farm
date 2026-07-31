@@ -3,7 +3,10 @@ name: Deploy Supabase Edge Functions
 on:
   push:
     branches: [main]
-    paths: [supabase/functions/**]
+    paths:
+      - supabase/functions/**
+      - supabase/config.toml
+      - .github/workflows/deploy-supabase-functions.yml
 
 jobs:
   deploy:
@@ -15,22 +18,25 @@ jobs:
         with:
           version: latest
 
-      - run: |
-          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+      - name: Deploy all edge functions
+        run: |
+          for fn in cleanup-otps delete-photo forgot-password get-verification-status login-user photo-status register-user request-contact-change resend-verification reset-password send-otp upload-photo verify-email-link verify-otp
+          do
+            echo "Deploying $fn..."
+            supabase functions deploy "$fn" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" --no-verify-jwt || echo "Warning: $fn deploy failed"
+          done
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Deploy all edge functions
-        run: |
-          for fn in _shared cleanup-otps delete-photo forgot-password get-verification-status login-user photo-status register-user request-contact-change resend-verification reset-password send-otp upload-photo verify-email-link verify-otp
-          do
-            if [ "$fn" = "_shared" ]; then continue; fi
-            echo "Deploying $fn..."
-            npx supabase functions deploy "$fn" --no-verify-jwt || echo "Warning: $fn deploy failed"
-          done
-
       - name: Set Edge Function secrets
         run: |
-          echo "${{ secrets.EMAIL_PROVIDER_API_KEY }}" | npx supabase secrets set EMAIL_PROVIDER_API_KEY
+          supabase secrets set EMAIL_PROVIDER_API_KEY="${{ secrets.EMAIL_PROVIDER_API_KEY }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set SMS_PROVIDER_API_KEY="${{ secrets.SMS_PROVIDER_API_KEY }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set SMS_SENDER_ID="${{ secrets.SMS_SENDER_ID || 'AgriConnect' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set EMAIL_FROM="${{ secrets.EMAIL_FROM || 'AgriConnect Nepal <noreply@agriconnect.com.np>' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set APP_URL="${{ secrets.APP_URL || 'https://agriconnect.com.np' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set RECAPTCHA_SECRET="${{ secrets.RECAPTCHA_SECRET }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set OTP_DEV_MODE="${{ secrets.OTP_DEV_MODE || 'false' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set CRON_SECRET="${{ secrets.CRON_SECRET }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
