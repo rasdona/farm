@@ -27,8 +27,8 @@ CREATE OR REPLACE FUNCTION public.create_work_request(
     p_accommodation_provided BOOLEAN,
     p_tools_provided BOOLEAN,
     p_equipment_required TEXT,
-    p_province_id INT,
-    p_district_id INT,
+    p_province_id UUID,
+    p_district_id UUID,
     p_municipality_id UUID,
     p_ward_number INT,
     p_exact_address TEXT,
@@ -693,7 +693,7 @@ BEGIN
             COUNT(DISTINCT aw.id) AS tasks_done,
             COALESCE(fp.experience_years, 0) AS exp_years
         FROM public.users u
-        LEFT JOIN public.farmer_profiles fp ON fp.user_id = u.id
+        LEFT JOIN public.worker_profiles fp ON fp.user_id = u.id
         LEFT JOIN public.work_ratings wr ON wr.ratee_id = u.id
         LEFT JOIN public.assigned_workers aw ON aw.worker_id = u.id AND aw.status = 'completed'
         WHERE u.account_status = 'active'
@@ -734,15 +734,14 @@ BEGIN
         ws.tasks_done,
         ws.exp_years,
         COALESCE(av.is_available, TRUE),
-        ARRAY[
+        array_remove(ARRAY[
             CASE WHEN ws.avg_rating >= 4 THEN 'High Rated' END,
             CASE WHEN ws.tasks_done >= 5 THEN 'Experienced' END,
             CASE WHEN COALESCE(av.is_available, TRUE) THEN 'Available' END,
             CASE WHEN ws.exp_years >= 3 THEN 'Skilled' END
-        ] FILTER (WHERE IS NOT NULL)
+        ], NULL)
     FROM worker_stats ws
     LEFT JOIN availability av ON av.worker_id = ws.w_id
-    WHERE u.account_status = 'active'
     ORDER BY score DESC
     LIMIT p_limit;
 END;
@@ -754,8 +753,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.notify_nearby_workers(
     p_work_request_id UUID,
     p_farmer_id UUID,
-    p_province_id INT,
-    p_district_id INT,
+    p_province_id UUID,
+    p_district_id UUID,
     p_category_id UUID
 ) RETURNS INT
     LANGUAGE plpgsql SECURITY DEFINER

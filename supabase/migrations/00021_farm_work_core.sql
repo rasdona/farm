@@ -91,8 +91,8 @@ CREATE TABLE IF NOT EXISTS public.work_requests (
     arma_parma_description  TEXT,
 
     -- Location
-    province_id             INT REFERENCES public.provinces(id),
-    district_id             INT REFERENCES public.districts(id),
+    province_id             UUID REFERENCES public.provinces(id),
+    district_id             UUID REFERENCES public.districts(id),
     municipality_id         UUID,
     ward_number             INT,
     exact_address           TEXT,
@@ -424,8 +424,8 @@ CREATE TABLE IF NOT EXISTS public.work_locations (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     label           TEXT NOT NULL,
-    province_id     INT REFERENCES public.provinces(id),
-    district_id     INT REFERENCES public.districts(id),
+    province_id     UUID REFERENCES public.provinces(id),
+    district_id     UUID REFERENCES public.districts(id),
     municipality_id UUID,
     ward_number     INT,
     address         TEXT,

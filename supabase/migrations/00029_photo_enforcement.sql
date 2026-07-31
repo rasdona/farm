@@ -2,13 +2,13 @@
 -- Ensures all users upload a profile photo before accessing platform features
 
 -- Add enforcement flag to system_settings if not exists
-INSERT INTO public.system_settings (setting_key, setting_value, setting_type, description, category, is_public)
+INSERT INTO public.system_settings (key, value, category, description, is_public)
 VALUES
-  ('photo_enforcement_enabled', 'true', 'boolean', 'Enable mandatory profile photo upload for all users', 'security', true),
-  ('photo_enforcement_grace_period_hours', '24', 'number', 'Hours after registration before photo becomes mandatory', 'security', false),
-  ('photo_enforcement_exempt_roles', '["admin"]', 'json', 'Roles exempt from photo enforcement', 'security', false)
-ON CONFLICT (setting_key) DO UPDATE SET
-  setting_value = EXCLUDED.setting_value,
+  ('photo_enforcement_enabled', 'true', 'security', 'Enable mandatory profile photo upload for all users', true),
+  ('photo_enforcement_grace_period_hours', '24', 'security', 'Hours after registration before photo becomes mandatory', false),
+  ('photo_enforcement_exempt_roles', '["admin"]', 'security', 'Roles exempt from photo enforcement', false)
+ON CONFLICT (key) DO UPDATE SET
+  value = EXCLUDED.value,
   updated_at = NOW();
 
 -- Function to check if a user has a valid profile photo
@@ -50,18 +50,18 @@ DECLARE
   v_has_photo BOOLEAN;
 BEGIN
   -- Check if enforcement is enabled
-  SELECT setting_value::BOOLEAN INTO v_enforcement_enabled
+  SELECT value::BOOLEAN INTO v_enforcement_enabled
   FROM public.system_settings
-  WHERE setting_key = 'photo_enforcement_enabled';
+  WHERE key = 'photo_enforcement_enabled';
 
   IF NOT v_enforcement_enabled THEN
     RETURN FALSE;
   END IF;
 
   -- Check exempt roles
-  SELECT setting_value::JSONB INTO v_exempt_roles
+  SELECT value::JSONB INTO v_exempt_roles
   FROM public.system_settings
-  WHERE setting_key = 'photo_enforcement_exempt_roles';
+  WHERE key = 'photo_enforcement_exempt_roles';
 
   -- Get user's active role
   SELECT active_role::TEXT INTO v_user_role
