@@ -41,6 +41,8 @@ serve(async (req: Request): Promise<Response> => {
     if (isMobile) {
       const clean = identifier.replace(/[\s\-()]/g, "");
       normalizedIdentifier = clean.startsWith("+") ? clean : (clean.length === 10 ? "+977" + clean : clean);
+    } else {
+      normalizedIdentifier = identifier.trim().toLowerCase();
     }
 
     const sb = getSupabase();
@@ -65,7 +67,7 @@ serve(async (req: Request): Promise<Response> => {
       return errorResp("Verification failed", 500, origin);
     }
 
-    const { success, user_id, message, lock_until } = verifyResult[0];
+    let { success, user_id, message, lock_until } = verifyResult[0];
 
     if (!success) {
       if (lock_until) {
@@ -77,6 +79,21 @@ serve(async (req: Request): Promise<Response> => {
         }, 200, origin);
       }
       return jsonResp({ success: false, message }, 200, origin);
+    }
+
+    // Fallback: some OTP records were created with user_id = null (older
+    // send-otp). Resolve the user now so completion steps can run.
+    if (!user_id) {
+      const lookupField = identifierType === "mobile" ? "mobile_number" : "email";
+      const { data: userRow } = await sb
+        .from("users")
+        .select("id")
+        .eq(lookupField, normalizedIdentifier)
+        .maybeSingle();
+      user_id = userRow?.id || null;
+      if (!user_id) {
+        return errorResp("No account found for this identifier", 400, origin);
+      }
     }
 
     // Complete verification based on purpose

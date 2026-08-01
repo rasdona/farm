@@ -59,8 +59,12 @@
     let resendTimer = null;
     let attemptCount = 0;
     const maxAttempts = 5;
+    const OTP_SEND_WINDOW_MS = 90000;
     const otpType = new URLSearchParams(window.location.search).get('type') || 'email';
     const otpEmail = new URLSearchParams(window.location.search).get('email') || '';
+    const hasPendingRegistration = (() => {
+      try { return !!sessionStorage.getItem('agri_pendingRegistration'); } catch (e) { return false; }
+    })();
 
     document.addEventListener('DOMContentLoaded', function() {
       App.init();
@@ -71,8 +75,56 @@
       }
       document.getElementById('otpEmail').textContent = otpEmail;
       setupOtpInputs();
-      startResendTimer();
+      if (otpType === 'email') {
+        autoSendOtp();
+      } else {
+        startResendTimer();
+      }
     });
+
+    function getLastOtpSent() {
+      try {
+        const raw = sessionStorage.getItem('agri_otpSent');
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        return data && data.email === otpEmail ? data : null;
+      } catch (e) { return null; }
+    }
+
+    function recordOtpSent() {
+      try { sessionStorage.setItem('agri_otpSent', JSON.stringify({ email: otpEmail, at: Date.now() })); } catch (e) {}
+    }
+
+    async function autoSendOtp() {
+      const last = getLastOtpSent();
+      if (last) {
+        const elapsed = Date.now() - last.at;
+        if (elapsed < OTP_SEND_WINDOW_MS) {
+          startResendTimer(Math.max(10, Math.ceil((OTP_SEND_WINDOW_MS - elapsed) / 1000)));
+          return;
+        }
+      }
+
+      document.getElementById('otpSubtitle').textContent = 'नयाँ कोड तपाईंको इमेलमा पठाइँदैछ...';
+      showOtpLoading(true);
+      try {
+        const result = await EmailService.sendEmailOtp(otpEmail, 'email_verify');
+        showOtpLoading(false);
+        if (result.success) {
+          recordOtpSent();
+          document.getElementById('otpSubtitle').textContent = 'तपाईंको इमेलमा ६ अंकको कोड पठाइएको छ';
+          startResendTimer();
+        } else {
+          const errMsg = (result.data && result.data.error) || result.message || 'कोड पठाउन असफल';
+          showOtpError('कोड पठाउन असफल: ' + errMsg);
+          startResendTimer(10);
+        }
+      } catch (err) {
+        showOtpLoading(false);
+        showOtpError('नेटवर्क त्रुटि। कोड पठाउन असफल भयो। फेरि प्रयास गर्नुहोस्।');
+        startResendTimer(10);
+      }
+    }
 
     function setupOtpInputs() {
       const inputs = document.querySelectorAll('.auth-otp-input');
@@ -146,34 +198,40 @@
             }
             clearOtpInputs();
           } else {
-            showOtpSuccess('इमेल सत्यापन सफल भयो! प्रोफाइल तयार हुँदैछ...');
-            document.getElementById('otpVerifyBtn').disabled = true;
-            document.getElementById('otpBtnText').textContent = 'प्रोफाइल तयार हुँदैछ...';
+            if (hasPendingRegistration) {
+              showOtpSuccess('इमेल सत्यापन सफल भयो! प्रोफाइल तयार हुँदैछ...');
+              document.getElementById('otpVerifyBtn').disabled = true;
+              document.getElementById('otpBtnText').textContent = 'प्रोफाइल तयार हुँदैछ...';
 
-            let completeResult;
-            try {
-              const COMPLETION_TIMEOUT_MS = 60000;
-              const completionPromise = AuthSystem.completeRegistrationAfterOtp();
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('COMPLETION_TIMEOUT')), COMPLETION_TIMEOUT_MS)
-              );
-              completeResult = await Promise.race([completionPromise, timeoutPromise]);
-            } catch (completionErr) {
-              console.error('[OTP] completeRegistrationAfterOtp error:', completionErr);
-              completeResult = { success: false, message: completionErr.message || 'Profile completion failed' };
-            }
-
-            if (completeResult.success) {
-              try { sessionStorage.removeItem('agri_pendingPhoto'); } catch (e) {}
-              showOtpSuccess('दर्ता पूरा भयो! ड्यासबोर्डमा लगिँदैछ...');
-              setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1200);
-            } else {
-              if (completeResult.message && completeResult.message.includes('timed out')) {
-                showOtpError('Profile picture upload failed. Your account was created. Please log in and upload a photo from settings.');
-              } else {
-                showOtpSuccess('इमेल सत्यापन भयो, तर प्रोफाइल सेभ गर्दा समस्या भयो। लगइन गर्नुहोस्।');
+              let completeResult;
+              try {
+                const COMPLETION_TIMEOUT_MS = 60000;
+                const completionPromise = AuthSystem.completeRegistrationAfterOtp();
+                const timeoutPromise = new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('COMPLETION_TIMEOUT')), COMPLETION_TIMEOUT_MS)
+                );
+                completeResult = await Promise.race([completionPromise, timeoutPromise]);
+              } catch (completionErr) {
+                console.error('[OTP] completeRegistrationAfterOtp error:', completionErr);
+                completeResult = { success: false, message: completionErr.message || 'Profile completion failed' };
               }
-              setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+
+              if (completeResult.success) {
+                try { sessionStorage.removeItem('agri_pendingPhoto'); } catch (e) {}
+                showOtpSuccess('दर्ता पूरा भयो! ड्यासबोर्डमा लगिँदैछ...');
+                setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1200);
+              } else {
+                if (completeResult.message && completeResult.message.includes('timed out')) {
+                  showOtpError('Profile picture upload failed. Your account was created. Please log in and upload a photo from settings.');
+                } else {
+                  showOtpSuccess('इमेल सत्यापन भयो, तर प्रोफाइल सेभ गर्दा समस्या भयो। लगइन गर्नुहोस्।');
+                }
+                setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+              }
+            } else {
+              // Existing account (login flow): email is now confirmed, so login will succeed.
+              showOtpSuccess('इमेल सत्यापन सफल भयो! अब लगइन गर्नुहोस्।');
+              setTimeout(() => { window.location.href = 'login.html'; }, 1500);
             }
           }
         }
@@ -206,6 +264,7 @@
           const result = await EmailService.resendOtp(otpEmail, 'email_verify');
           showOtpLoading(false);
           if (result.success) {
+            recordOtpSent();
             showOtpSuccess('नयाँ OTP कोड ' + otpEmail + ' मा पठाइयो!');
             attemptCount = 0;
             startResendTimer();
@@ -219,8 +278,8 @@
       }
     }
 
-    function startResendTimer() {
-      let sec = 60;
+    function startResendTimer(initialSeconds) {
+      let sec = initialSeconds || 60;
       const btn = document.getElementById('resendBtn');
       const text = document.getElementById('resendText');
       btn.disabled = true;

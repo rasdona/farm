@@ -61,7 +61,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const identifierType = isMobile ? "mobile" : "email";
 
-    // Normalize mobile
+    // Normalize mobile / email
     let normalizedIdentifier = identifier;
     if (isMobile) {
       const clean = identifier.replace(/[\s\-()]/g, "");
@@ -70,6 +70,8 @@ serve(async (req: Request): Promise<Response> => {
       } else {
         normalizedIdentifier = clean;
       }
+    } else {
+      normalizedIdentifier = identifier.trim().toLowerCase();
     }
 
     // Rate limit check (1 OTP per 60s per identifier)
@@ -90,9 +92,25 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
+    // Resolve the user by identifier so verification can confirm the account.
+    // Without this, create_otp stores user_id = null and verify-otp can never
+    // mark the email/mobile as verified or confirm the auth user.
+    let userId: string | null = null;
+    try {
+      const lookupField = identifierType === "mobile" ? "mobile_number" : "email";
+      const { data: userRow } = await sb
+        .from("users")
+        .select("id")
+        .eq(lookupField, normalizedIdentifier)
+        .maybeSingle();
+      userId = userRow?.id || null;
+    } catch (err) {
+      console.warn("send-otp: user lookup failed", err);
+    }
+
     // Create OTP via DB function
     const { data: otpResult, error: otpErr } = await sb.rpc("create_otp", {
-      p_user_id: null,
+      p_user_id: userId,
       p_identifier: normalizedIdentifier,
       p_identifier_type: identifierType,
       p_purpose: purpose,

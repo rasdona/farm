@@ -245,6 +245,8 @@ async function handleRegister() {
       btn.textContent = 'दर्ता सफल! ✓';
       btn.style.background = '#059669';
 
+      try { sessionStorage.setItem('agri_otpSent', JSON.stringify({ email: data.email.trim().toLowerCase(), at: Date.now() })); } catch (e) {}
+
       setTimeout(() => { window.location.href = 'verify-otp.html?type=email&email=' + encodeURIComponent(data.email.trim().toLowerCase()); }, 1500);
     } else {
       console.error('[Registration] Registration failed:', result.message || JSON.stringify(result.errors));
