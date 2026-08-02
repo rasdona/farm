@@ -35,6 +35,8 @@ const I18N = {
     'nav.more':          { en: 'More',       ne: 'थप' },
     'nav.calendar':      { en: 'Calendar',   ne: 'पात्रो' },
     'nav.nearbyFarmers': { en: 'Nearby Farmers', ne: 'नजिकका किसानहरू' },
+    'nav.savedJobs':     { en: 'Saved Jobs',     ne: 'सुरक्षित रोजगारीहरू' },
+    'nav.savedWorkers':  { en: 'Saved Workers',  ne: 'सुरक्षित श्रमिकहरू' },
     'nav.contact':       { en: 'Contact',    ne: 'सम्पर्क' },
 
     // ── Footer ──────────────────────────────

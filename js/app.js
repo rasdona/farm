@@ -203,6 +203,13 @@ const App = {
           </button>
         </div>
 
+        <div class="mobile-menu-search">
+          <div class="mobile-search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="mobileNavSearch" placeholder="${t('nav.search')}" aria-label="${t('nav.search')}" onkeydown="if(event.key==='Enter')App.mobileSearch(this.value)">
+          </div>
+        </div>
+
         ${user ? `
           <div class="mobile-menu-user">
             <div class="mobile-menu-user-card">
@@ -287,6 +294,14 @@ const App = {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               ${t('nav.msgs')}
             </a>
+            <a href="saved-jobs.html" class="${this.isActive('saved-jobs') ? 'active' : ''}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              ${t('nav.savedJobs') || 'Saved Jobs'}
+            </a>
+            <a href="saved-workers.html" class="${this.isActive('saved-workers') ? 'active' : ''}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              ${t('nav.savedWorkers') || 'Saved Workers'}
+            </a>
             <a href="profile.html?id=${user.id}" class="${this.isActive('profile') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               ${t('nav.myProfile')}
@@ -302,6 +317,14 @@ const App = {
             </button>
           ` : ''}
         </nav>
+
+        <div class="mobile-menu-lang">
+          <div class="mobile-menu-lang-label">🌐 ${T ? (T.lang === 'ne' ? 'भाषा रोज्नुहोस् / Language' : 'Language / भाषा रोज्नुहोस्') : 'Language'}</div>
+          <div class="mobile-menu-lang-options">
+            <button class="${T && T.lang === 'ne' ? 'active' : ''}" onclick="App.pickLanguage('ne')">🇳🇵 नेपाली</button>
+            <button class="${T && T.lang === 'en' ? 'active' : ''}" onclick="App.pickLanguage('en')">🇬🇧 English</button>
+          </div>
+        </div>
       </div>
       <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="App.toggleMobileMenu()"></div>
     `;
@@ -524,6 +547,11 @@ const App = {
     rec.onerror = () => { input.placeholder = prevPlaceholder; };
     rec.onend = () => { input.placeholder = prevPlaceholder; };
     rec.start();
+  },
+
+  mobileSearch(q) {
+    const val = (q || '').trim();
+    window.location.href = 'jobs.html' + (val ? '?q=' + encodeURIComponent(val) : '');
   },
 
   toggleRoleDropdown() {

@@ -513,6 +513,34 @@ a.nav-icon-btn .badge-count {
 .mobile-menu-logout:hover { background: #fef2f2; }
 .mobile-menu-logout svg { flex-shrink: 0; }
 
+/* ── Mobile Drawer Search ─────────────────────────────── */
+.mobile-menu-search { padding: 14px 16px 0; }
+.mobile-search-box {
+  display: flex; align-items: center; gap: 10px;
+  height: 44px; padding: 0 14px;
+  background: var(--bg-alt); border: 2px solid var(--border);
+  border-radius: 12px; color: var(--text-tertiary);
+  transition: all 0.2s ease;
+}
+.mobile-search-box:focus-within { border-color: var(--primary); background: var(--surface); }
+.mobile-search-box svg { flex-shrink: 0; }
+.mobile-search-box input {
+  flex: 1; min-width: 0; border: none; background: none; outline: none;
+  font-size: 0.95rem; color: var(--text);
+}
+
+/* ── Mobile Drawer Language ───────────────────────────── */
+.mobile-menu-lang { padding: 12px 16px 20px; border-top: 1px solid var(--border-light); }
+.mobile-menu-lang-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); padding: 4px 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+.mobile-menu-lang-options { display: flex; gap: 10px; }
+.mobile-menu-lang-options button {
+  flex: 1; height: 44px; border: 2px solid var(--border); border-radius: 10px;
+  background: var(--surface); color: var(--text); font-weight: 600; font-size: 0.9rem;
+  cursor: pointer; transition: all 0.2s ease;
+}
+.mobile-menu-lang-options button:hover { border-color: var(--primary); }
+.mobile-menu-lang-options button.active { border-color: var(--primary); background: rgba(22,163,74,0.08); color: var(--primary); }
+
 /* ── Mobile Role Switcher ──────────────────────────────── */
 .mobile-role-switcher { padding: 0 0 12px; }
 .mobile-role-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); padding: 4px 16px 6px; text-transform: uppercase; letter-spacing: 0.04em; }
