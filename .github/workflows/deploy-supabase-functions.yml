@@ -112,7 +112,7 @@ jobs:
           supabase secrets set EMAIL_PROVIDER_API_KEY="${{ secrets.EMAIL_PROVIDER_API_KEY }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase secrets set SMS_PROVIDER_API_KEY="${{ secrets.SMS_PROVIDER_API_KEY }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase secrets set SMS_SENDER_ID="${{ secrets.SMS_SENDER_ID || 'AgriConnect' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
-          supabase secrets set EMAIL_FROM="${{ secrets.EMAIL_FROM || 'AgriConnect Nepal <noreply@agriconnect.com.np>' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase secrets set EMAIL_FROM="${{ secrets.EMAIL_FROM || 'AgriConnect Nepal <noreply@ekrishi.vercel.app>' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase secrets set APP_URL="${{ secrets.APP_URL || 'https://agriconnect.com.np' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase secrets set RECAPTCHA_SECRET="${{ secrets.RECAPTCHA_SECRET }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
           supabase secrets set OTP_DEV_MODE="${{ secrets.OTP_DEV_MODE || 'false' }}" --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"

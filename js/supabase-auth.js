@@ -151,7 +151,7 @@ const SupabaseAuth = {
       if (!result.success) {
         console.error('[SupabaseAuth] sendEmailOtp via Edge Function failed:', result.message);
       } else {
-        console.log('[SupabaseAuth] sendEmailOtp sent new 6-digit OTP via Resend');
+        console.log('[SupabaseAuth] sendEmailOtp sent new 6-digit OTP via Brevo');
       }
       return result.success
         ? { data: { otp_id: result.data?.otp_id }, error: null }

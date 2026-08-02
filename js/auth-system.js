@@ -88,7 +88,7 @@ const AuthSystem = {
       log(4, 'failed', 'Email check exception: ' + err.message);
     }
 
-    // ── Step 5: Create user + send 6-digit OTP via Edge Function (Resend) ──
+    // ── Step 5: Create user + send 6-digit OTP via Edge Function (Brevo) ──
     const userRoles = (data.roles && data.roles.length > 0) ? data.roles : ['farmer'];
     log(5, 'started', 'Creating account and sending OTP to: ' + email);
     try {

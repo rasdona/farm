@@ -16,7 +16,7 @@ const ENV = {
   SMS_API_KEY: Deno.env.get("SMS_PROVIDER_API_KEY") || "",
   SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "AgriConnect",
   EMAIL_API_KEY: Deno.env.get("EMAIL_PROVIDER_API_KEY") || "",
-  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "AgriConnect Nepal <noreply@agriconnect.com.np>",
+  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "AgriConnect Nepal <noreply@ekrishi.vercel.app>",
   RECAPTCHA_SECRET: Deno.env.get("RECAPTCHA_SECRET") || "",
   OTP_DEV_MODE: Deno.env.get("OTP_DEV_MODE") === "true",
 };
@@ -34,14 +34,7 @@ export function getSupabase() {
 // CORS HEADERS
 // ============================================
 export function corsHeaders(origin?: string): Record<string, string> {
-  const allowedOrigins = [
-    ENV.APP_URL,
-    "https://agriconnect.com.np",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-  ];
-  const o = origin && allowedOrigins.includes(origin) ? origin : ENV.APP_URL;
+  const o = origin && !origin.startsWith("file:") ? origin : "*";
   return {
     "Access-Control-Allow-Origin": o,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -215,13 +208,19 @@ export async function sendSMS(
 }
 
 // ============================================
-// EMAIL PROVIDER: Resend
+// EMAIL PROVIDER: Brevo (ex-Sendinblue)
 // ============================================
 export interface EmailResult {
   success: boolean;
   provider: string;
   error?: string;
   message_id?: string;
+}
+
+function parseSender(from: string): { name: string; email: string } {
+  const m = from.match(/^(.*?)\s*<([^>]+)>$/);
+  if (m) return { name: m[1].trim(), email: m[2].trim() };
+  return { name: "", email: from.trim() };
 }
 
 export async function sendEmail(
@@ -236,36 +235,38 @@ export async function sendEmail(
   }
 
   if (!ENV.EMAIL_API_KEY) {
-    return { success: false, provider: "resend", error: "Email API key not configured" };
+    return { success: false, provider: "brevo", error: "Email API key not configured" };
   }
 
+  const sender = parseSender(ENV.EMAIL_FROM);
+
   try {
-    const resp = await fetch("https://api.resend.com/emails", {
+    const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${ENV.EMAIL_API_KEY}`,
+        "api-key": ENV.EMAIL_API_KEY,
       },
       body: JSON.stringify({
-        from: ENV.EMAIL_FROM,
-        to: [to],
+        sender: { name: sender.name || "AgriConnect Nepal", email: sender.email },
+        to: [{ email: to }],
         subject,
-        html,
+        htmlContent: html,
       }),
     });
 
     const data = await resp.json();
 
     if (resp.ok) {
-      return { success: true, provider: "resend", message_id: data.id };
+      return { success: true, provider: "brevo", message_id: data.messageId };
     }
 
-    return { success: false, provider: "resend", error: data.message || "Resend error" };
+    return { success: false, provider: "brevo", error: data.message || "Brevo error" };
   } catch (err) {
     return {
       success: false,
-      provider: "resend",
-      error: err instanceof Error ? err.message : "Resend network error",
+      provider: "brevo",
+      error: err instanceof Error ? err.message : "Brevo network error",
     };
   }
 }

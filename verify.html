@@ -353,7 +353,7 @@ function clearOTP() {
 // ============================================
 async function sendOTP() {
   if (currentMethod === 'email') {
-    // Email OTP via Edge Function (Resend)
+    // Email OTP via Edge Function (Brevo)
     if (currentIdentifier) {
       const result = await EmailService.sendEmailOtp(currentIdentifier, currentPurpose);
       if (!result.success) {

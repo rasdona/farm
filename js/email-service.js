@@ -38,7 +38,7 @@ const EmailService = {
     }
   },
 
-  // ── Register user (creates auth user + profile + sends OTP via Resend) ──
+  // ── Register user (creates auth user + profile + sends OTP via Brevo) ──
   async registerUser(registrationData) {
     this._log('info', `Registering user: ${registrationData.email}`);
     return this._request('register-user', {
