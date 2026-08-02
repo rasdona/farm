@@ -371,10 +371,53 @@ function skipPhotoUpload() {
   handleRegister();
 }
 
+function initDobSelects() {
+  const daySel = document.getElementById('regDobDay');
+  const monthSel = document.getElementById('regDobMonth');
+  const yearSel = document.getElementById('regDobYear');
+  if (!daySel || !monthSel || !yearSel) return;
+
+  for (let m = 1; m <= 12; m++) {
+    monthSel.add(new Option(String(m).padStart(2, '0'), String(m).padStart(2, '0')));
+  }
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear - 10; y >= currentYear - 100; y--) {
+    yearSel.add(new Option(String(y), String(y)));
+  }
+  rebuildDobDays();
+  daySel.addEventListener('change', syncDobValue);
+  monthSel.addEventListener('change', () => { rebuildDobDays(); syncDobValue(); });
+  yearSel.addEventListener('change', () => { rebuildDobDays(); syncDobValue(); });
+}
+
+function rebuildDobDays() {
+  const daySel = document.getElementById('regDobDay');
+  if (!daySel) return;
+  const y = document.getElementById('regDobYear').value;
+  const m = document.getElementById('regDobMonth').value;
+  const max = (y && m) ? new Date(Number(y), Number(m), 0).getDate() : 31;
+  const current = daySel.value;
+  daySel.length = 1;
+  for (let d = 1; d <= max; d++) {
+    daySel.add(new Option(String(d).padStart(2, '0'), String(d).padStart(2, '0')));
+  }
+  if (current && Number(current) <= max) daySel.value = current;
+}
+
+function syncDobValue() {
+  const d = document.getElementById('regDobDay').value;
+  const m = document.getElementById('regDobMonth').value;
+  const y = document.getElementById('regDobYear').value;
+  const input = document.getElementById('regDob');
+  if (d && m && y) input.value = y + '-' + m + '-' + d;
+  else input.value = '';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   App.init();
   if (Auth.isLoggedIn()) { window.location.href = Auth.getDashboardUrl(); return; }
   initLocationDropdowns();
+  initDobSelects();
   document.querySelectorAll('.auth-role-card').forEach(card => {
     card.addEventListener('click', function() {
       setTimeout(() => {
