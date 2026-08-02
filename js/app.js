@@ -18,11 +18,25 @@ const App = {
     if (typeof SupabaseSync !== 'undefined') {
       SupabaseSync.loadAll().then(() => this._onDataSynced());
     }
+    document.addEventListener('chat-realtime', (e) => {
+      this.updateChatBadge();
+      if (e.detail && e.detail.notification) this.updateNotificationBadge();
+    });
+  },
+
+  _ensureRealtime() {
+    const user = Auth.currentUser;
+    if (!user || !user.id) { setTimeout(() => this._ensureRealtime(), 1000); return; }
+    if (typeof SupabaseSync !== 'undefined' && SupabaseSync.subscribeRealtime) {
+      SupabaseSync.subscribeRealtime(user.id);
+    }
   },
 
   _onDataSynced() {
     this.renderNavbar();
     this.updateNotificationBadge();
+    this.updateChatBadge();
+    this._ensureRealtime();
     if (window.innerWidth <= 768) {
       this.renderMobileHome();
     }
@@ -384,6 +398,21 @@ const App = {
     if (badge) {
       if (count > 0) badge.textContent = count;
       else badge.remove();
+    }
+  },
+
+  updateChatBadge() {
+    if (!Auth.currentUser) return;
+    const unread = DB.getChatsByUser(Auth.currentUser.id).reduce((acc, c) =>
+      acc + DB.getMessagesByChat(c.id).filter(m => m.senderId !== Auth.currentUser.id && !m.read).length, 0);
+    const icon = document.querySelector('.nav-icon-btn[href="chat.html"]');
+    const badge = icon ? icon.querySelector('.badge-count') : null;
+    if (unread > 0) {
+      const label = unread > 99 ? '99+' : String(unread);
+      if (badge) badge.textContent = label;
+      else if (icon) icon.insertAdjacentHTML('beforeend', `<span class="badge-count">${label}</span>`);
+    } else if (badge) {
+      badge.remove();
     }
   },
 

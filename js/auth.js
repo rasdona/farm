@@ -38,6 +38,9 @@ const Auth = {
     this.currentUser = null;
     localStorage.removeItem('agri_currentUser');
     localStorage.removeItem(AuthSystem.SESSION_KEY);
+    if (typeof SupabaseSync !== 'undefined' && SupabaseSync.disconnectRealtime) {
+      SupabaseSync.disconnectRealtime();
+    }
     if (SupabaseAuth && SupabaseAuth.client) {
       SupabaseAuth.signOut().catch(() => {});
     }

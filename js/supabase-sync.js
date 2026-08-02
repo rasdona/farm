@@ -736,6 +736,205 @@ const SupabaseSync = {
   };
 })();
 
+// ── Realtime (live chat) ─────────────────────────────────────────────────────
+SupabaseSync._realtimeChannel = null;
+SupabaseSync._presenceChannel = null;
+SupabaseSync._typingChannel = null;
+SupabaseSync._convPartsMap = null;
+SupabaseSync._onlineUserIds = new Set();
+
+SupabaseSync.isOnline = function(userId) {
+  return this._onlineUserIds.has(userId);
+};
+
+SupabaseSync._loadConversationParticipantsMap = async function() {
+  const sb = this._sb();
+  if (!sb) return {};
+  const { data } = await sb.from('conversation_participants')
+    .select('conversation_id, user_id, left_at');
+  const map = {};
+  (data || []).forEach(p => {
+    if (p.left_at) return;
+    (map[p.conversation_id] = map[p.conversation_id] || []).push(p.user_id);
+  });
+  return map;
+};
+
+SupabaseSync._ensureConversationLocal = async function(conversationId) {
+  const sb = this._sb();
+  if (!sb) return;
+  try {
+    const [convRes, partsRes] = await Promise.all([
+      sb.from('conversations').select('*').eq('id', conversationId).single(),
+      sb.from('conversation_participants').select('user_id').eq('conversation_id', conversationId),
+    ]);
+    const conv = convRes.data;
+    if (!conv) return;
+    const chats = DB.getChats();
+    if (chats.find(c => c.id === conversationId)) return;
+    chats.push({
+      id: conversationId,
+      participants: (partsRes.data || []).map(p => p.user_id),
+      createdAt: conv.created_at,
+      lastMessage: conv.last_message_preview || '',
+      lastMessageAt: conv.last_message_at || conv.created_at,
+    });
+    DB.setChats(chats);
+  } catch (e) { console.warn('[Sync] ensureConversationLocal failed:', e); }
+};
+
+SupabaseSync.subscribeRealtime = async function(userId) {
+  const sb = this._sb();
+  if (!sb || this._realtimeChannel) return;
+  if (!userId) return;
+  try {
+    this._convPartsMap = await this._loadConversationParticipantsMap();
+
+    // ── Chat messages channel ──────────────────────────────────────────────
+    const msgChannel = sb.channel('chat-realtime');
+    msgChannel
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        this._onRealtimeMessage(payload.new);
+      })
+      .subscribe((status) => this._retryIfDead(msgChannel, status, () => { this._realtimeChannel = null; }));
+
+    // ── Notifications channel ──────────────────────────────────────────────
+    const notifChannel = sb.channel('notif-realtime');
+    notifChannel
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+        this._onRealtimeNotification(payload.new);
+      })
+      .subscribe((status) => this._retryIfDead(notifChannel, status));
+
+    // ── Presence (online status) ───────────────────────────────────────────
+    const presence = sb.channel('online-presence');
+    presence
+      .on('presence', { event: 'sync' }, () => {
+        const state = presence.presenceState();
+        const ids = new Set();
+        Object.values(state).forEach(list => list.forEach(p => { if (p.user_id) ids.add(p.user_id); }));
+        this._onlineUserIds = ids;
+        document.dispatchEvent(new CustomEvent('chat-presence'));
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presence.track({ user_id: userId }).catch(e => console.warn('[Sync] presence track failed:', e));
+        } else if (this._retryIfDead(presence, status)) { return; }
+      });
+
+    // ── Typing broadcast ───────────────────────────────────────────────────
+    const typing = sb.channel('chat-typing');
+    typing
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        document.dispatchEvent(new CustomEvent('chat-typing', { detail: payload }));
+      })
+      .subscribe((status) => this._retryIfDead(typing, status));
+
+    this._realtimeChannel = msgChannel;
+    this._presenceChannel = presence;
+    this._typingChannel = typing;
+    console.log('[Sync] Realtime chat subscribed');
+  } catch (e) { console.error('[Sync] subscribeRealtime failed:', e); }
+};
+
+SupabaseSync._retryIfDead = function(channel, status, onDead) {
+  const dead = status === 'CHANNEL_ERROR' || status === 'CLOSED' || status === 'TIMED_OUT';
+  if (!dead) return false;
+  if (onDead) onDead();
+  setTimeout(() => {
+    const user = Auth?.currentUser;
+    if (user && SupabaseAuth?.client) {
+      if (onDead) onDead();
+      channel.subscribe((s2) => this._retryIfDead(channel, s2, onDead));
+    }
+  }, 5000);
+  return true;
+};
+
+SupabaseSync.disconnectRealtime = function() {
+  const sb = this._sb();
+  if (!sb) return;
+  if (this._realtimeChannel) { sb.removeChannel(this._realtimeChannel); this._realtimeChannel = null; }
+  if (this._presenceChannel) { sb.removeChannel(this._presenceChannel); this._presenceChannel = null; }
+  if (this._typingChannel) { sb.removeChannel(this._typingChannel); this._typingChannel = null; }
+};
+
+SupabaseSync._onRealtimeNotification = function(row) {
+  if (!row) return;
+  const currentUserId = Auth?.currentUser?.id;
+  if (!currentUserId || row.user_id !== currentUserId) return;
+  const notifs = DB._get('notifications') || [];
+  if (notifs.find(n => n.id === row.id)) return;
+  notifs.push({
+    id: row.id,
+    userId: row.user_id,
+    type: row.type || 'system',
+    text: row.title + (row.body ? ': ' + row.body : ''),
+    read: row.is_read || false,
+    createdAt: row.created_at,
+    link: (row.data && row.data.link) || '',
+  });
+  DB._set('notifications', notifs);
+  document.dispatchEvent(new CustomEvent('chat-realtime', { detail: { notification: true } }));
+};
+
+SupabaseSync._onRealtimeMessage = function(row) {
+  if (!row || row.is_deleted || row.deleted_at) return;
+  const currentUserId = Auth?.currentUser?.id;
+  if (!currentUserId) return;
+  const msgs = DB.getMessages();
+  if (msgs.find(m => m.id === row.id)) return;
+
+  // Echo of our own send — bind the real Supabase id to the pending local message
+  if (row.sender_id === currentUserId) {
+    const pending = msgs.find(m =>
+      m.senderId === currentUserId &&
+      m.chatId === row.conversation_id &&
+      m.text === (row.content || '') &&
+      /^MSG/.test(m.id) &&
+      Math.abs(new Date(m.createdAt).getTime() - new Date(row.created_at).getTime()) < 15000
+    );
+    if (pending) { pending.id = row.id; DB.setMessages(msgs); return; }
+  }
+
+  const parts = this._convPartsMap && this._convPartsMap[row.conversation_id];
+  if (parts && !parts.includes(currentUserId)) return;
+  if (!parts) this._loadConversationParticipantsMap().then(m => { this._convPartsMap = m; });
+
+  const msg = {
+    id: row.id,
+    chatId: row.conversation_id,
+    senderId: row.sender_id,
+    text: row.content || '',
+    createdAt: row.created_at,
+    read: row.sender_id === currentUserId,
+  };
+  msgs.push(msg);
+  DB.setMessages(msgs);
+
+  const chats = DB.getChats();
+  let conv = chats.find(c => c.id === row.conversation_id);
+  if (conv) {
+    conv.lastMessage = row.content || '';
+    conv.lastMessageAt = row.created_at;
+  } else {
+    this._ensureConversationLocal(row.conversation_id);
+  }
+  DB.setChats(chats);
+
+  document.dispatchEvent(new CustomEvent('chat-realtime', { detail: { message: msg } }));
+};
+
+SupabaseSync.sendTyping = function(conversationId, isTyping) {
+  const user = Auth?.currentUser;
+  if (!this._typingChannel || !user) return;
+  this._typingChannel.send({
+    type: 'broadcast',
+    event: 'typing',
+    payload: { conversationId, userId: user.id, name: user.name, isTyping },
+  }).catch(() => {});
+};
+
 // ── Admin: Real stats from Supabase (cached for sync access) ────────────────
 SupabaseSync._realStats = null;
 

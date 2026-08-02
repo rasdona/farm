@@ -1,13 +1,41 @@
 const Chat = {
   currentChat: null,
   currentUserId: null,
+  _bound: false,
 
   init(userId) {
     this.currentUserId = userId;
+    this._bindEvents();
     this.renderContacts();
     const paramUser = Utils.getParam('user');
     if (paramUser) { this.openChat(paramUser); }
     else { const chats = DB.getChatsByUser(userId); if (chats.length) { const other = chats[0].participants.find(p => p !== userId); this.openChat(other); } }
+  },
+
+  _bindEvents() {
+    if (this._bound) return;
+    this._bound = true;
+    document.addEventListener('chat-realtime', (e) => {
+      const msg = e.detail && e.detail.message;
+      if (msg && this.currentChat && msg.chatId === this.currentChat.id) {
+        this.renderMessages();
+        this.scrollToBottom();
+      }
+      this.renderContacts();
+    });
+    document.addEventListener('chat-presence', () => {
+      this.renderContacts();
+      this.updatePresence();
+    });
+    document.addEventListener('chat-typing', (e) => this.onTyping(e.detail));
+    const input = document.getElementById('chatInput');
+    if (input) {
+      input.addEventListener('input', (ev) => {
+        if (typeof SupabaseSync !== 'undefined' && SupabaseSync.sendTyping && this.currentChat) {
+          SupabaseSync.sendTyping(this.currentChat.id, ev.target.value.trim().length > 0);
+        }
+      });
+    }
   },
 
   renderContacts() {
@@ -19,13 +47,14 @@ const Chat = {
       const otherId = chat.participants.find(p => p !== this.currentUserId);
       const other = DB.getUserById(otherId);
       if (!other) return '';
+      const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
       const lastMsg = DB.getMessagesByChat(chat.id).slice(-1)[0];
       const isCurrent = this.currentUserId === otherId || chat.participants.includes(this.currentUserId) && document.querySelector(`[data-chat-user="${otherId}"]`);
       return `
         <div class="chat-contact ${this.currentChat?.id === chat.id ? 'active' : ''}" data-chat-user="${otherId}" onclick="Chat.openChat('${otherId}')">
           <div class="chat-contact-avatar">
             ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
-            <div class="online"></div>
+            ${online ? '<div class="online"></div>' : ''}
           </div>
           <div class="chat-contact-info">
             <div class="chat-contact-name">${other.name}</div>
@@ -43,26 +72,68 @@ const Chat = {
     const other = DB.getUserById(otherUserId);
     if (!other) return;
     this.currentChat = DB.getOrCreateChat(this.currentUserId, otherUserId);
-    const header = document.getElementById('chatHeader');
-    if (header) {
-      header.innerHTML = `
-        <div class="chat-header-info">
-          ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
-          <div>
-            <div class="chat-header-name">${other.name}</div>
-            <div class="chat-header-status">● Online</div>
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button class="btn btn-ghost btn-icon" title="Voice call">📞</button>
-          <button class="btn btn-ghost btn-icon" title="Video call">📹</button>
-          <button class="btn btn-ghost btn-icon" title="More">⋮</button>
-        </div>
-      `;
-    }
+    this.renderHeader(other);
+    this.markRead();
     this.renderMessages();
     this.renderContacts();
     this.scrollToBottom();
+  },
+
+  renderHeader(other) {
+    const header = document.getElementById('chatHeader');
+    if (!header) return;
+    const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
+    header.innerHTML = `
+      <div class="chat-header-info">
+        ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
+        <div>
+          <div class="chat-header-name">${other.name}</div>
+          <div class="chat-header-status ${online ? '' : 'offline'}" id="chatHeaderStatus">${online ? '● Online' : 'Offline'}</div>
+          <div class="chat-header-typing" id="chatTyping" style="display:none">typing…</div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost btn-icon" title="Voice call">📞</button>
+        <button class="btn btn-ghost btn-icon" title="Video call">📹</button>
+        <button class="btn btn-ghost btn-icon" title="More">⋮</button>
+      </div>
+    `;
+  },
+
+  updatePresence() {
+    if (!this.currentChat) return;
+    const otherId = this.currentChat.participants.find(p => p !== this.currentUserId);
+    const statusEl = document.getElementById('chatHeaderStatus');
+    if (statusEl && otherId) {
+      const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(otherId) : false;
+      statusEl.textContent = online ? '● Online' : 'Offline';
+      statusEl.classList.toggle('offline', !online);
+    }
+  },
+
+  onTyping(payload) {
+    if (!payload || !this.currentChat) return;
+    if (payload.conversationId !== this.currentChat.id) return;
+    if (payload.userId === this.currentUserId) return;
+    const typingEl = document.getElementById('chatTyping');
+    if (!typingEl) return;
+    clearTimeout(this._typingTimer);
+    typingEl.style.display = payload.isTyping ? 'block' : 'none';
+    if (payload.isTyping) {
+      this._typingTimer = setTimeout(() => { typingEl.style.display = 'none'; }, 3000);
+    }
+  },
+
+  markRead() {
+    if (!this.currentChat) return;
+    const msgs = DB.getMessages();
+    let changed = false;
+    msgs.forEach(m => {
+      if (m.chatId === this.currentChat.id && m.senderId !== this.currentUserId && !m.read) {
+        m.read = true; changed = true;
+      }
+    });
+    if (changed) DB.setMessages(msgs);
   },
 
   renderMessages() {
@@ -102,6 +173,9 @@ const Chat = {
     const ci = chats.findIndex(c => c.id === this.currentChat.id);
     if (ci >= 0) { chats[ci].lastMessage = text.trim(); chats[ci].lastMessageAt = new Date().toISOString(); DB.setChats(chats); }
     DB.addNotification({ userId: otherId, type: 'message', text: `New message from ${Auth.currentUser.name}`, link: 'chat.html' });
+    if (typeof SupabaseSync !== 'undefined' && SupabaseSync.sendTyping) {
+      SupabaseSync.sendTyping(this.currentChat.id, false);
+    }
     this.renderMessages();
     this.renderContacts();
     this.scrollToBottom();
