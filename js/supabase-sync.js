@@ -44,6 +44,20 @@ const SupabaseSync = {
     const wpMap = {};
     (workerProfiles || []).forEach(wp => { wpMap[wp.user_id] = wp; });
 
+    const provName = {};
+    const distName = {};
+    const bodyName = {};
+    try {
+      const [provs, dists, bodies] = await Promise.all([
+        sb.from('provinces').select('id, name_en'),
+        sb.from('districts').select('id, name_en'),
+        sb.from('local_bodies').select('id, name_en'),
+      ]);
+      (provs?.data || []).forEach(r => { provName[r.id] = r.name_en; });
+      (dists?.data || []).forEach(r => { distName[r.id] = r.name_en; });
+      (bodies?.data || []).forEach(r => { bodyName[r.id] = r.name_en; });
+    } catch (e) { console.warn('[Sync] Location lookup unavailable:', e.message); }
+
     const mapped = users.map(u => {
       const fp = fpMap[u.id] || {};
       const wp = wpMap[u.id] || {};
@@ -60,9 +74,10 @@ const SupabaseSync = {
         farmName: fp.farm_name || '',
         farmSize: fp.farm_size ? `${fp.farm_size} ${fp.farm_size_unit || 'hectare'}` : '',
         crops: fp.crop_types || [],
-        district: '',
-        municipality: '',
-        ward: '',
+        province: provName[fp.province_id] || provName[wp.province_id] || '',
+        district: distName[fp.district_id] || distName[wp.district_id] || '',
+        municipality: bodyName[fp.local_body_id] || bodyName[wp.local_body_id] || '',
+        ward: fp.ward_id || wp.ward_id || '',
         description: fp.biography || wp.bio || '',
         verified: u.verification_status === 'verified',
         suspended: u.account_status === 'suspended',
@@ -75,7 +90,7 @@ const SupabaseSync = {
         skills: wp.skills || [],
         experience: wp.experience_years || 0,
         languages: wp.languages || ['ne'],
-        availableDistricts: [],
+        availableDistricts: distName[wp.district_id] ? [distName[wp.district_id]] : [],
         expectedWage: { daily: wp.daily_wage || 0, monthly: wp.monthly_wage || 0 },
         bio: wp.bio || '',
         availability: wp.is_available ? 'available' : 'unavailable',
@@ -92,7 +107,7 @@ const SupabaseSync = {
     const sb = this._sb();
     const { data: jobs } = await sb.from('jobs')
       .select('*')
-      .eq('deleted_at', null)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(200);
 

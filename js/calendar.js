@@ -7,6 +7,9 @@ const CalendarView = {
     App.init();
     this.render();
     this.renderSidebar();
+    if (typeof Weather !== 'undefined') {
+      Weather.renderWidget('calendarWeather', Auth.currentUser?.district || 'Kathmandu');
+    }
   },
 
   setView(view, el) {

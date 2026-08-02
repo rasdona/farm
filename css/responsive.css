@@ -164,7 +164,7 @@ a, button { touch-action: manipulation; }
   :root { --navbar-height: 56px; }
   .navbar-container { gap: 10px; padding: 0 8px; }
   .navbar-brand { font-size: 1rem; gap: 6px; }
-  .navbar-brand svg, .navbar-brand img { height: 26px; width: 26px; }
+  .navbar-brand svg, .navbar-brand img { height: 34px; width: 34px; }
   .navbar-center { display: none; }
   .navbar-search { display: none; }
   .navbar-right { gap: 4px; }
@@ -559,7 +559,7 @@ a, button { touch-action: manipulation; }
 
   /* ── Mobile Nav ─────────────────────────────────────── */
   .navbar-brand { font-size: 1rem; gap: 6px; }
-  .navbar-brand svg, .navbar-brand img { height: 26px; width: 26px; }
+  .navbar-brand svg, .navbar-brand img { height: 34px; width: 34px; }
   .lang-btn { padding: 5px 8px; }
   .nav-icon-btn { width: 34px; height: 34px; }
   .nav-icon-btn svg { width: 16px; height: 16px; }
@@ -583,7 +583,7 @@ a, button { touch-action: manipulation; }
   .section { padding: 28px 0; }
   .section-header { margin-bottom: 16px; }
   .navbar-brand { font-size: 0.95rem; gap: 6px; }
-  .navbar-brand svg { height: 24px; width: 24px; }
+  .navbar-brand svg, .navbar-brand img { height: 32px; width: 32px; }
   .stats-grid { gap: 6px; }
   .stat-card { gap: 8px; padding: 10px; }
   .stat-card .icon { width: 36px; height: 36px; font-size: 1rem; border-radius: var(--radius-sm); }

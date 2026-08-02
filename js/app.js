@@ -689,7 +689,7 @@ const App = {
     const T = typeof I18N !== 'undefined' ? I18N : null;
     const t = T ? (key => T.get(key)) : (key => key);
     const greeting = this.getGreeting();
-    const weather = typeof Weather !== 'undefined' ? Weather.getWeather(user?.district) : null;
+    const todayEvents = this.getTodaySchedule(user);
     const jobs = typeof DB !== 'undefined' ? DB.getJobs().filter(j => j.status === 'active').slice(0, 4) : [];
     const users = typeof DB !== 'undefined' ? DB.getUsers().filter(u => !u.suspended).slice(0, 6) : [];
     const products = typeof DB !== 'undefined' && DB.getProducts ? DB.getProducts().slice(0, 3) : [];
@@ -738,33 +738,41 @@ const App = {
           </div>
         `}
 
-        ${weather ? `
-          <div class="mobile-home-weather-card" onclick="window.location.href='dashboard-${user ? (user.roles && user.roles.includes('worker') ? 'worker' : 'farmer') : 'farmer'}.html'">
+        <div id="mobileHomeWeather">
+          <div class="mobile-home-weather-card" style="opacity:.75">
             <div class="mobile-home-weather-main">
-              <span class="mobile-home-weather-icon">${weather.current.icon}</span>
+              <span class="mobile-home-weather-icon">🌤️</span>
               <div>
-                <div class="mobile-home-weather-temp">${weather.current.temp}°C</div>
-                <div class="mobile-home-weather-condition">${weather.current.condition}</div>
+                <div class="mobile-home-weather-temp">--°C</div>
+                <div class="mobile-home-weather-condition">Loading weather...</div>
               </div>
             </div>
-            <div class="mobile-home-weather-details">
-              <span>💧 ${weather.current.humidity}%</span>
-              <span>💨 ${weather.current.wind} km/h</span>
-              <span>🌧️ ${weather.current.rain}%</span>
-            </div>
           </div>
-        ` : ''}
+        </div>
 
         ${user ? `
           <div class="mobile-home-section">
             <div class="mobile-home-section-header">
               <h3>${t('home.todaySchedule')}</h3>
+              <a href="calendar.html" class="mobile-home-view-all">${t('home.viewAll')} →</a>
             </div>
             <div class="mobile-home-schedule-card">
+              ${todayEvents.length ? todayEvents.map(e => {
+                const icon = e.type === 'paid' ? '💰' : e.type === 'arma' ? '🤝' : '📝';
+                const bg = e.type === 'paid' ? '#dbeafe' : e.type === 'arma' ? '#dcfce7' : '#ede9fe';
+                return `
+                  <a href="${e.href}" class="mobile-home-schedule-item" style="display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:inherit;border-bottom:1px solid var(--border-light)">
+                    <span style="width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:1rem;background:${bg}">${icon}</span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${Utils.escapeHtml(e.title)}</div>
+                      <div style="font-size:0.72rem;color:var(--text-secondary)">${e.time ? e.time + ' · ' : ''}${e.location ? Utils.escapeHtml(e.location) : ''}</div>
+                    </div>
+                  </a>`;
+              }).join('') : `
               <div class="mobile-home-schedule-empty">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-tertiary)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 <p>${t('home.noSchedule')}</p>
-              </div>
+              </div>`}
             </div>
           </div>
         ` : ''}
@@ -835,6 +843,61 @@ const App = {
         ` : ''}
       </div>
     `;
+    this.renderMobileWeather(user);
+  },
+
+  getTodaySchedule(user) {
+    if (!user || typeof DB === 'undefined') return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sameDay = (d) => {
+      if (!d) return false;
+      const x = new Date(d);
+      if (isNaN(x.getTime())) return false;
+      x.setHours(0, 0, 0, 0);
+      return x.getTime() === today.getTime();
+    };
+    const events = [];
+    DB.getJobs().forEach(j => {
+      if (j.status && j.status !== 'active') return;
+      const isParticipant = j.farmerId === user.id || j.workerId === user.id || DB.getApplicationsByJob(j.id).some(a => a.workerId === user.id);
+      if (!isParticipant) return;
+      if (sameDay(j.startDate)) events.push({ title: j.title + ' starts', type: j.workMode === 'arma-parma' ? 'arma' : 'paid', href: 'job-detail.html?id=' + j.id, location: j.district, time: j.workingHours || '' });
+      if (sameDay(j.endDate)) events.push({ title: j.title + ' ends', type: j.workMode === 'arma-parma' ? 'arma' : 'paid', href: 'job-detail.html?id=' + j.id, location: j.district, time: '' });
+    });
+    DB.getCalendarEventsByUser(user.id).forEach(ce => {
+      if (sameDay(ce.date)) events.push({ title: ce.title, type: 'personal', href: 'calendar.html', location: ce.location || '', time: ce.time || '' });
+    });
+    DB.getArmaParmaRequests().forEach(r => {
+      if (r.farmerId !== user.id && !(r.applicants || []).includes(user.id)) return;
+      if (sameDay(r.startDate)) events.push({ title: r.title, type: 'arma', href: 'post-job.html?mode=arma-parma', location: r.district, time: '' });
+    });
+    return events.sort((a, b) => (a.time || '').localeCompare(b.time || '')).slice(0, 5);
+  },
+
+  renderMobileWeather(user) {
+    const el = document.getElementById('mobileHomeWeather');
+    if (!el || typeof Weather === 'undefined') return;
+    const dashboardUrl = 'dashboard-' + (user && user.roles && user.roles.includes('worker') ? 'worker' : 'farmer') + '.html';
+    Weather.getWeather(user?.district).then(w => {
+      el.innerHTML = `
+        <div class="mobile-home-weather-card" onclick="window.location.href='${dashboardUrl}'">
+          <div class="mobile-home-weather-main">
+            <span class="mobile-home-weather-icon">${w.current.icon}</span>
+            <div>
+              <div class="mobile-home-weather-temp">${w.current.temp}°C</div>
+              <div class="mobile-home-weather-condition">${w.current.condition} · ${user?.district || 'Kathmandu'}</div>
+            </div>
+          </div>
+          <div class="mobile-home-weather-details">
+            <span>💧 ${w.current.humidity}%</span>
+            <span>💨 ${w.current.wind} km/h</span>
+            <span>🌧️ ${w.current.rain}%</span>
+          </div>
+        </div>`;
+    }).catch(() => {
+      el.innerHTML = '';
+    });
   },
 
   initScrollEffects() {
