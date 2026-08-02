@@ -14,10 +14,10 @@ const NearbyFarmers = {
     const myDistrict = user?.district || 'Kathmandu';
     this.farmers = DB.getUsers().filter(u => u.role === 'farmer' && u.id !== user?.id).map(f => {
       const districtDistances = {
-        'Kathmandu': { 'Lalitpur': 2, 'Bhaktapur': 5, 'Kavrepalanchok': 15, 'Dhading': 30, 'Makwanpur': 45 },
-        'Lalitpur': { 'Kathmandu': 2, 'Bhaktapur': 7, 'Kavrepalanchok': 18, 'Dhading': 32, 'Makwanpur': 43 },
-        'Bhaktapur': { 'Kathmandu': 5, 'Lalitpur': 7, 'Kavrepalanchok': 12, 'Dhading': 28, 'Makwanpur': 40 },
-        'Chitwan': { 'Nawalparasi': 30, 'Tanahu': 45, 'Gorkha': 60, 'Makwanpur': 50, 'Bara': 40 },
+        'Kathmandu': { 'Lalitpur': 2, 'Bhaktapur': 5, 'Kavrepalanchowk': 15, 'Dhading': 30, 'Makwanpur': 45 },
+        'Lalitpur': { 'Kathmandu': 2, 'Bhaktapur': 7, 'Kavrepalanchowk': 18, 'Dhading': 32, 'Makwanpur': 43 },
+        'Bhaktapur': { 'Kathmandu': 5, 'Lalitpur': 7, 'Kavrepalanchowk': 12, 'Dhading': 28, 'Makwanpur': 40 },
+        'Chitwan': { 'Parasi': 30, 'Nawalparasi East': 45, 'Tanahun': 45, 'Gorkha': 60, 'Makwanpur': 50, 'Bara': 40 },
         'Jhapa': { 'Morang': 15, 'Sunsari': 40, 'Panchthar': 50, 'Ilam': 30 },
         'Morang': { 'Jhapa': 15, 'Sunsari': 25, 'Panchthar': 60, 'Terhathum': 40 },
         'Ilam': { 'Jhapa': 30, 'Panchthar': 20, 'Terhathum': 25, 'Sankhuwasabha': 80 }

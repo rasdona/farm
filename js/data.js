@@ -800,13 +800,13 @@ const SAMPLE_CATEGORIES = [
 
 const SAMPLE_LOCATIONS = {
   provinces: [
-    { name: 'Koshi', districts: ['Jhapa', 'Morang', 'Sunsari', 'Taplejung', 'Panchthar', 'Ilam', 'Dhankuta', 'Terhathum', 'Sankhuwasabha', 'Bhojpur', 'Solukhumbu', 'Khotang', 'Udayapur'] },
-    { name: 'Madhesh', districts: ['Saptari', 'Siraha', 'Dhanusha', 'Mahottari', 'Sarlahi', 'Bara', 'Parsa'] },
-    { name: 'Bagmati', districts: ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Kavrepalanchok', 'Nuwakot', 'Rasuwa', 'Dhading', 'Makwanpur', 'Chitwan', 'Sindhuli', 'Ramechhap', 'Dolakha'] },
-    { name: 'Gandaki', districts: ['Gorkha', 'Nawalparasi East', 'Tanahu', 'Syangja', 'Kaski', 'Manang', 'Mustang', 'Myagdi', 'Parbat', 'Baglung', 'Gulmi', 'Palpa', 'Lamjung'] },
-    { name: 'Lumbini', districts: ['Kapilvastu', 'Rupandehi', 'Nawalparasi West', 'Rolpa', 'Rukum East', 'Syangja', 'Arghakhanchi', 'Pyuthan', 'Dang', 'Banke', 'Bardiya'] },
-    { name: 'Karnali', districts: ['Humla', 'Jumla', 'Dolpa', 'Mugu', 'Kalikot', 'Jajarkot', 'Dailekh', 'Surkhet', 'Rukum West'] },
-    { name: 'Sudurpashchim', districts: ['Darchula', 'Baitadi', 'Dadeldhura', 'Doti', 'Achham', 'Kailali', 'Kanchanpur', 'Bajhang', 'Bajura', 'Seti'] }
+    { name: 'Koshi', districts: ['Bhojpur', 'Dhankuta', 'Ilam', 'Jhapa', 'Khotang', 'Morang', 'Okhaldhunga', 'Panchthar', 'Sankhuwasabha', 'Solukhumbu', 'Sunsari', 'Taplejung', 'Terhathum', 'Udayapur'] },
+    { name: 'Madhesh', districts: ['Parsa', 'Bara', 'Rautahat', 'Saptari', 'Siraha', 'Dhanusha', 'Mahottari', 'Sarlahi'] },
+    { name: 'Bagmati', districts: ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Chitwan', 'Dhading', 'Dolakha', 'Kavrepalanchowk', 'Makwanpur', 'Nuwakot', 'Ramechhap', 'Rasuwa', 'Sindhuli', 'Sindhupalchok'] },
+    { name: 'Gandaki', districts: ['Baglung', 'Gorkha', 'Kaski', 'Lamjung', 'Manang', 'Mustang', 'Myagdi', 'Nawalparasi East', 'Parbat', 'Syangja', 'Tanahun'] },
+    { name: 'Lumbini', districts: ['Arghakhanchi', 'Banke', 'Bardiya', 'Dang', 'Eastern Rukum', 'Gulmi', 'Kapilvastu', 'Parasi', 'Palpa', 'Pyuthan', 'Rolpa', 'Rupandehi'] },
+    { name: 'Karnali', districts: ['Dailekh', 'Dolpa', 'Humla', 'Jajarkot', 'Jumla', 'Kalikot', 'Mugu', 'Salyan', 'Surkhet', 'Western Rukum'] },
+    { name: 'Sudurpashchim', districts: ['Achham', 'Baitadi', 'Bajhang', 'Bajura', 'Dadeldhura', 'Darchula', 'Doti', 'Kailali', 'Kanchanpur'] }
   ]
 };
 
