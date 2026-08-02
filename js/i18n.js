@@ -125,7 +125,6 @@ const I18N = {
     'login.register':    { en: 'Sign Up',      ne: 'दर्ता गर्नुहोस्' },
     'login.resetPwd':    { en: 'Reset password', ne: 'पासवर्ड रिसेट गर्नुहोस्' },
     'login.or':          { en: 'or',           ne: 'वा' },
-    'login.demoTitle':   { en: 'Demo Accounts:', ne: 'डेमो खाताहरू:' },
     'login.farmer':      { en: 'Farmer:',      ne: 'किसान:' },
     'login.worker':      { en: 'Worker:',      ne: 'श्रमिक:' },
     'login.admin':       { en: 'Admin:',       ne: 'एडमिन:' },
