@@ -220,8 +220,14 @@
 
               if (completeResult.success) {
                 try { sessionStorage.removeItem('agri_pendingPhoto'); } catch (e) {}
+                const completedUser = completeResult.user || Auth.currentUser;
+                const dashUrl = completedUser
+                  ? (completedUser.role === 'admin' ? 'admin.html'
+                     : (completedUser.roles || []).includes('worker') ? 'dashboard-worker.html'
+                     : 'dashboard-farmer.html')
+                  : Auth.getDashboardUrl();
                 showOtpSuccess('दर्ता पूरा भयो! ड्यासबोर्डमा लगिँदैछ...');
-                setTimeout(() => { window.location.href = Auth.getDashboardUrl(); }, 1200);
+                setTimeout(() => { window.location.href = dashUrl; }, 1200);
               } else {
                 if (completeResult.message && completeResult.message.includes('timed out')) {
                   showOtpError('Profile picture upload failed. Your account was created. Please log in and upload a photo from settings.');
