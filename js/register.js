@@ -388,6 +388,13 @@ function initDobSelects() {
   daySel.addEventListener('change', syncDobValue);
   monthSel.addEventListener('change', () => { rebuildDobDays(); syncDobValue(); });
   yearSel.addEventListener('change', () => { rebuildDobDays(); syncDobValue(); });
+  const desktop = document.getElementById('regDobDesktop');
+  if (desktop) {
+    const now = new Date();
+    desktop.min = (now.getFullYear() - 100) + '-01-01';
+    desktop.max = (now.getFullYear() - 10) + '-12-31';
+    desktop.addEventListener('change', syncDobFromDesktop);
+  }
 }
 
 function rebuildDobDays() {
@@ -408,9 +415,29 @@ function syncDobValue() {
   const d = document.getElementById('regDobDay').value;
   const m = document.getElementById('regDobMonth').value;
   const y = document.getElementById('regDobYear').value;
-  const input = document.getElementById('regDob');
-  if (d && m && y) input.value = y + '-' + m + '-' + d;
-  else input.value = '';
+  const value = (d && m && y) ? y + '-' + m + '-' + d : '';
+  document.getElementById('regDob').value = value;
+  const desktop = document.getElementById('regDobDesktop');
+  if (desktop && desktop.value !== value) desktop.value = value;
+}
+
+function syncDobFromDesktop() {
+  const desktop = document.getElementById('regDobDesktop');
+  const value = desktop.value || '';
+  document.getElementById('regDob').value = value;
+  if (value) {
+    const parts = value.split('-');
+    const y = parts[0], m = parts[1], d = parts[2];
+    document.getElementById('regDobYear').value = y;
+    document.getElementById('regDobMonth').value = m;
+    rebuildDobDays();
+    document.getElementById('regDobDay').value = d;
+  } else {
+    document.getElementById('regDobDay').value = '';
+    document.getElementById('regDobMonth').value = '';
+    document.getElementById('regDobYear').value = '';
+    rebuildDobDays();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

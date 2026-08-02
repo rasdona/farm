@@ -501,3 +501,10 @@
   .auth-page { background: white; padding: 0; }
   .auth-card { box-shadow: none; border: 1px solid #ddd; }
 }
+
+/* ── Date of Birth picker: calendar on desktop, dropdowns on mobile ── */
+.dob-mobile { display: none; }
+@media (max-width: 768px) {
+  .dob-desktop { display: none; }
+  .dob-mobile { display: flex; }
+}
