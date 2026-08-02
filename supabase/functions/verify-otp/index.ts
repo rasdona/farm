@@ -47,38 +47,88 @@ serve(async (req: Request): Promise<Response> => {
 
     const sb = getSupabase();
 
-    // Verify OTP
-    const { data: verifyResult, error: verifyErr } = await sb.rpc("verify_otp", {
-      p_identifier: normalizedIdentifier,
-      p_identifier_type: identifierType,
-      p_otp_code: code,
-      p_purpose: purpose,
-      p_ip_address: ip,
-      p_user_agent: ua,
-      p_device_fingerprint: device_fingerprint,
-    });
+    const useSupabaseOtp =
+      identifierType === "email" && ["email_verify", "registration", "login"].includes(purpose);
 
-    if (verifyErr) {
-      console.error("verify_otp error:", verifyErr);
-      return errorResp("Verification failed", 500, origin);
-    }
+    let user_id: string | null = null;
+    let verified = false;
 
-    if (!verifyResult || verifyResult.length === 0) {
-      return errorResp("Verification failed", 500, origin);
-    }
+    if (useSupabaseOtp) {
+      // Email OTP — verify via Supabase Auth (built-in email OTP).
+      // Try 'email' (passwordless login OTP) first, then 'signup' (confirmation OTP).
+      let otpVerify;
+      for (const type of ["email", "signup"] as const) {
+        const attempt = await sb.auth.verifyOtp({
+          email: normalizedIdentifier,
+          token: code,
+          type,
+        });
+        if (!attempt.error) {
+          otpVerify = attempt;
+          break;
+        }
+      }
 
-    let { success, user_id, message, lock_until } = verifyResult[0];
-
-    if (!success) {
-      if (lock_until) {
+      if (!otpVerify) {
         return jsonResp({
           success: false,
-          locked: true,
-          message,
-          lock_until,
+          message: "Invalid or expired code.",
         }, 200, origin);
       }
-      return jsonResp({ success: false, message }, 200, origin);
+
+      verified = true;
+      user_id = otpVerify.data?.user?.id || null;
+
+      // Guarantee the auth user's email is confirmed so signIn works after
+      // registration/login OTP verification (some flows don't set it automatically).
+      if (user_id) {
+        try {
+          await sb.auth.admin.updateUserById(user_id, { email_confirm: true });
+        } catch (authErr) {
+          console.error("Failed to confirm email in Supabase Auth:", authErr);
+        }
+      }
+    } else {
+      // Mobile / custom OTP — verify via DB function
+      const { data: verifyResult, error: verifyErr } = await sb.rpc("verify_otp", {
+        p_identifier: normalizedIdentifier,
+        p_identifier_type: identifierType,
+        p_otp_code: code,
+        p_purpose: purpose,
+        p_ip_address: ip,
+        p_user_agent: ua,
+        p_device_fingerprint: device_fingerprint,
+      });
+
+      if (verifyErr) {
+        console.error("verify_otp error:", verifyErr);
+        return errorResp("Verification failed", 500, origin);
+      }
+
+      if (!verifyResult || verifyResult.length === 0) {
+        return errorResp("Verification failed", 500, origin);
+      }
+
+      const { success, user_id: rUserId, message, lock_until } = verifyResult[0];
+
+      if (!success) {
+        if (lock_until) {
+          return jsonResp({
+            success: false,
+            locked: true,
+            message,
+            lock_until,
+          }, 200, origin);
+        }
+        return jsonResp({ success: false, message }, 200, origin);
+      }
+
+      verified = true;
+      user_id = rUserId;
+    }
+
+    if (!verified) {
+      return jsonResp({ success: false, message: "Verification failed" }, 200, origin);
     }
 
     // Fallback: some OTP records were created with user_id = null (older

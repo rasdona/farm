@@ -38,7 +38,7 @@ const EmailService = {
     }
   },
 
-  // ── Register user (creates auth user + profile + sends OTP via Brevo) ──
+  // ── Register user (creates auth user + profile + sends OTP via Supabase built-in email) ──
   async registerUser(registrationData) {
     this._log('info', `Registering user: ${registrationData.email}`);
     return this._request('register-user', {

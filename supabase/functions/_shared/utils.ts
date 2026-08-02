@@ -12,7 +12,7 @@ const ENV = {
   SUPABASE_URL: Deno.env.get("SUPABASE_URL")!,
   SUPABASE_SERVICE_ROLE_KEY: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   SUPABASE_ANON_KEY: Deno.env.get("SUPABASE_ANON_KEY")!,
-  APP_URL: Deno.env.get("APP_URL") || "https://agriconnect.com.np",
+  APP_URL: Deno.env.get("APP_URL") || "https://ekrishi.vercel.app",
   SMS_API_KEY: Deno.env.get("SMS_PROVIDER_API_KEY") || "",
   SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "AgriConnect",
   EMAIL_API_KEY: Deno.env.get("EMAIL_PROVIDER_API_KEY") || "",
@@ -49,18 +49,18 @@ export function corsHeaders(origin?: string): Record<string, string> {
 export function jsonResp(
   data: Record<string, unknown>,
   status = 200,
-  origin?: string
+  origin?: string | null
 ): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+    headers: { "Content-Type": "application/json", ...corsHeaders(origin || undefined) },
   });
 }
 
 export function errorResp(
   msg: string,
   status = 400,
-  origin?: string
+  origin?: string | null
 ): Response {
   return jsonResp({ error: msg }, status, origin);
 }
@@ -215,6 +215,32 @@ export interface EmailResult {
   provider: string;
   error?: string;
   message_id?: string;
+}
+
+// ============================================
+// EMAIL OTP VIA SUPABASE AUTH (built-in email)
+// Sends Supabase's own 6-digit OTP email. Works on the free plan with
+// NO custom SMTP/domain — Supabase relays from their servers.
+// ============================================
+export async function sendEmailOtpViaSupabase(
+  sb: ReturnType<typeof getSupabase>,
+  email: string
+): Promise<EmailResult> {
+  try {
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false },
+    });
+    if (error) {
+      console.error("signInWithOtp error:", error.message);
+      return { success: false, provider: "supabase", error: error.message };
+    }
+    return { success: true, provider: "supabase" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Supabase email error";
+    console.error("signInWithOtp exception:", msg);
+    return { success: false, provider: "supabase", error: msg };
+  }
 }
 
 function parseSender(from: string): { name: string; email: string } {

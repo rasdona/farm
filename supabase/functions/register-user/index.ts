@@ -4,9 +4,9 @@
 // ============================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
-  getSupabase, jsonResp, errorResp, parseBody, getIP, getUserAgent,
+  getSupabase, jsonResp, errorResp, parseBody, getIP,
   verifyCaptcha, isValidNepalMobile, isValidEmail,
-  normalizePhone, sendEmail, emailOTPTemplate,
+  normalizePhone, sendEmailOtpViaSupabase,
 } from "../_shared/utils.ts";
 
 serve(async (req: Request): Promise<Response> => {
@@ -163,37 +163,16 @@ serve(async (req: Request): Promise<Response> => {
       console.error("legacy profile insert error:", legacyProfileErr);
     }
 
-    // Send email verification OTP
-    const ip = getIP(req);
-    const ua = getUserAgent(req);
-    let otpSent = false;
+    // Send email verification OTP via Supabase Auth built-in email
+    const otpSend = await sendEmailOtpViaSupabase(sb, normalizedEmail);
 
-    const { data: otpResult } = await sb.rpc("create_otp", {
-      p_user_id: authUserId,
-      p_identifier: normalizedEmail,
-      p_identifier_type: "email",
-      p_purpose: "email_verify",
-      p_ip_address: ip,
-      p_user_agent: ua,
+    await sb.rpc("send_auth_notification", {
+      p_user_id: null,
+      p_type: "otp_sent",
+      p_title: "OTP Sent",
+      p_body: "Email verification OTP sent",
+      p_metadata: { purpose: "email_verify", provider: otpSend.provider, success: otpSend.success },
     });
-
-    if (otpResult?.[0]?.otp_code) {
-      const emailResult = await sendEmail(
-        normalizedEmail,
-        `Verify Your Email - AgriConnect Nepal`,
-        emailOTPTemplate(otpResult[0].otp_code, "email_verify", full_name.trim())
-      );
-      otpSent = emailResult.success;
-
-      await sb.from("otp_records").update({
-        delivery_status: emailResult.success ? "sent" : "failed",
-        delivery_error: emailResult.error || null,
-        delivery_provider: emailResult.provider,
-      }).eq("id", otpResult[0].otp_id);
-    }
-
-    // Dev mode: include OTP
-    const devMode = Deno.env.get("OTP_DEV_MODE") === "true";
 
     return jsonResp({
       success: true,
@@ -203,7 +182,7 @@ serve(async (req: Request): Promise<Response> => {
       verification_method: "email",
       email: normalizedEmail,
       mobile: normalizedMobile,
-      dev_otp: devMode ? otpResult?.[0]?.otp_code : undefined,
+      otp_delivery: otpSend.success ? "email_sent" : "email_pending",
     }, 201, origin);
 
   } catch (err) {

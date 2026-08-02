@@ -4,7 +4,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   getSupabase, jsonResp, errorResp, parseBody, getIP, getUserAgent,
-  parseUserAgent, sendSMS, sendEmail, smsOTPTemplate, emailOTPTemplate,
+  parseUserAgent, sendSMS, sendEmailOtpViaSupabase, smsOTPTemplate,
 } from "../_shared/utils.ts";
 
 serve(async (req: Request): Promise<Response> => {
@@ -108,48 +108,51 @@ serve(async (req: Request): Promise<Response> => {
       console.warn("send-otp: user lookup failed", err);
     }
 
-    // Create OTP via DB function
-    const { data: otpResult, error: otpErr } = await sb.rpc("create_otp", {
-      p_user_id: userId,
-      p_identifier: normalizedIdentifier,
-      p_identifier_type: identifierType,
-      p_purpose: purpose,
-      p_ip_address: ip,
-      p_user_agent: ua,
-    });
+    // Create OTP via DB function (mobile only — email uses Supabase Auth OTP)
+    let otpResult = null;
+    if (identifierType === "mobile") {
+      const { data: otpData, error: otpErr } = await sb.rpc("create_otp", {
+        p_user_id: userId,
+        p_identifier: normalizedIdentifier,
+        p_identifier_type: identifierType,
+        p_purpose: purpose,
+        p_ip_address: ip,
+        p_user_agent: ua,
+      });
 
-    if (otpErr) {
-      console.error("create_otp error:", otpErr);
-      return errorResp(`Failed to create OTP: ${otpErr.message}`, 500, origin);
+      if (otpErr) {
+        console.error("create_otp error:", otpErr);
+        return errorResp(`Failed to create OTP: ${otpErr.message}`, 500, origin);
+      }
+
+      if (!otpData || otpData.length === 0) {
+        return errorResp("OTP creation failed", 500, origin);
+      }
+      otpResult = otpData;
     }
 
-    if (!otpResult || otpResult.length === 0) {
-      return errorResp("OTP creation failed", 500, origin);
-    }
-
-    const { otp_code, otp_id, expires_at } = otpResult[0];
+    const otpId = otpResult?.[0]?.otp_id;
+    const otpCode = otpResult?.[0]?.otp_code;
 
     // Send
     let deliveryResult;
     if (identifierType === "mobile") {
       deliveryResult = await sendSMS(
         normalizedIdentifier,
-        smsOTPTemplate(otp_code, purpose)
+        smsOTPTemplate(otpCode, purpose)
       );
     } else {
-      deliveryResult = await sendEmail(
-        normalizedIdentifier,
-        `Verify Your Email - AgriConnect Nepal`,
-        emailOTPTemplate(otp_code, purpose)
-      );
+      deliveryResult = await sendEmailOtpViaSupabase(sb, normalizedIdentifier);
     }
 
-    // Update delivery status
-    await sb.from("otp_records").update({
-      delivery_status: deliveryResult.success ? "sent" : "failed",
-      delivery_error: deliveryResult.error || null,
-      delivery_provider: deliveryResult.provider,
-    }).eq("id", otp_id);
+    // Update delivery status (mobile only)
+    if (otpId) {
+      await sb.from("otp_records").update({
+        delivery_status: deliveryResult.success ? "sent" : "failed",
+        delivery_error: deliveryResult.error || null,
+        delivery_provider: deliveryResult.provider,
+      }).eq("id", otpId);
+    }
 
     // Log
     await sb.rpc("send_auth_notification", {
@@ -158,23 +161,22 @@ serve(async (req: Request): Promise<Response> => {
       p_title: "OTP Sent",
       p_body: `OTP sent to ${identifierType === "mobile" ? "mobile" : "email"}`,
       p_metadata: {
-        otp_id,
+        otp_id: otpId,
         purpose,
         provider: deliveryResult.provider,
         success: deliveryResult.success,
       },
     });
 
-    // Dev mode: return OTP in response
-    const devOtp = Deno.env.get("OTP_DEV_MODE") === "true" ? otp_code : undefined;
+    // Dev mode: return OTP in response (mobile only)
+    const devOtp = Deno.env.get("OTP_DEV_MODE") === "true" ? otpCode : undefined;
 
     return jsonResp({
       success: true,
       message: deliveryResult.success
         ? "OTP sent successfully"
         : "OTP created but delivery may be delayed",
-      otp_id,
-      expires_at,
+      otp_id: otpId,
       delivery_provider: deliveryResult.provider,
       dev_otp: devOtp,
     }, 200, origin);
