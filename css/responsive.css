@@ -64,6 +64,11 @@ a, button { touch-action: manipulation; }
   .nav-link { padding: 8px 20px; font-size: 0.875rem; }
 }
 
+/* ── Navbar: collapse the search box on desktop so the center links never overlap the brand ── */
+@media (min-width: 1025px) {
+  .navbar-search { display: none; }
+}
+
 /* ══════════════════════════════════════════════════════════
    ≥ 1440px — Large desktops
    ══════════════════════════════════════════════════════════ */

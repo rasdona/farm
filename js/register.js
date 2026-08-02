@@ -133,10 +133,29 @@ function initLocationDropdowns() {
 function updateDistricts() {
   const province = document.getElementById('regProvince').value;
   const districtSelect = document.getElementById('regDistrict');
-  if (!province) { districtSelect.innerHTML = '<option value="">पहिले प्रदेश छान्नुहोस्</option>'; return; }
+  const munSelect = document.getElementById('regMunicipality');
+  if (!province) {
+    districtSelect.innerHTML = '<option value="">पहिले प्रदेश छान्नुहोस्</option>';
+    if (munSelect) munSelect.innerHTML = '<option value="">पहिले जिल्ला छान्नुहोस्</option>';
+    return;
+  }
   const prov = SAMPLE_LOCATIONS.provinces.find(p => p.name === province);
   districtSelect.innerHTML = '<option value="">जिल्ला छान्नुहोस्</option>' +
     (prov ? prov.districts.map(d => `<option value="${d}">${d}</option>`).join('') : '');
+  if (munSelect) munSelect.innerHTML = '<option value="">पहिले जिल्ला छान्नुहोस्</option>';
+}
+
+function updateMunicipalities() {
+  const district = document.getElementById('regDistrict').value;
+  const munSelect = document.getElementById('regMunicipality');
+  if (!munSelect) return;
+  const items = district && SAMPLE_LOCAL_LEVELS[district];
+  if (!items) {
+    munSelect.innerHTML = '<option value="">पहिले जिल्ला छान्नुहोस्</option>';
+    return;
+  }
+  munSelect.innerHTML = '<option value="">नगरपालिका / गाउँपालिका छान्नुहोस्</option>' +
+    items.map(m => `<option value="${m.n}">${m.n}</option>`).join('');
 }
 
 function showRegProgress(steps) {

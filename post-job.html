@@ -100,7 +100,7 @@
 
             <div class="form-row mt-4">
               <div class="form-group"><label class="form-label">District <span class="required">*</span></label><select class="form-select" id="jobDistrict" required></select></div>
-              <div class="form-group"><label class="form-label">Municipality</label><input class="form-input" id="jobMunicipality" placeholder="e.g. Bharatpur"></div>
+              <div class="form-group"><label class="form-label">Municipality</label><select class="form-select" id="jobMunicipality"><option value="">Select Municipality</option></select></div>
             </div>
             <div class="form-group"><label class="form-label">Ward Number</label><input type="number" class="form-input" id="jobWard" min="1"></div>
             <div class="form-row">
@@ -127,6 +127,16 @@
     if (!Auth.requireRole('farmer')) throw new Error('Not authorized');
     document.getElementById('jobCrop').innerHTML = Jobs.getCropOptions();
     document.getElementById('jobDistrict').innerHTML = Jobs.getDistrictOptions().replace('All Districts', 'Select District');
+    document.getElementById('jobDistrict').addEventListener('change', updateJobMunicipalities);
+
+    function updateJobMunicipalities() {
+      const district = document.getElementById('jobDistrict').value;
+      const mun = document.getElementById('jobMunicipality');
+      mun.innerHTML = '<option value="">Select Municipality</option>';
+      if (district && SAMPLE_LOCAL_LEVELS[district]) {
+        mun.innerHTML += SAMPLE_LOCAL_LEVELS[district].map(m => `<option value="${m.n}">${m.n}</option>`).join('');
+      }
+    }
     const editId = Utils.getParam('edit');
     const editType = Utils.getParam('type');
     let editingJob = null;
@@ -148,6 +158,7 @@
           document.getElementById('jobStartTime').value = editingJob.startTime || '06:00';
           document.getElementById('jobDuration').value = editingJob.expectedDuration || '';
           document.getElementById('jobDistrict').value = editingJob.district || '';
+          updateJobMunicipalities();
           document.getElementById('jobMunicipality').value = editingJob.municipality || '';
           document.getElementById('jobWard').value = editingJob.ward || '';
           document.getElementById('jobFood').checked = editingJob.foodProvided;
@@ -176,6 +187,7 @@
           document.getElementById('jobWeeklyWage').value = editingJob.wage?.weekly || '';
           document.getElementById('jobMonthlyWage').value = editingJob.wage?.monthly || '';
           document.getElementById('jobDistrict').value = editingJob.district || '';
+          updateJobMunicipalities();
           document.getElementById('jobMunicipality').value = editingJob.municipality || '';
           document.getElementById('jobWard').value = editingJob.ward || '';
           document.getElementById('jobFood').checked = editingJob.foodProvided;
