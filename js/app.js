@@ -903,6 +903,12 @@ const App = {
     if (dropdown) dropdown.classList.remove('show');
   },
 
+  pickLanguage(lang) {
+    this.setLanguage(lang);
+    const modal = document.getElementById('langPickerModal');
+    if (modal) modal.classList.remove('active');
+  },
+
   applyLanguage(lang) {
     if (typeof I18N !== 'undefined') I18N.lang = lang;
 
