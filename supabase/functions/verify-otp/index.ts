@@ -3,7 +3,7 @@
 // ============================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
-  getSupabase, jsonResp, errorResp, parseBody, getIP, getUserAgent,
+  getSupabase, getSupabaseAnon, jsonResp, errorResp, parseBody, getIP, getUserAgent,
 } from "../_shared/utils.ts";
 
 serve(async (req: Request): Promise<Response> => {
@@ -55,10 +55,12 @@ serve(async (req: Request): Promise<Response> => {
 
     if (useSupabaseOtp) {
       // Email OTP — verify via Supabase Auth (built-in email OTP).
-      // Try 'email' (passwordless login OTP) first, then 'signup' (confirmation OTP).
+      // Uses the ANON client (user-facing endpoint); the service-role client
+      // is only used for the admin confirm call below.
+      const sbAnon = getSupabaseAnon();
       let otpVerify;
       for (const type of ["email", "signup"] as const) {
-        const attempt = await sb.auth.verifyOtp({
+        const attempt = await sbAnon.auth.verifyOtp({
           email: normalizedIdentifier,
           token: code,
           type,

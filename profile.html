@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Profile - AgriConnect Nepal</title>
+  <title>Profile - Ekrishi Nepal</title>
   <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
@@ -21,8 +21,8 @@
     const userId = Utils.getParam('id');
     const user = DB.getUserById(userId);
     if (!user) { document.getElementById('profileContent').innerHTML = '<div class="empty-state" style="padding:80px"><div class="icon">👤</div><h3>User Not Found</h3><p>This profile doesn\'t exist or has been removed.</p><a href="index.html" class="btn btn-primary mt-4">Go Home</a></div>'; }
-    else if (user.role === 'worker') { document.getElementById('profileContent').innerHTML = Workers.renderWorkerProfile(user); document.title = user.name + ' - AgriConnect Nepal'; }
-    else if (user.role === 'farmer') { document.getElementById('profileContent').innerHTML = Workers.renderFarmerProfile(user); document.title = (user.farmName || user.name) + ' - AgriConnect Nepal'; }
+    else if (user.role === 'worker') { document.getElementById('profileContent').innerHTML = Workers.renderWorkerProfile(user); document.title = user.name + ' - Ekrishi Nepal'; }
+    else if (user.role === 'farmer') { document.getElementById('profileContent').innerHTML = Workers.renderFarmerProfile(user); document.title = (user.farmName || user.name) + ' - Ekrishi Nepal'; }
     else { window.location.href = 'index.html'; }
   </script>
 </body>

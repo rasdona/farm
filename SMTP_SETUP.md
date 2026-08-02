@@ -1,12 +1,12 @@
-# AgriConnect Nepal — Custom SMTP Email Setup Guide
+# Ekrishi Nepal — Custom SMTP Email Setup Guide
 
 ## Overview
 
-This guide configures AgriConnect-branded emails for all authentication flows (OTP, verification, password reset) while keeping Supabase Auth as the authentication provider.
+This guide configures Ekrishi-branded emails for all authentication flows (OTP, verification, password reset) while keeping Supabase Auth as the authentication provider.
 
 **Sender Configuration:**
-- **Sender Name:** AgriConnect Nepal
-- **Sender Email:** noreply@agriconnect.com.np
+- **Sender Name:** Ekrishi Nepal
+- **Sender Email:** noreply@ekrishi.vercel.app
 
 ---
 
@@ -19,8 +19,8 @@ This guide configures AgriConnect-branded emails for all authentication flows (O
 
 | Field | Value |
 |-------|-------|
-| Sender email | `noreply@agriconnect.com.np` |
-| Sender name | `AgriConnect Nepal` |
+| Sender email | `noreply@ekrishi.vercel.app` |
+| Sender name | `Ekrishi Nepal` |
 | Host | *(your SMTP provider host, e.g., `smtp.mailgun.org`)* |
 | Port number | `587` (or `465` for SSL) |
 | Minimum interval between emails | `60` (seconds) |
@@ -54,13 +54,13 @@ Replace the default Supabase template with:
   <tr><td align="center" style="padding:32px 16px;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
       <tr><td style="background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);padding:36px 32px;text-align:center;">
-        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 AgriConnect Nepal</div>
+        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 Ekrishi Nepal</div>
         <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:4px;">Agriculture Platform</div>
       </td></tr>
       <tr><td style="padding:36px 32px;">
         <p style="color:#1a1a1a;font-size:16px;font-weight:600;margin:0 0 8px;">Hello,</p>
         <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
-          Welcome to AgriConnect Nepal. Click the button below to verify your email address:
+          Welcome to Ekrishi Nepal. Click the button below to verify your email address:
         </p>
         <div style="text-align:center;margin:24px 0;">
           <a href="{{ .ConfirmationURL }}" style="background:#16a34a;color:#ffffff;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;">Verify Email</a>
@@ -74,10 +74,10 @@ Replace the default Supabase template with:
       </td></tr>
       <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
         <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-align:center;">
-          Need help? Contact us at <a href="mailto:support@agriconnect.com.np" style="color:#16a34a;">support@agriconnect.com.np</a>
+          Need help? Contact us at <a href="mailto:support@ekrishi.vercel.app" style="color:#16a34a;">support@ekrishi.vercel.app</a>
         </p>
         <p style="color:#cbd5e1;font-size:11px;margin:0;text-align:center;">
-          &copy; 2025 AgriConnect Nepal. All rights reserved.
+          &copy; 2025 Ekrishi Nepal. All rights reserved.
         </p>
       </td></tr>
     </table>
@@ -98,13 +98,13 @@ Replace the default Supabase template with:
   <tr><td align="center" style="padding:32px 16px;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
       <tr><td style="background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);padding:36px 32px;text-align:center;">
-        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 AgriConnect Nepal</div>
+        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 Ekrishi Nepal</div>
         <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:4px;">Agriculture Platform</div>
       </td></tr>
       <tr><td style="padding:36px 32px;">
         <p style="color:#1a1a1a;font-size:16px;font-weight:600;margin:0 0 8px;">Hello,</p>
         <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
-          Click the button below to sign in to your AgriConnect Nepal account:
+          Click the button below to sign in to your Ekrishi Nepal account:
         </p>
         <div style="text-align:center;margin:24px 0;">
           <a href="{{ .ConfirmationURL }}" style="background:#16a34a;color:#ffffff;padding:14px 40px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;">Sign In</a>
@@ -118,7 +118,7 @@ Replace the default Supabase template with:
       </td></tr>
       <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
         <p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">
-          &copy; 2025 AgriConnect Nepal. All rights reserved.
+          &copy; 2025 Ekrishi Nepal. All rights reserved.
         </p>
       </td></tr>
     </table>
@@ -139,7 +139,7 @@ Replace the default Supabase template with:
   <tr><td align="center" style="padding:32px 16px;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
       <tr><td style="background:linear-gradient(135deg,#15803d 0%,#22c55e 100%);padding:36px 32px;text-align:center;">
-        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 AgriConnect Nepal</div>
+        <div style="color:#ffffff;font-size:22px;font-weight:700;">🌾 Ekrishi Nepal</div>
         <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:4px;">Agriculture Platform</div>
       </td></tr>
       <tr><td style="padding:36px 32px;">
@@ -156,7 +156,7 @@ Replace the default Supabase template with:
       </td></tr>
       <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
         <p style="color:#94a3b8;font-size:12px;margin:0;text-align:center;">
-          &copy; 2025 AgriConnect Nepal. All rights reserved.
+          &copy; 2025 Ekrishi Nepal. All rights reserved.
         </p>
       </td></tr>
     </table>
@@ -177,9 +177,9 @@ Deploy the updated Edge Functions and set environment variables:
 cd farm
 
 # Set environment variables
-npx supabase secrets set APP_URL=https://agriconnect.com.np
-npx supabase secrets set EMAIL_FROM="AgriConnect Nepal <noreply@agriconnect.com.np>"
-npx supabase secrets set SMS_SENDER_ID=AgriConnect
+npx supabase secrets set APP_URL=https://ekrishi.vercel.app
+npx supabase secrets set EMAIL_FROM="Ekrishi Nepal <noreply@ekrishi.vercel.app>"
+npx supabase secrets set SMS_SENDER_ID=Ekrishi
 npx supabase secrets set EMAIL_PROVIDER_API_KEY=your_resend_api_key
 npx supabase secrets set SMS_PROVIDER_API_KEY=your_sparrow_sms_key
 
@@ -198,11 +198,11 @@ npx supabase functions deploy verify-email-link
 
 ## Step 4: Verify Domain (Required for Custom Sender)
 
-For the sender email `noreply@agriconnect.com.np` to work:
+For the sender email `noreply@ekrishi.vercel.app` to work:
 
 ### If using Resend:
 1. Go to [Resend Dashboard](https://resend.com/domains)
-2. Add domain `agriconnect.com.np`
+2. Add domain `ekrishi.vercel.app`
 3. Add the DNS records provided (SPF, DKIM, DMARC)
 4. Wait for DNS propagation (usually 24-48 hours)
 5. Verify the domain in Resend dashboard
@@ -227,23 +227,23 @@ TXT  _dmarc            "v=DMARC1; p=none; rua=mailto:..."  (DMARC)
 
 1. **Registration Flow:**
    - Register a new account
-   - Verify the email arrives from "AgriConnect Nepal <noreply@agriconnect.com.np>"
-   - Verify the email contains AgriConnect branding (no Supabase branding)
+   - Verify the email arrives from "Ekrishi Nepal <noreply@ekrishi.vercel.app>"
+   - Verify the email contains Ekrishi branding (no Supabase branding)
    - Click the verification link and confirm it works
 
 2. **OTP Flow:**
    - Request an OTP for email verification
-   - Verify the OTP email has AgriConnect branding
+   - Verify the OTP email has Ekrishi branding
    - Enter the OTP and confirm verification succeeds
 
 3. **Password Reset:**
    - Request a password reset
-   - Verify the reset email has AgriConnect branding
+   - Verify the reset email has Ekrishi branding
    - Click the reset link and confirm it works
 
 4. **Resend Verification:**
    - On the verify-email page, click "Resend"
-   - Verify the new email arrives with AgriConnect branding
+   - Verify the new email arrives with Ekrishi branding
 
 5. **Rate Limiting:**
    - Try sending OTP 4+ times within 60 seconds
@@ -286,7 +286,7 @@ User Action → Frontend → Edge Function → Email Provider → Recipient
 2. Frontend calls Edge Function (send-otp, register-user, etc.)
 3. Edge Function generates OTP, stores hash in `otp_records` table
 4. Edge Function calls `sendEmail()` via Resend API (or Supabase SMTP)
-5. Email sent from `AgriConnect Nepal <noreply@agriconnect.com.np>`
+5. Email sent from `Ekrishi Nepal <noreply@ekrishi.vercel.app>`
 6. User receives branded email with OTP or verification link
 7. User enters OTP / clicks link → Edge Function verifies
 

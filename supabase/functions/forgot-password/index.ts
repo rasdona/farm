@@ -91,11 +91,11 @@ serve(async (req: Request): Promise<Response> => {
         return errorResp("Failed to process request", 500, origin);
       }
 
-      const resetUrl = `${Deno.env.get("APP_URL") || "https://agriconnect.com.np"}/reset-password?token=${tokenResult[0].raw_token}`;
+      const resetUrl = `${Deno.env.get("APP_URL") || "https://ekrishi.vercel.app"}/reset-password?token=${tokenResult[0].raw_token}`;
 
       await sendEmail(
         user.email,
-        "Reset Your AgriConnect Password",
+        "Reset Your Ekrishi Password",
         emailLinkTemplate(resetUrl, "password_reset")
       );
 

@@ -1,5 +1,5 @@
 # ============================================================
-# Supabase CLI configuration — AgriConnect Nepal
+# Supabase CLI configuration — Ekrishi Nepal
 # Used by GitHub Actions to deploy edge functions
 # Minimal on purpose: avoids schema errors on newer CLI versions
 # ============================================================

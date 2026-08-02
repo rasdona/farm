@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Job Detail - AgriConnect Nepal</title>
+  <title>Job Detail - Ekrishi Nepal</title>
   <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
   <style>
     .arma-commitment-box{background:linear-gradient(135deg,var(--primary-50),#ecfdf5);border:1px solid #d1fae5;border-radius:var(--radius-md);padding:20px;margin-top:8px}
@@ -27,16 +27,16 @@
     if (type === 'arma-parma') {
       const req = DB.getArmaParmaById(jobId);
       content = ArmaParma.renderArmaParmaDetail(req);
-      if (req) document.title = req.title + ' - AgriConnect Nepal';
+      if (req) document.title = req.title + ' - Ekrishi Nepal';
     } else {
       const job = DB.getJobById(jobId);
       if (job && job.workMode === 'arma-parma') {
         const req = DB.getArmaParmaById(jobId);
-        if (req) { content = ArmaParma.renderArmaParmaDetail(req); document.title = req.title + ' - AgriConnect Nepal'; }
-        else { content = Jobs.renderJobDetail(job); document.title = job.title + ' - AgriConnect Nepal'; }
+        if (req) { content = ArmaParma.renderArmaParmaDetail(req); document.title = req.title + ' - Ekrishi Nepal'; }
+        else { content = Jobs.renderJobDetail(job); document.title = job.title + ' - Ekrishi Nepal'; }
       } else {
         content = Jobs.renderJobDetail(job);
-        if (job) document.title = job.title + ' - AgriConnect Nepal';
+        if (job) document.title = job.title + ' - Ekrishi Nepal';
       }
     }
     document.getElementById('jobDetailContent').innerHTML = content;

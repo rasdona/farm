@@ -41,7 +41,7 @@ serve(async (req: Request): Promise<Response> => {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: `${Deno.env.get("APP_URL") || "https://agriconnect.com.np"}/verify.html?error=invalid_token`,
+          Location: `${Deno.env.get("APP_URL") || "https://ekrishi.vercel.app"}/verify.html?error=invalid_token`,
           ...corsHeaders(origin),
         },
       });
@@ -57,7 +57,7 @@ serve(async (req: Request): Promise<Response> => {
       return new Response(null, {
         status: 302,
         headers: {
-          Location: `${Deno.env.get("APP_URL") || "https://agriconnect.com.np"}/reset-password?token=${token}`,
+          Location: `${Deno.env.get("APP_URL") || "https://ekrishi.vercel.app"}/reset-password?token=${token}`,
           ...corsHeaders(origin),
         },
       });
@@ -67,7 +67,7 @@ serve(async (req: Request): Promise<Response> => {
     return new Response(null, {
       status: 302,
       headers: {
-          Location: `${Deno.env.get("APP_URL") || "https://agriconnect.com.np"}/verify.html?success=true`,
+          Location: `${Deno.env.get("APP_URL") || "https://ekrishi.vercel.app"}/verify.html?success=true`,
         ...corsHeaders(origin),
       },
     });

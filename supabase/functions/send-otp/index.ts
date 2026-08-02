@@ -142,7 +142,7 @@ serve(async (req: Request): Promise<Response> => {
         smsOTPTemplate(otpCode, purpose)
       );
     } else {
-      deliveryResult = await sendEmailOtpViaSupabase(sb, normalizedIdentifier);
+      deliveryResult = await sendEmailOtpViaSupabase(normalizedIdentifier);
     }
 
     // Update delivery status (mobile only)

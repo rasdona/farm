@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Product Details - AgriConnect Nepal</title>
+  <title>Product Details - Ekrishi Nepal</title>
   <link rel="stylesheet" href="css/main.css"><link rel="stylesheet" href="css/components.css"><link rel="stylesheet" href="css/animations.css"><link rel="stylesheet" href="css/responsive.css">
   <style>
     .pd-layout{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:32px 0}
@@ -115,7 +115,7 @@
       const img = p.images && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&h=450&fit=crop';
       document.getElementById('pdMainImg').src = img;
       document.getElementById('pdMainImg').alt = p.name;
-      document.title = p.name + ' - AgriConnect Nepal';
+      document.title = p.name + ' - Ekrishi Nepal';
       const badgeEl = document.getElementById('pdBadge');
       badgeEl.className = 'pd-badge ' + (p.type === 'rent' ? 'rent' : 'sell');
       badgeEl.textContent = p.type === 'rent' ? '🚜 For Rent' : '🏷️ For Sale';

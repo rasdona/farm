@@ -163,7 +163,7 @@ const Jobs = {
   shareJob(jobId) {
     const url = window.location.origin + '/job-detail.html?id=' + jobId;
     if (navigator.share) {
-      navigator.share({ title: 'Job on AgriConnect Nepal', url });
+      navigator.share({ title: 'Job on Ekrishi Nepal', url });
     } else {
       Utils.copyToClipboard(url);
     }

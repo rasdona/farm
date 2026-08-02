@@ -164,7 +164,7 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Send email verification OTP via Supabase Auth built-in email
-    const otpSend = await sendEmailOtpViaSupabase(sb, normalizedEmail);
+    const otpSend = await sendEmailOtpViaSupabase(normalizedEmail);
 
     await sb.rpc("send_auth_notification", {
       p_user_id: null,

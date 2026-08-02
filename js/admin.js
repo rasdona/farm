@@ -33,7 +33,7 @@ const Admin = {
     }
     const stats = DB.getStats();
     nav.innerHTML = `
-      <div class="admin-sidebar-header"><h3>Admin Panel</h3><p>AgriConnect Nepal</p></div>
+      <div class="admin-sidebar-header"><h3>Admin Panel</h3><p>Ekrishi Nepal</p></div>
       <div class="admin-sidebar-section">Main</div>
       <a href="#" class="active" onclick="Admin.renderOverview();return false"><span class="icon">📊</span><span class="nav-text">Overview</span></a>
       <a href="#" onclick="Admin.renderUsers();return false"><span class="icon">👥</span><span class="nav-text">Users</span><span class="badge">${stats.totalUsers}</span></a>
@@ -313,7 +313,7 @@ const Admin = {
       <div class="dashboard-card"><div class="dashboard-card-body">
         <div class="settings-group">
           <h4 class="mb-4">Platform Settings</h4>
-          <div class="settings-row"><div><div class="settings-row-label">Platform Name</div><div class="settings-row-desc">AgriConnect Nepal</div></div><button class="btn btn-outline btn-sm">Edit</button></div>
+          <div class="settings-row"><div><div class="settings-row-label">Platform Name</div><div class="settings-row-desc">Ekrishi Nepal</div></div><button class="btn btn-outline btn-sm">Edit</button></div>
           <div class="settings-row"><div><div class="settings-row-label">Registration</div><div class="settings-row-desc">Allow new user registration</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
           <div class="settings-row"><div><div class="settings-row-label">Email Verification</div><div class="settings-row-desc">Require email verification for new accounts</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
           <div class="settings-row"><div><div class="settings-row-label">Job Auto-Approval</div><div class="settings-row-desc">Automatically approve new job postings</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>

@@ -100,7 +100,7 @@ serve(async (req: Request): Promise<Response> => {
     } else {
       deliveryResult = await sendEmail(
         normalized,
-        `Verify Your Email - AgriConnect Nepal`,
+        `Verify Your Email - Ekrishi Nepal`,
         emailOTPTemplate(otpResult[0].otp_code, `${change_type}_change`)
       );
     }

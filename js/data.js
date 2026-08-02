@@ -887,9 +887,9 @@ const SAMPLE_AUDIT_LOGS = [
 const SAMPLE_FAQS = [
   { id: 'FAQ1', question: 'How do I register as a farmer?', answer: 'Click on Register, select Farmer role, fill in your details including farm information, and verify your account. Once verified, you can start posting jobs immediately.' },
   { id: 'FAQ2', question: 'How do I find agricultural workers?', answer: 'Use our advanced search to filter workers by skill, location, experience, and availability. You can also post a job and let workers apply to you.' },
-  { id: 'FAQ3', question: 'Is AgriConnect Nepal free to use?', answer: 'Yes! Basic registration and job posting are completely free. Workers can also create profiles and apply for jobs at no cost.' },
+  { id: 'FAQ3', question: 'Is Ekrishi Nepal free to use?', answer: 'Yes! Basic registration and job posting are completely free. Workers can also create profiles and apply for jobs at no cost.' },
   { id: 'FAQ4', question: 'How does the rating system work?', answer: 'After a job is completed, both the farmer and worker can rate each other on a 1-5 scale. This builds trust and reputation on the platform.' },
-  { id: 'FAQ5', question: 'How do payments work?', answer: 'AgriConnect Nepal does not handle payments directly. Payment arrangements are made between the farmer and worker as per the agreed terms.' },
+  { id: 'FAQ5', question: 'How do payments work?', answer: 'Ekrishi Nepal does not handle payments directly. Payment arrangements are made between the farmer and worker as per the agreed terms.' },
   { id: 'FAQ6', question: 'Can I verify my account?', answer: 'Yes! Account verification builds trust. Farmers can verify their farm ownership, and workers can verify their identity documents through our verification process.' },
   { id: 'FAQ7', question: 'What is Arma Parma?', answer: 'Arma Parma is a traditional Nepali labor exchange system where farmers help each other on their farms instead of paying money. The help received is tracked as Labor Credits, and you return the same amount of labor when the other farmer needs it.' },
   { id: 'FAQ8', question: 'How do Labor Credits work?', answer: 'When you help another farmer through Arma Parma, you earn Labor Credits equal to the days you worked. When you need help, farmers with credits can assist you, and the balance adjusts accordingly.' },

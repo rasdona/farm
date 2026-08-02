@@ -176,7 +176,7 @@ const Community = {
 
   sharePost(postId, text) {
     const url = window.location.origin + window.location.pathname + '#post-' + postId;
-    const shareText = `${text} — Read on AgriConnect Nepal`;
+    const shareText = `${text} — Read on Ekrishi Nepal`;
     if (navigator.share) {
       navigator.share({ title: text, text: shareText, url }).catch(() => {});
     } else if (navigator.clipboard) {

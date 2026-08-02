@@ -59,7 +59,7 @@ const App = {
           <div class="navbar-left">
             <a href="index.html" class="navbar-brand">
               <svg width="36" height="36" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
-              <span class="navbar-brand-text">AgriConnect</span>
+              <span class="navbar-brand-text">Ekrishi</span>
             </a>
           </div>
 
@@ -196,7 +196,7 @@ const App = {
         <div class="mobile-menu-header">
           <a href="index.html" class="mobile-menu-brand">
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
-            AgriConnect
+            Ekrishi
           </a>
           <button class="mobile-menu-close" onclick="App.toggleMobileMenu()" aria-label="Close">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -363,7 +363,7 @@ const App = {
           <div>
             <div class="footer-brand">
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
-              AgriConnect Nepal
+              Ekrishi Nepal
             </div>
             <p class="footer-about">${t('footer.aboutText')}</p>
             <div class="footer-social">

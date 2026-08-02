@@ -1,5 +1,5 @@
 // ============================================================
-// AgriConnect Nepal — Shared Utilities
+// Ekrishi Nepal — Shared Utilities
 // Production-grade: No mock data, real providers
 // ============================================================
 
@@ -14,9 +14,9 @@ const ENV = {
   SUPABASE_ANON_KEY: Deno.env.get("SUPABASE_ANON_KEY")!,
   APP_URL: Deno.env.get("APP_URL") || "https://ekrishi.vercel.app",
   SMS_API_KEY: Deno.env.get("SMS_PROVIDER_API_KEY") || "",
-  SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "AgriConnect",
+  SMS_SENDER_ID: Deno.env.get("SMS_SENDER_ID") || "Ekrishi",
   EMAIL_API_KEY: Deno.env.get("EMAIL_PROVIDER_API_KEY") || "",
-  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "AgriConnect Nepal <noreply@ekrishi.vercel.app>",
+  EMAIL_FROM: Deno.env.get("EMAIL_FROM") || "Ekrishi Nepal <noreply@ekrishi.vercel.app>",
   RECAPTCHA_SECRET: Deno.env.get("RECAPTCHA_SECRET") || "",
   OTP_DEV_MODE: Deno.env.get("OTP_DEV_MODE") === "true",
 };
@@ -219,26 +219,32 @@ export interface EmailResult {
 
 // ============================================
 // EMAIL OTP VIA SUPABASE AUTH (built-in email)
-// Sends Supabase's own 6-digit OTP email. Works on the free plan with
-// NO custom SMTP/domain — Supabase relays from their servers.
+// Sends Supabase's own 6-digit OTP email. The user-facing OTP endpoints
+// (signInWithOtp / verifyOtp) must use the ANON key, NOT the service role.
 // ============================================
+export function getSupabaseAnon() {
+  return createClient(ENV.SUPABASE_URL, ENV.SUPABASE_ANON_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 export async function sendEmailOtpViaSupabase(
-  sb: ReturnType<typeof getSupabase>,
   email: string
 ): Promise<EmailResult> {
+  const sb = getSupabaseAnon();
   try {
     const { error } = await sb.auth.signInWithOtp({
       email,
       options: { shouldCreateUser: false },
     });
     if (error) {
-      console.error("signInWithOtp error:", error.message);
+      console.error("signInWithOtp error:", error.message, JSON.stringify(error));
       return { success: false, provider: "supabase", error: error.message };
     }
     return { success: true, provider: "supabase" };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Supabase email error";
-    console.error("signInWithOtp exception:", msg);
+    console.error("signInWithOtp exception:", msg, JSON.stringify(err));
     return { success: false, provider: "supabase", error: msg };
   }
 }
@@ -274,7 +280,7 @@ export async function sendEmail(
         "api-key": ENV.EMAIL_API_KEY,
       },
       body: JSON.stringify({
-        sender: { name: sender.name || "AgriConnect Nepal", email: sender.email },
+        sender: { name: sender.name || "Ekrishi Nepal", email: sender.email },
         to: [{ email: to }],
         subject,
         htmlContent: html,
@@ -331,7 +337,7 @@ export function smsOTPTemplate(code: string, purpose: string): string {
     email_change: "email change",
     login: "login verification",
   };
-  return `AgriConnect: Your verification code is ${code}. Purpose: ${purposes[purpose] || purpose}. Valid for 5 minutes. Do not share this code.`;
+  return `Ekrishi: Your verification code is ${code}. Purpose: ${purposes[purpose] || purpose}. Valid for 5 minutes. Do not share this code.`;
 }
 
 export function emailOTPTemplate(code: string, purpose: string, userName?: string): string {
@@ -364,7 +370,7 @@ export function emailOTPTemplate(code: string, purpose: string, userName?: strin
               <div style="width:48px;height:48px;background:#ffffff;border-radius:12px;text-align:center;line-height:48px;font-size:26px;">🌾</div>
             </td>
             <td style="vertical-align:middle;">
-              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">AgriConnect Nepal</div>
+              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Ekrishi Nepal</div>
               <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Agriculture Platform</div>
             </td>
           </tr>
@@ -375,7 +381,7 @@ export function emailOTPTemplate(code: string, purpose: string, userName?: strin
       <tr><td style="padding:36px 32px 24px;">
         <p style="color:#1a1a1a;font-size:16px;margin:0 0 8px;font-weight:600;">${greeting}</p>
         <p style="color:#555555;font-size:15px;line-height:1.6;margin:0 0 24px;">
-          Welcome to AgriConnect Nepal. Use the following code to complete your <strong>${purposeText}</strong>:
+          Welcome to Ekrishi Nepal. Use the following code to complete your <strong>${purposeText}</strong>:
         </p>
 
         <!-- OTP Code Box -->
@@ -410,10 +416,10 @@ export function emailOTPTemplate(code: string, purpose: string, userName?: strin
       <!-- Footer -->
       <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
         <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-align:center;">
-          Need help? Contact us at <a href="mailto:support@agriconnect.com.np" style="color:#16a34a;text-decoration:none;">support@agriconnect.com.np</a>
+          Need help? Contact us at <a href="mailto:support@ekrishi.vercel.app" style="color:#16a34a;text-decoration:none;">support@ekrishi.vercel.app</a>
         </p>
         <p style="color:#cbd5e1;font-size:11px;margin:0;text-align:center;">
-          &copy; ${year} AgriConnect Nepal. All rights reserved.<br>
+          &copy; ${year} Ekrishi Nepal. All rights reserved.<br>
           Connecting Nepal's farms with skilled workers.
         </p>
       </td></tr>
@@ -432,8 +438,8 @@ export function emailLinkTemplate(url: string, purpose: string, userName?: strin
     purpose === "password_reset" ? "Reset Password" : "Verify Email";
   const greeting = userName ? `Hello ${userName},` : "Hello,";
   const purposeText = purpose === "password_reset"
-    ? "to reset your password for AgriConnect Nepal"
-    : "to verify your email address for AgriConnect Nepal";
+    ? "to reset your password for Ekrishi Nepal"
+    : "to verify your email address for Ekrishi Nepal";
   const year = new Date().getFullYear();
   return `
 <!DOCTYPE html>
@@ -452,7 +458,7 @@ export function emailLinkTemplate(url: string, purpose: string, userName?: strin
               <div style="width:48px;height:48px;background:#ffffff;border-radius:12px;text-align:center;line-height:48px;font-size:26px;">🌾</div>
             </td>
             <td style="vertical-align:middle;">
-              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">AgriConnect Nepal</div>
+              <div style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Ekrishi Nepal</div>
               <div style="color:rgba(255,255,255,0.85);font-size:12px;margin-top:2px;">Agriculture Platform</div>
             </td>
           </tr>
@@ -503,10 +509,10 @@ export function emailLinkTemplate(url: string, purpose: string, userName?: strin
       <!-- Footer -->
       <tr><td style="background:#f8fafc;padding:24px 32px;border-top:1px solid #e2e8f0;">
         <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;text-align:center;">
-          Need help? Contact us at <a href="mailto:support@agriconnect.com.np" style="color:#16a34a;text-decoration:none;">support@agriconnect.com.np</a>
+          Need help? Contact us at <a href="mailto:support@ekrishi.vercel.app" style="color:#16a34a;text-decoration:none;">support@ekrishi.vercel.app</a>
         </p>
         <p style="color:#cbd5e1;font-size:11px;margin:0;text-align:center;">
-          &copy; ${year} AgriConnect Nepal. All rights reserved.<br>
+          &copy; ${year} Ekrishi Nepal. All rights reserved.<br>
           Connecting Nepal's farms with skilled workers.
         </p>
       </td></tr>
