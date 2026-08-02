@@ -71,12 +71,6 @@
     .photo-gate-progress.visible { display: block; }
     .photo-gate-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; width: 0; transition: width 0.3s; }
     .photo-gate-actions { display: flex; gap: 10px; margin-bottom: 12px; }
-    .photo-gate-skip {
-      background: none; border: none; color: var(--text-tertiary);
-      font-size: 0.82rem; cursor: pointer; padding: 8px;
-      text-decoration: underline;
-    }
-    .photo-gate-skip:hover { color: var(--text-secondary); }
     .photo-gate-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; margin-top: 12px; display: none; }
     .photo-gate-msg.success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; display: block; }
     .photo-gate-msg.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
@@ -125,8 +119,6 @@
       </div>
 
       <div class="photo-gate-msg" id="msgBox"></div>
-
-      <button class="photo-gate-skip" onclick="skipForNow()">पछि अपलोड गर्छु →</button>
     </div>
   </div>
 
@@ -376,11 +368,6 @@
       el.textContent = text;
       el.className = 'photo-gate-msg ' + type;
       el.style.display = 'block';
-    }
-
-    function skipForNow() {
-      if (!confirm('फोटो बिना प्लेटफर्मका सबै सुविधा प्राप्त हुँदैन। पछि अपलोड गर्न चाहनुहुन्छ?')) return;
-      redirectAfterPhoto();
     }
 
     function redirectAfterPhoto() {
