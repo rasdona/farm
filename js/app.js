@@ -58,7 +58,7 @@ const App = {
         <div class="container navbar-container">
           <div class="navbar-left">
             <a href="index.html" class="navbar-brand">
-              <svg width="36" height="36" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
+              <img src="image/logo.png" alt="Ekrishi logo" class="navbar-brand-logo">
               <span class="navbar-brand-text">Ekrishi</span>
             </a>
           </div>
@@ -195,7 +195,7 @@ const App = {
       <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
           <a href="index.html" class="mobile-menu-brand">
-            <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="#16a34a"/><path d="M16 6c-2 0-4 2-4 5 0 2 1 3 2 4-3 0-6 2-6 5 0 3 3 6 8 6s8-3 8-6c0-3-3-5-6-5 1-1 2-2 2-4 0-3-2-5-4-5z" fill="white"/></svg>
+            <img src="image/logo.png" alt="Ekrishi logo">
             Ekrishi
           </a>
           <button class="mobile-menu-close" onclick="App.toggleMobileMenu()" aria-label="Close">

@@ -58,7 +58,6 @@ a, button { touch-action: manipulation; }
 @media (min-width: 1920px) {
   :root { --container-max: 1400px; }
   .container { max-width: 1400px; }
-  .navbar { left: 24px; right: 24px; max-width: 1480px; }
   .navbar-search { width: 420px; }
   .navbar-center { gap: 8px; }
   .nav-link { padding: 8px 20px; font-size: 0.875rem; }
@@ -67,6 +66,7 @@ a, button { touch-action: manipulation; }
 /* ── Navbar: collapse the search box on desktop so the center links never overlap the brand ── */
 @media (min-width: 1025px) {
   .navbar-search { display: none; }
+  .mobile-menu, .mobile-menu-overlay { display: none; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -214,7 +214,7 @@ a, button { touch-action: manipulation; }
   body.index-page #mobileHomeContainer .mobile-home { display: block !important; }
 
   /* ── Mobile Drawer ──────────────────────────────────── */
-  .mobile-menu { width: 300px; right: -320px; }
+  .mobile-menu { width: 300px; }
   .mobile-menu-user { display: block; }
   .mobile-drawer-welcome { display: block; }
 
@@ -615,7 +615,7 @@ a, button { touch-action: manipulation; }
   .mobile-home-product-img { height: 80px; }
   .footer { padding-top: 36px; }
   .footer-grid { gap: 20px; }
-  .mobile-menu { width: 280px; right: -300px; }
+  .mobile-menu { width: 280px; }
 }
 
 /* ══════════════════════════════════════════════════════════
