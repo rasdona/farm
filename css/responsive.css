@@ -210,6 +210,11 @@ a, button { touch-action: manipulation; }
   }
   body.index-page #mobileHomeContainer .mobile-home { display: block !important; }
 
+  /* ── Hide desktop sections duplicated by the mobile home ── */
+  body.index-page #sectionRecentJobs,
+  body.index-page #sectionFeaturedWorkers,
+  body.index-page #sectionLatestProducts { display: none !important; }
+
   /* ── Mobile Drawer ──────────────────────────────────── */
   .mobile-menu { width: 300px; }
   .mobile-menu-user { display: block; }
