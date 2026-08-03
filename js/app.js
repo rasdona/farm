@@ -672,10 +672,8 @@ const App = {
       container.id = 'mobileHomeContainer';
       container.className = 'mobile-home';
       const hero = document.querySelector('.hero');
-      if (hero && hero.nextElementSibling) {
-        hero.parentNode.insertBefore(container, hero.nextElementSibling);
-      } else if (hero) {
-        hero.parentNode.insertBefore(container, hero.nextSibling);
+      if (hero) {
+        hero.parentNode.insertBefore(container, hero);
       } else {
         const footer = document.querySelector('.footer') || document.getElementById('footer');
         if (footer) {

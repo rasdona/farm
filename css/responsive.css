@@ -200,10 +200,7 @@ a, button { touch-action: manipulation; }
   /* ── Mobile Home ────────────────────────────────────── */
   .mobile-home { display: block; }
 
-  /* ── Hide desktop sections on index.html ─────────────── */
-  body.index-page .hero,
-  body.index-page .section-sm,
-  body.index-page .section { display: none !important; }
+  /* ── Desktop home sections stay visible below the mobile home ── */
   body.index-page #mobileHomeContainer {
     display: block !important;
     position: relative;
@@ -331,7 +328,7 @@ a, button { touch-action: manipulation; }
     font-size: 1.2rem; color: var(--text); cursor: pointer;
   }
   .dashboard-sidebar-toggle:hover { background: var(--bg-alt); }
-  .dashboard-main { margin-left: 0; padding: 20px 16px 20px 56px; }
+  .dashboard-main { margin-left: 0; padding: 20px 16px; }
   .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
   .dashboard-header h1 { font-size: 1.3rem; }
   .dashboard-grid-2 { grid-template-columns: 1fr; }
@@ -938,12 +935,12 @@ a, button { touch-action: manipulation; }
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
   }
-  .dashboard-main { margin-left: 0; padding: 12px 10px 80px 56px; }
+  .dashboard-main { margin-left: 0; padding: 12px 10px 80px; }
 }
 
 @media (max-width: 425px) {
   .dashboard-sidebar { width: 260px; }
-  .dashboard-main { padding: 10px 8px 80px 50px; }
+  .dashboard-main { padding: 10px 8px 80px; }
 }
 
 /* ── Admin Sidebar — full hide + drawer on mobile ──────── */
