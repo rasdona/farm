@@ -72,6 +72,7 @@ const Auth = {
     const result = AuthSystem.setActiveRole(this.currentUser.id, role);
     if (result.success) {
       this.currentUser = DB.getUserById(this.currentUser.id);
+      this.syncProfileToSupabase({ role, roles: this.currentUser.roles });
     }
     return result;
   },
@@ -81,6 +82,7 @@ const Auth = {
     const result = AuthSystem.addRole(this.currentUser.id, role);
     if (result.success) {
       this.currentUser = DB.getUserById(this.currentUser.id);
+      this.syncProfileToSupabase({ roles: this.currentUser.roles });
     }
     return result;
   },
@@ -90,6 +92,7 @@ const Auth = {
     const result = AuthSystem.removeRole(this.currentUser.id, role);
     if (result.success) {
       this.currentUser = DB.getUserById(this.currentUser.id);
+      this.syncProfileToSupabase({ roles: this.currentUser.roles });
     }
     return result;
   },
@@ -114,8 +117,24 @@ const Auth = {
   updateProfile(data) {
     if (!this.currentUser) return false;
     const updated = DB.updateUser(this.currentUser.id, data);
-    if (updated) { this.currentUser = updated; return true; }
+    if (updated) { this.currentUser = updated; this.syncProfileToSupabase(data); return true; }
     return false;
+  },
+
+  syncProfileToSupabase(data = {}) {
+    const user = this.currentUser;
+    if (!user || !user.supabase_id || typeof SupabaseAuth === 'undefined' || !SupabaseAuth.client) return;
+    const map = {
+      name: 'full_name', phone: 'mobile_number', province: 'province', district: 'district',
+      municipality: 'municipality', ward: 'ward', gender: 'gender', dob: 'dob',
+      profilePhotoUrl: 'profile_picture_url', role: 'role', roles: 'roles', bio: 'bio'
+    };
+    const updates = {};
+    Object.entries(map).forEach(([local, db]) => {
+      if (data[local] !== undefined) updates[db] = data[local];
+    });
+    if (!Object.keys(updates).length) return;
+    SupabaseAuth.updateProfile(user.supabase_id, updates).catch(() => {});
   },
 
   requireAuth() {

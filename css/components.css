@@ -785,6 +785,11 @@ a.nav-icon-btn .badge-count {
 .chat-header-status.offline { color: var(--text-muted, #94a3b8); }
 .chat-header-typing { font-size: 0.75rem; color: var(--primary); font-style: italic; }
 .chat-messages { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.chat-media-preview { display: flex; align-items: center; gap: 10px; padding: 8px 24px; background: var(--surface); border-top: 1px solid var(--border); }
+.chat-media-preview img, .chat-media-preview video { max-height: 64px; max-width: 120px; border-radius: 8px; object-fit: cover; display: block; }
+.chat-media-name { font-size: 0.8rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
+.chat-bubble-media img { max-width: 220px; max-height: 220px; border-radius: 8px; object-fit: cover; display: block; cursor: pointer; }
+.chat-bubble-media video { max-width: 240px; max-height: 240px; border-radius: 8px; display: block; }
 .chat-message { display: flex; gap: 8px; max-width: 70%; }
 .chat-message.sent { align-self: flex-end; flex-direction: row-reverse; }
 .chat-message.received { align-self: flex-start; }
@@ -1240,6 +1245,7 @@ a.nav-icon-btn .badge-count {
   border: 1px solid rgba(59,130,246,0.1);
 }
 .mobile-home-weather-card:hover { box-shadow: var(--shadow-md); }
+.mobile-home-weather-alert { margin-bottom: 10px; padding: 8px 12px; border-radius: var(--radius); background: #fef2f2; border: 1px solid #fecaca; font-size: 0.75rem; font-weight: 600; color: #b91c1c; }
 .mobile-home-weather-main {
   display: flex; align-items: center; gap: 12px;
   margin-bottom: 12px;

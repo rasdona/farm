@@ -42,6 +42,7 @@ const DB = {
       this._set('transportRequests', []);
       this._set('workRequests', []);
       this._set('groups', []);
+      this._set('friends', []);
       this._set('initialized', true);
     }
   },
@@ -89,6 +90,49 @@ const DB = {
   saveWorker(userId, workerId) { const s = this._get('savedWorkers') || []; if (!s.find(x => x.userId === userId && x.workerId === workerId)) { s.push({ userId, workerId, createdAt: new Date().toISOString() }); this._set('savedWorkers', s); } },
   unsaveWorker(userId, workerId) { this._set('savedWorkers', this._get('savedWorkers').filter(x => !(x.userId === userId && x.workerId === workerId))); },
   isWorkerSaved(userId, workerId) { return (this._get('savedWorkers') || []).some(x => x.userId === userId && x.workerId === workerId); },
+
+  // ── Friends / Connections (Facebook-style) ────────────
+  getFriends() { return this._get('friends') || []; },
+  setFriends(f) { this._set('friends', f); },
+  getFriendStatus(userId, otherId) {
+    if (userId === otherId) return 'self';
+    const rel = this.getFriends().find(r => (r.userId === userId && r.friendId === otherId) || (r.userId === otherId && r.friendId === userId));
+    if (!rel) return 'none';
+    if (rel.status === 'accepted') return 'friends';
+    return rel.userId === userId ? 'pending_sent' : 'pending_received';
+  },
+  getConnectionIds(userId) {
+    return this.getFriends().filter(r => r.status === 'accepted' && (r.userId === userId || r.friendId === userId))
+      .map(r => r.userId === userId ? r.friendId : r.userId);
+  },
+  getConnections(userId) { return this.getConnectionIds(userId).map(id => this.getUserById(id)).filter(Boolean); },
+  getFriendRequests(userId) { return this.getFriends().filter(r => r.status === 'pending' && r.friendId === userId); },
+  getPendingRequests(userId) { return this.getFriends().filter(r => r.status === 'pending' && r.userId === userId); },
+  sendFriendRequest(userId, friendId) {
+    const f = this.getFriends();
+    const existing = f.find(r => (r.userId === userId && r.friendId === friendId) || (r.userId === friendId && r.friendId === userId));
+    if (existing) return existing;
+    const rel = { id: 'FR' + Date.now(), userId, friendId, status: 'pending', createdAt: new Date().toISOString() };
+    f.push(rel);
+    this.setFriends(f);
+    return rel;
+  },
+  acceptFriendRequest(userId, friendId) {
+    const f = this.getFriends();
+    const rel = f.find(r => r.userId === friendId && r.friendId === userId && r.status === 'pending');
+    if (!rel) return null;
+    rel.status = 'accepted';
+    rel.acceptedAt = new Date().toISOString();
+    this.setFriends(f);
+    return rel;
+  },
+  rejectFriendRequest(userId, friendId) {
+    this.setFriends(this.getFriends().filter(r => !(r.userId === friendId && r.friendId === userId && r.status === 'pending')));
+  },
+  removeFriend(userId, friendId) {
+    this.setFriends(this.getFriends().filter(r => !((r.userId === userId && r.friendId === friendId) || (r.userId === friendId && r.friendId === userId))));
+  },
+  getFriendsOf(userId) { return this.getConnections(userId); },
   addAuditLog(log) { const l = this._get('auditLogs') || []; log.id = 'LOG' + Date.now(); log.createdAt = new Date().toISOString(); l.push(log); this._set('auditLogs', l); },
   getAuditLogs() { return this._get('auditLogs') || []; },
   getCategories() { return this._get('categories') || SAMPLE_CATEGORIES; },
@@ -202,6 +246,12 @@ const DB = {
     return event;
   },
   deleteCalendarEvent(id) { this.setCalendarEvents(this.getCalendarEvents().filter(e => e.id !== id)); },
+  updateCalendarEvent(id, data) {
+    const e = this.getCalendarEvents();
+    const i = e.findIndex(x => x.id === id);
+    if (i >= 0) { e[i] = { ...e[i], ...data }; this.setCalendarEvents(e); return e[i]; }
+    return null;
+  },
   getStats() { const users = this.getUsers(); const jobs = this.getJobs(); const ap = this.getArmaParmaRequests(); return { totalUsers: users.length, totalFarmers: users.filter(u => u.role === 'farmer').length, totalWorkers: users.filter(u => u.role === 'worker').length, totalJobs: jobs.length, activeJobs: jobs.filter(j => j.status === 'active').length, filledJobs: jobs.filter(j => j.status === 'filled').length, totalApplications: this.getApplications().length, verifiedUsers: users.filter(u => u.verified).length, armaParmaRequests: ap.length, activeArmaParma: ap.filter(r => r.status === 'open').length, completedExchanges: this.getExchangeHistory().filter(e => e.status === 'completed').length }; },
   hasUploadedPhoto(userId) {
     const user = this.getUserById(userId);

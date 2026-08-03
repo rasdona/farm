@@ -131,6 +131,7 @@ const Weather = {
         rain: data.daily?.precipitation_probability_max?.[0] ?? 20,
         icon: wmo.icon,
         wind: Math.round(data.current?.wind_speed_10m ?? 10),
+        code: currentCode,
         suggestions: wmo.suggestions,
       };
 
@@ -170,6 +171,32 @@ const Weather = {
     };
   },
 
+  getAlert(weather) {
+    const c = weather?.current;
+    if (!c) return null;
+    const alerts = [];
+    const severe = {
+      65: 'Heavy Rain', 82: 'Violent Showers', 95: 'Thunderstorm',
+      96: 'Thunderstorm + Hail', 99: 'Heavy Thunderstorm',
+      71: 'Light Snow', 73: 'Moderate Snow', 75: 'Heavy Snow', 45: 'Fog', 48: 'Rime Fog'
+    };
+    if (severe[c.code]) alerts.push(`${c.icon} ${severe[c.code]} — take extra care with crops and livestock.`);
+    if (c.wind >= 40) alerts.push(`💨 Strong wind (${c.wind} km/h) — secure greenhouses and loose equipment.`);
+    if (c.temp >= 35) alerts.push(`🌡️ Extreme heat (${c.temp}°C) — irrigate early and avoid midday field work.`);
+    if (c.temp <= 5) alerts.push(`❄️ Cold (${c.temp}°C) — protect frost-sensitive crops.`);
+    if (c.rain >= 80) alerts.push(`🌧️ High chance of rain (${c.rain}%) — adjust irrigation and plan accordingly.`);
+    return alerts.length ? alerts : null;
+  },
+
+  renderAlert(weather) {
+    const alerts = this.getAlert(weather);
+    if (!alerts || !alerts.length) return '';
+    return `
+      <div class="weather-alert">
+        ${alerts.map(a => `<div class="weather-alert-item">⚠️ ${a}</div>`).join('')}
+      </div>`;
+  },
+
   renderWidget(containerId, district) {
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -182,6 +209,7 @@ const Weather = {
       const { current, forecast } = weather;
       el.innerHTML = `
         <div class="weather-widget">
+          ${this.renderAlert(weather)}
           <div class="weather-current">
             <div class="weather-main">
               <span class="weather-icon">${current.icon}</span>

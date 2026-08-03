@@ -72,7 +72,7 @@ const App = {
         <div class="container navbar-container">
           <div class="navbar-left">
             <a href="index.html" class="navbar-brand">
-              <img src="image/logo.png" alt="Ekrishi logo" class="navbar-brand-logo">
+              <img src="image/logo.svg" alt="Ekrishi logo" class="navbar-brand-logo">
               <span class="navbar-brand-text">Ekrishi</span>
             </a>
           </div>
@@ -103,7 +103,10 @@ const App = {
           <div class="navbar-right">
             <div class="navbar-search">
               <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" onkeydown="if(event.key==='Enter')window.location.href='jobs.html?q='+this.value">
+              <input type="text" placeholder="${t('nav.search')}" id="navSearchInput" list="districtSuggestions" autocomplete="off" onkeydown="if(event.key==='Enter')App.navSearch(this.value)">
+              <datalist id="districtSuggestions">
+                ${(typeof SAMPLE_LOCATIONS !== 'undefined' ? SAMPLE_LOCATIONS.provinces.flatMap(p => p.districts) : []).map(d => `<option value="${d}">${d}</option>`).join('')}
+              </datalist>
               <button class="nav-search-mic" type="button" aria-label="Voice search" onclick="App.voiceSearch()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               </button>
@@ -181,6 +184,7 @@ const App = {
                   <a href="${Auth.getDashboardUrl()}" role="menuitem" tabindex="0">📊 ${t('nav.dashboard')}</a>
                   <a href="calendar.html" role="menuitem" tabindex="0">📅 ${t('nav.calendar') || 'Calendar'}</a>
                   <a href="chat.html" role="menuitem" tabindex="0">💬 ${t('nav.msgs')}</a>
+                  <a href="friends.html" role="menuitem" tabindex="0">🤝 ${t('nav.friends') || 'Friends'}</a>
                   <div class="dropdown-divider"></div>
                   <a href="saved-jobs.html" role="menuitem" tabindex="0">🔖 ${t('nav.savedJobs') || 'Saved Jobs'}</a>
                   <a href="saved-workers.html" role="menuitem" tabindex="0">👷 ${t('nav.savedWorkers') || 'Saved Workers'}</a>
@@ -209,7 +213,7 @@ const App = {
       <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
           <a href="index.html" class="mobile-menu-brand">
-            <img src="image/logo.png" alt="Ekrishi logo">
+            <img src="image/logo.svg" alt="Ekrishi logo">
             Ekrishi
           </a>
           <button class="mobile-menu-close" onclick="App.toggleMobileMenu()" aria-label="Close">
@@ -307,6 +311,10 @@ const App = {
             <a href="chat.html" class="${this.isActive('chat') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
               ${t('nav.msgs')}
+            </a>
+            <a href="friends.html" class="${this.isActive('friends') ? 'active' : ''}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              ${t('nav.friends') || 'Friends'}
             </a>
             <a href="saved-jobs.html" class="${this.isActive('saved-jobs') ? 'active' : ''}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -414,6 +422,7 @@ const App = {
     } else if (badge) {
       badge.remove();
     }
+    this.renderMobileBottomNav();
   },
 
   renderFooter() {
@@ -494,6 +503,7 @@ const App = {
     }
     const user = Auth.currentUser;
     const current = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
+    const unreadChats = user ? DB.getChatsByUser(user.id).reduce((acc, c) => acc + DB.getMessagesByChat(c.id).filter(m => m.senderId !== user.id && !m.read).length, 0) : 0;
     const T = typeof I18N !== 'undefined' ? I18N : null;
     const t = T ? (key => T.get(key)) : (key => key);
     bottomNav.innerHTML = `
@@ -518,6 +528,15 @@ const App = {
           <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
           <span>${t('nav.community')}</span>
         </a>
+        ${user ? `
+          <a href="chat.html" class="${current === 'chat' ? 'active' : ''}">
+            <span class="nav-icon" style="position:relative">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              ${unreadChats > 0 ? `<span class="badge-count bottom-nav-badge">${unreadChats > 99 ? '99+' : unreadChats}</span>` : ''}
+            </span>
+            <span>${t('nav.msgs')}</span>
+          </a>
+        ` : ''}
       </div>
     `;
   },
@@ -579,8 +598,21 @@ const App = {
   },
 
   mobileSearch(q) {
+    this.navSearch(q);
+  },
+
+  navSearch(q) {
     const val = (q || '').trim();
-    window.location.href = 'jobs.html' + (val ? '?q=' + encodeURIComponent(val) : '');
+    if (!val) { window.location.href = 'jobs.html'; return; }
+    const districts = (typeof SAMPLE_LOCATIONS !== 'undefined')
+      ? SAMPLE_LOCATIONS.provinces.flatMap(p => p.districts)
+      : [];
+    const exact = districts.find(d => d.toLowerCase() === val.toLowerCase());
+    if (exact) {
+      window.location.href = 'jobs.html?district=' + encodeURIComponent(exact);
+      return;
+    }
+    window.location.href = 'jobs.html?q=' + encodeURIComponent(val);
   },
 
   toggleRoleDropdown() {
@@ -878,8 +910,10 @@ const App = {
     if (!el || typeof Weather === 'undefined') return;
     const dashboardUrl = 'dashboard-' + (user && user.roles && user.roles.includes('worker') ? 'worker' : 'farmer') + '.html';
     Weather.getWeather(user?.district).then(w => {
+      const alerts = typeof Weather.getAlert !== 'undefined' ? Weather.getAlert(w) : null;
       el.innerHTML = `
         <div class="mobile-home-weather-card" onclick="window.location.href='${dashboardUrl}'">
+          ${alerts && alerts.length ? `<div class="mobile-home-weather-alert">⚠️ ${alerts[0]}</div>` : ''}
           <div class="mobile-home-weather-main">
             <span class="mobile-home-weather-icon">${w.current.icon}</span>
             <div>
@@ -1037,6 +1071,56 @@ const App = {
       el.className = 'btn btn-sm btn-primary';
       el.innerHTML = '❤️ Saved';
       Utils.toast('Worker saved!');
+    }
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // FRIENDS / CONNECTIONS (Facebook-style)
+  // ═══════════════════════════════════════════════════════
+
+  friendButtonHtml(otherId) {
+    const me = Auth.currentUser;
+    if (!me) return `<a href="login.html" class="btn btn-outline">🤝 Add Friend</a>`;
+    const status = DB.getFriendStatus(me.id, otherId);
+    if (status === 'self') return '';
+    const config = {
+      none: { label: '🤝 Add Friend', cls: 'btn-outline' },
+      pending_sent: { label: '⏳ Request Sent', cls: 'btn-outline' },
+      pending_received: { label: '✅ Accept Friend', cls: 'btn-primary' },
+      friends: { label: '✓ Friends', cls: 'btn-success' }
+    };
+    const c = config[status] || config.none;
+    return `<button class="btn ${c.cls}" onclick="App.friendAction('${status}','${otherId}',this)">${c.label}</button>`;
+  },
+
+  friendCountHtml(userId) {
+    const n = DB.getConnectionIds(userId).length;
+    return `<div class="profile-stat"><div class="number">${n}</div><div class="label">Friends</div></div>`;
+  },
+
+  friendAction(status, otherId, el) {
+    const me = Auth.currentUser;
+    if (!me) { Auth.requireAuth(); return; }
+    const other = DB.getUserById(otherId);
+    const otherName = other ? (other.name || 'User') : 'User';
+    if (status === 'none') {
+      DB.sendFriendRequest(me.id, otherId);
+      DB.addNotification({ userId: otherId, type: 'friend', title: 'Friend request', body: `${me.name} sent you a friend request.`, href: 'friends.html' });
+      Utils.toast('Friend request sent!', 'success');
+    } else if (status === 'pending_sent') {
+      DB.removeFriend(me.id, otherId);
+      Utils.toast('Request cancelled');
+    } else if (status === 'pending_received') {
+      DB.acceptFriendRequest(me.id, otherId);
+      DB.addNotification({ userId: otherId, type: 'friend', title: 'Friend request accepted', body: `${me.name} accepted your friend request.`, href: 'friends.html' });
+      Utils.toast(`You and ${otherName} are now friends!`, 'success');
+    } else if (status === 'friends') {
+      DB.removeFriend(me.id, otherId);
+      Utils.toast('Removed from friends');
+    }
+    if (el) {
+      const next = this.friendButtonHtml(otherId);
+      if (next) el.outerHTML = next;
     }
   },
 

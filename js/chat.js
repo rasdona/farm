@@ -2,6 +2,7 @@ const Chat = {
   currentChat: null,
   currentUserId: null,
   _bound: false,
+  _pendingMedia: null,
 
   init(userId) {
     this.currentUserId = userId;
@@ -49,6 +50,7 @@ const Chat = {
       if (!other) return '';
       const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
       const lastMsg = DB.getMessagesByChat(chat.id).slice(-1)[0];
+      const lastText = lastMsg?.text || (lastMsg?.image ? '📷 Photo' : lastMsg?.media ? '🎬 Video' : null) || chat.lastMessage || 'Start chatting...';
       const isCurrent = this.currentUserId === otherId || chat.participants.includes(this.currentUserId) && document.querySelector(`[data-chat-user="${otherId}"]`);
       return `
         <div class="chat-contact ${this.currentChat?.id === chat.id ? 'active' : ''}" data-chat-user="${otherId}" onclick="Chat.openChat('${otherId}')">
@@ -58,7 +60,7 @@ const Chat = {
           </div>
           <div class="chat-contact-info">
             <div class="chat-contact-name">${other.name}</div>
-            <div class="chat-contact-preview">${Utils.truncate(lastMsg?.text || chat.lastMessage || 'Start chatting...', 40)}</div>
+            <div class="chat-contact-preview">${Utils.truncate(lastText, 40)}</div>
           </div>
           <div class="chat-contact-meta">
             <span class="chat-contact-time">${Utils.formatTime(chat.lastMessageAt)}</span>
@@ -155,7 +157,9 @@ const Chat = {
         <div class="chat-message ${isSent ? 'sent' : 'received'}">
           ${!isSent ? Utils.avatarHTML(Utils.getUserPhoto(sender), sender?.name || '', 'sm') : ''}
           <div>
-            <div class="chat-bubble">${Utils.escapeHtml(msg.text)}</div>
+            ${msg.image ? `<div class="chat-bubble chat-bubble-media"><img src="${msg.image}" alt="Photo" onclick="window.open('${msg.image}','_blank')"></div>` : ''}
+            ${msg.media ? `<div class="chat-bubble chat-bubble-media"><video src="${msg.media}" controls></video></div>` : ''}
+            ${msg.text ? `<div class="chat-bubble">${Utils.escapeHtml(msg.text)}</div>` : ''}
             <div class="chat-message-time">${new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ${isSent ? '<span class="chat-message-read">' + (msg.read ? '✓✓' : '✓') + '</span>' : ''}</div>
           </div>
         </div>
@@ -164,22 +168,76 @@ const Chat = {
     container.innerHTML = html;
   },
 
+  attachMedia(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) { Utils.toast('File too large (max 50MB)', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const isVideo = file.type.startsWith('video/');
+      this._pendingMedia = { type: isVideo ? 'video' : 'image', data: e.target.result };
+      const preview = document.getElementById('chatMediaPreview');
+      if (preview) {
+        preview.style.display = 'flex';
+        const holder = document.getElementById('chatMediaHolder');
+        if (isVideo) holder.innerHTML = `<video src="${e.target.result}" controls></video>`;
+        else holder.innerHTML = `<img src="${e.target.result}" alt="Attachment">`;
+        document.getElementById('chatMediaName').textContent = file.name;
+      }
+    };
+    reader.readAsDataURL(file);
+  },
+
+  removeMedia() {
+    this._pendingMedia = null;
+    const preview = document.getElementById('chatMediaPreview');
+    if (preview) preview.style.display = 'none';
+  },
+
   sendMessage(text) {
-    if (!text.trim() || !this.currentChat) return;
+    if (!this.currentChat) return;
+    const trimmed = (text || '').trim();
+    if (!trimmed && !this._pendingMedia) return;
     const otherId = this.currentChat.participants.find(p => p !== this.currentUserId);
-    DB.addMessage({ chatId: this.currentChat.id, senderId: this.currentUserId, text: text.trim() });
-    DB.updateChat?.(this.currentChat.id, { lastMessage: text.trim(), lastMessageAt: new Date().toISOString() });
-    const chats = DB.getChats();
-    const ci = chats.findIndex(c => c.id === this.currentChat.id);
-    if (ci >= 0) { chats[ci].lastMessage = text.trim(); chats[ci].lastMessageAt = new Date().toISOString(); DB.setChats(chats); }
-    DB.addNotification({ userId: otherId, type: 'message', text: `New message from ${Auth.currentUser.name}`, link: 'chat.html' });
-    if (typeof SupabaseSync !== 'undefined' && SupabaseSync.sendTyping) {
-      SupabaseSync.sendTyping(this.currentChat.id, false);
+
+    const finishSend = (msgData) => {
+      DB.addMessage({ chatId: this.currentChat.id, senderId: this.currentUserId, ...msgData });
+      const last = msgData.text || (msgData.image ? '📷 Photo' : msgData.media ? '🎬 Video' : 'Media');
+      DB.updateChat?.(this.currentChat.id, { lastMessage: last, lastMessageAt: new Date().toISOString() });
+      const chats = DB.getChats();
+      const ci = chats.findIndex(c => c.id === this.currentChat.id);
+      if (ci >= 0) { chats[ci].lastMessage = last; chats[ci].lastMessageAt = new Date().toISOString(); DB.setChats(chats); }
+      DB.addNotification({ userId: otherId, type: 'message', text: `New message from ${Auth.currentUser.name}`, link: 'chat.html' });
+      if (typeof SupabaseSync !== 'undefined' && SupabaseSync.sendTyping) {
+        SupabaseSync.sendTyping(this.currentChat.id, false);
+      }
+      this.renderMessages();
+      this.renderContacts();
+      this.scrollToBottom();
+      const input = document.getElementById('chatInput');
+      if (input) input.value = '';
+      this.removeMedia();
+    };
+
+    if (this._pendingMedia && typeof SupabaseAuth !== 'undefined' && SupabaseAuth._client) {
+      const dataUrl = this._pendingMedia.data;
+      fetch(dataUrl).then(r => r.blob()).then(blob => {
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const prefix = this._pendingMedia.type === 'video' ? 'videos' : 'chat';
+        const path = `${prefix}/${this.currentUserId}/${Date.now()}.${ext}`;
+        SupabaseAuth._client.storage.from('avatars').upload(path, blob, { contentType: blob.type }).then(({ data, error }) => {
+          if (error) { finishSend({ text: trimmed }); return; }
+          const url = SupabaseAuth._client.storage.from('avatars').getPublicUrl(path).data?.publicUrl || '';
+          const msgData = {};
+          if (this._pendingMedia.type === 'video') msgData.media = url;
+          else msgData.image = url;
+          if (trimmed) msgData.text = trimmed;
+          finishSend(msgData);
+        }).catch(() => finishSend({ text: trimmed }));
+      }).catch(() => finishSend({ text: trimmed }));
+    } else {
+      finishSend({ text: trimmed });
     }
-    this.renderMessages();
-    this.renderContacts();
-    this.scrollToBottom();
-    document.getElementById('chatInput').value = '';
   },
 
   scrollToBottom() {

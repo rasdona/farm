@@ -68,8 +68,8 @@ const Workers = {
               <div class="mt-2">${Utils.trustScoreHTML(worker)}</div>
             </div>
             <div class="profile-actions">
-              ${Auth.isFarmer() ? `<a href="chat.html?user=${worker.id}" class="btn btn-primary">💬 Message</a>` : ''}
-              ${Auth.isFarmer() ? `<button class="btn btn-outline" onclick="Utils.toast('Invitation sent!','success')">📨 Invite</button>` : ''}
+              ${Auth.currentUser && Auth.currentUser.id !== worker.id ? `<a href="chat.html?user=${worker.id}" class="btn btn-primary">💬 Message</a>` : ''}
+              ${App.friendButtonHtml(worker.id)}
               ${Auth.currentUser && Auth.currentUser.id !== worker.id ? `<button class="btn btn-outline" onclick="App.toggleSaveWorker('${worker.id}',this)">🤍 Save</button>` : ''}
             </div>
           </div>
@@ -79,6 +79,7 @@ const Workers = {
           <div class="profile-stat"><div class="number">${reviews.length}</div><div class="label">Reviews</div></div>
           <div class="profile-stat"><div class="number">${completedJobs}</div><div class="label">Jobs Done</div></div>
           <div class="profile-stat"><div class="number">${completedExchanges}</div><div class="label">Exchanges</div></div>
+          ${App.friendCountHtml(worker.id)}
           <div class="profile-stat"><div class="number">${Utils.formatCurrency(worker.expectedWage?.daily || 0)}</div><div class="label">Daily Wage</div></div>
         </div>
       </div>
@@ -202,7 +203,8 @@ const Workers = {
               </div>
             </div>
             <div class="profile-actions">
-              ${Auth.isWorker() ? `<a href="chat.html?user=${farmer.id}" class="btn btn-primary">💬 Message</a>` : ''}
+              ${Auth.currentUser && Auth.currentUser.id !== farmer.id ? `<a href="chat.html?user=${farmer.id}" class="btn btn-primary">💬 Message</a>` : ''}
+              ${App.friendButtonHtml(farmer.id)}
             </div>
           </div>
         </div>
@@ -211,6 +213,7 @@ const Workers = {
           <div class="profile-stat"><div class="number">${jobs.filter(j => j.status === 'filled').length}</div><div class="label">Filled</div></div>
           <div class="profile-stat"><div class="number">${rating > 0 ? rating : '-'}</div><div class="label">Rating</div></div>
           <div class="profile-stat"><div class="number">${reviews.length}</div><div class="label">Reviews</div></div>
+          ${App.friendCountHtml(farmer.id)}
           <div class="profile-stat"><div class="number">${completedExchanges}</div><div class="label">Arma Parma</div></div>
         </div>
       </div>

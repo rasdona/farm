@@ -36,6 +36,13 @@ a, button { touch-action: manipulation; }
 .mobile-bottom-nav a:hover,
 .mobile-bottom-nav a.active { color: var(--primary); background: var(--primary-50); }
 .mobile-bottom-nav a.active { font-weight: 700; }
+.mobile-bottom-nav .bottom-nav-badge {
+  position: absolute; top: -4px; right: -10px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  background: #ef4444; color: white; font-size: 0.6rem; font-weight: 700;
+  border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface); line-height: 1;
+}
 
 /* ── Mobile Overlay for drawer ──────────────────────── */
 .mobile-menu-overlay {

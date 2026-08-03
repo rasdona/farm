@@ -154,13 +154,19 @@ const CalendarView = {
           const d = new Date(e.date);
           const icon = e.type === 'paid' ? '💰' : e.type === 'arma' ? '🤝' : e.type === 'personal' ? '📝' : '🌱';
           const link = e.jobId ? `job-detail.html?id=${e.jobId}` : '#';
-          return `<a href="${link}" class="flex items-center gap-3 p-2 mb-2" style="border-radius:var(--radius);border:1px solid var(--border-light);text-decoration:none;color:inherit">
-            <div style="min-width:48px;text-align:center;padding:4px 8px;border-radius:var(--radius);background:var(--bg-alt);font-size:0.8rem">
-              <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${d.getDate()}</div>
-              <div class="text-xs">${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}</div>
-            </div>
-            <div class="flex-1"><div class="font-semibold text-sm">${icon} ${Utils.escapeHtml(e.title)}</div><div class="text-xs text-muted">${e.location || ''}</div></div>
-          </a>`;
+          return `<div class="flex items-center gap-3 p-2 mb-2" style="border-radius:var(--radius);border:1px solid var(--border-light);background:var(--surface)">
+            <a href="${link}" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+              <div style="min-width:48px;text-align:center;padding:4px 8px;border-radius:var(--radius);background:var(--bg-alt);font-size:0.8rem">
+                <div style="font-weight:700;font-size:1.1rem;color:var(--primary)">${d.getDate()}</div>
+                <div class="text-xs">${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}</div>
+              </div>
+              <div style="flex:1;min-width:0"><div class="font-semibold text-sm" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${icon} ${Utils.escapeHtml(e.title)}</div><div class="text-xs text-muted">${e.location || ''}</div></div>
+            </a>
+            ${e.eventId && Auth.currentUser ? `<div class="flex gap-1">
+              <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="CalendarView.editEvent('${e.eventId}')" title="Edit event">✏️</button>
+              <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="CalendarView.deleteEvent('${e.eventId}')" title="Delete event">🗑️</button>
+            </div>` : ''}
+          </div>`;
         }).join('');
       }
     }
@@ -256,35 +262,59 @@ const CalendarView = {
     if (events.length) events.forEach(e => {
       const icon = e.type === 'paid' ? '💰' : e.type === 'arma' ? '🤝' : e.type === 'personal' ? '📝' : '🌱';
       const link = e.jobId ? `job-detail.html?id=${e.jobId}` : '#';
-      html += `<a href="${link}" class="card mb-3" style="text-decoration:none;color:inherit;cursor:${e.jobId ? 'pointer' : 'default'}">
-        <div class="card-body flex items-center gap-3"><div style="font-size:1.5rem">${icon}</div><div><div class="font-semibold">${Utils.escapeHtml(e.title)}</div><div class="text-sm text-muted">${e.location || ''}</div></div></div>
-      </a>`;
+      const canEdit = !e.jobId && e.eventId && Auth.currentUser;
+      html += `<div class="card mb-3" style="text-decoration:none;color:inherit">
+        <div class="card-body flex items-center gap-3">
+          <div style="font-size:1.5rem">${icon}</div>
+          <div style="flex:1"><div class="font-semibold">${Utils.escapeHtml(e.title)}</div><div class="text-sm text-muted">${e.location || ''}</div></div>
+          ${canEdit ? `
+            <div class="flex gap-2">
+              <button class="btn btn-outline btn-sm" onclick="CalendarView.editEvent('${e.eventId}')">✏️ Edit</button>
+              <button class="btn btn-outline btn-sm" onclick="CalendarView.deleteEvent('${e.eventId}')">🗑️</button>
+            </div>` : ''}
+        </div>
+      </div>`;
     });
     html += `<div class="mt-3"><button class="btn btn-primary btn-sm" onclick="CalendarView.showAddEvent('${dateStr}')">+ Add Event on This Day</button></div>`;
     Utils.modal('Events on this day', html);
   },
 
-  showAddEvent(prefillDate) {
+  showAddEvent(prefillDate, eventId = null) {
     const user = Auth.currentUser;
     if (!user) { Utils.toast('Please log in to add events', 'warning'); return; }
-    const today = prefillDate || this.currentDate.toISOString().split('T')[0];
+    const existing = eventId ? DB.getCalendarEventsByUser(user.id).find(e => e.id === eventId) : null;
+    const today = existing ? existing.date : (prefillDate || this.currentDate.toISOString().split('T')[0]);
     const html = `
-      <div class="form-group"><label class="form-label">Event Title *</label><input type="text" class="form-input" id="calEventTitle" placeholder="e.g., Team meeting, Farm visit"></div>
+      <div class="form-group"><label class="form-label">Event Title *</label><input type="text" class="form-input" id="calEventTitle" placeholder="e.g., Team meeting, Farm visit" value="${Utils.escapeHtml(existing?.title || '')}"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Date *</label><input type="date" class="form-input" id="calEventDate" value="${today}"></div>
-        <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="calEventTime" value="09:00"></div>
+        <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="calEventTime" value="${existing?.time || '09:00'}"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="calEventType"><option value="personal">📝 Personal</option><option value="reminder">⏰ Reminder</option><option value="meeting">🤝 Meeting</option></select></div>
-        <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="calEventLocation" placeholder="Optional"></div>
+        <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="calEventType"><option value="personal" ${existing?.type === 'personal' || !existing ? 'selected' : ''}>📝 Personal</option><option value="reminder" ${existing?.type === 'reminder' ? 'selected' : ''}>⏰ Reminder</option><option value="meeting" ${existing?.type === 'meeting' ? 'selected' : ''}>🤝 Meeting</option></select></div>
+        <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="calEventLocation" placeholder="Optional" value="${Utils.escapeHtml(existing?.location || '')}"></div>
       </div>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="calEventNotes" rows="2" placeholder="Optional notes"></textarea></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-ghost" onclick="document.querySelector('.modal-backdrop.active')?.classList.remove('active')">Cancel</button><button class="btn btn-primary" onclick="CalendarView.saveEvent()">Save Event</button></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="calEventNotes" rows="2" placeholder="Optional notes">${Utils.escapeHtml(existing?.notes || '')}</textarea></div>
     `;
-    Utils.modal('Add Calendar Event', html);
+    const mid = Utils.modal(existing ? 'Edit Calendar Event' : 'Add Calendar Event', html, 'calEventModal');
+    const footer = document.querySelector('#' + mid + ' .modal-footer');
+    if (footer) footer.innerHTML = `<button class="btn btn-ghost" onclick="Utils.hideModal('${mid}')">Cancel</button><button class="btn btn-primary" onclick="CalendarView.saveEvent(${eventId ? `'${eventId}'` : 'null'}, '${mid}')">${existing ? 'Save Changes' : 'Save Event'}</button>`;
   },
 
-  saveEvent() {
+  editEvent(eventId) {
+    this.showAddEvent(null, eventId);
+  },
+
+  deleteEvent(eventId) {
+    const user = Auth.currentUser;
+    if (!user) return;
+    if (!confirm('Delete this event?')) return;
+    DB.deleteCalendarEvent(eventId);
+    Utils.toast('Event deleted');
+    this.render(); this.renderSidebar();
+  },
+
+  saveEvent(eventId = null, mid = null) {
     const user = Auth.currentUser;
     const title = document.getElementById('calEventTitle')?.value?.trim();
     const date = document.getElementById('calEventDate')?.value;
@@ -293,9 +323,14 @@ const CalendarView = {
     const location = document.getElementById('calEventLocation')?.value?.trim();
     const notes = document.getElementById('calEventNotes')?.value?.trim();
     if (!title || !date) { Utils.toast('Please fill in title and date', 'error'); return; }
-    DB.addCalendarEvent({ userId: user.id, title, date, time: time || '09:00', type: type || 'personal', location: location || '', notes: notes || '' });
-    document.querySelector('.modal-backdrop.active')?.classList.remove('active');
-    Utils.toast('Event added to calendar!', 'success');
+    if (eventId) {
+      DB.updateCalendarEvent(eventId, { title, date, time: time || '09:00', type: type || 'personal', location: location || '', notes: notes || '' });
+      Utils.toast('Event updated!', 'success');
+    } else {
+      DB.addCalendarEvent({ userId: user.id, title, date, time: time || '09:00', type: type || 'personal', location: location || '', notes: notes || '' });
+      Utils.toast('Event added to calendar!', 'success');
+    }
+    if (mid) Utils.hideModal(mid); else document.querySelector('.modal-backdrop.active')?.classList.remove('active');
     this.render(); this.renderSidebar();
   }
 };

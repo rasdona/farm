@@ -23,8 +23,13 @@
         <div class="empty-state" style="flex:1;padding:20px"><p class="text-muted">Select a conversation to start chatting</p></div>
       </div>
       <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-media-preview" id="chatMediaPreview" style="display:none">
+        <div id="chatMediaHolder"></div>
+        <span class="chat-media-name" id="chatMediaName"></span>
+        <button class="btn btn-ghost btn-sm" onclick="Chat.removeMedia()" style="margin-left:auto">✕ Remove</button>
+      </div>
       <div class="chat-input-area">
-        <button class="chat-attach-btn" title="Attach file">📎</button>
+        <label class="chat-attach-btn" title="Attach photo or video" style="cursor:pointer">📎<input type="file" accept="image/*,video/*" style="display:none" onchange="Chat.attachMedia(this)"></label>
         <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){Chat.sendMessage(this.value);event.preventDefault();}">
         <button class="chat-send-btn" onclick="Chat.sendMessage(document.getElementById('chatInput').value)">➤</button>
       </div>

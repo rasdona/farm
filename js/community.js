@@ -28,9 +28,9 @@ const Community = {
         <div class="form-group">
           <textarea class="form-textarea" id="postContent" rows="4" placeholder="Share a farming tip, ask a question, or celebrate a success..."></textarea>
         </div>
-        <div id="postImagePreview" style="display:none;margin-bottom:12px;position:relative">
-          <img src="" style="max-width:100%;max-height:200px;border-radius:var(--radius);object-fit:cover">
-          <button class="btn btn-ghost btn-sm" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center" onclick="Community.removeImage()">✕</button>
+        <div id="postMediaPreview" style="display:none;margin-bottom:12px;position:relative">
+          <div id="postMediaHolder"></div>
+          <button class="btn btn-ghost btn-sm" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center" onclick="Community.removeMedia()">✕</button>
         </div>
         <div class="flex justify-between items-center flex-wrap gap-2">
           <div class="flex gap-2 items-center flex-wrap">
@@ -41,8 +41,8 @@ const Community = {
               <option value="celebration">🎉 Celebration</option>
             </select>
             <input class="form-input" id="postTags" placeholder="Tags (comma separated)" style="width:250px">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Add photo">
-              📷 <input type="file" accept="image/*" style="display:none" onchange="Community.previewImage(this)">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Add photo or video">
+              📷 <input type="file" accept="image/*,video/*" style="display:none" onchange="Community.previewMedia(this)">
             </label>
           </div>
           <button class="btn btn-primary" onclick="Community.createPost()">Post</button>
@@ -51,23 +51,28 @@ const Community = {
     `;
   },
 
-  _pendingImage: null,
+  _pendingMedia: null,
 
-  previewImage(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this._pendingImage = e.target.result;
-        const preview = document.getElementById('postImagePreview');
-        if (preview) { preview.style.display = ''; preview.querySelector('img').src = e.target.result; }
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
+  previewMedia(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this._pendingMedia = { type: isVideo ? 'video' : 'image', data: e.target.result };
+      const preview = document.getElementById('postMediaPreview');
+      if (!preview) return;
+      preview.style.display = '';
+      const holder = document.getElementById('postMediaHolder');
+      if (isVideo) holder.innerHTML = `<video src="${e.target.result}" controls style="max-width:100%;max-height:220px;border-radius:var(--radius);display:block"></video>`;
+      else holder.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:220px;border-radius:var(--radius);object-fit:cover;display:block">`;
+    };
+    reader.readAsDataURL(file);
   },
 
-  removeImage() {
-    this._pendingImage = null;
-    const preview = document.getElementById('postImagePreview');
+  removeMedia() {
+    this._pendingMedia = null;
+    const preview = document.getElementById('postMediaPreview');
     if (preview) preview.style.display = 'none';
   },
 
@@ -99,7 +104,10 @@ const Community = {
             ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')" aria-label="Delete post">🗑️</button>` : ''}
           </div>
           ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
-          ${p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.image}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : ''}
+          ${p.media ? (p.mediaType === 'video'
+            ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><video src="${p.media}" controls style="width:100%;max-height:300px;display:block" alt="Post video"></video></div>`
+            : `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.media}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post media"></div>`)
+            : (p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.image}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : '')}
           <div class="post-content">${Utils.escapeHtml(p.content)}</div>
           ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
           <div class="post-actions">
@@ -144,25 +152,33 @@ const Community = {
     const type = document.getElementById('postType')?.value || 'tip';
     const tags = document.getElementById('postTags')?.value.split(',').map(t => t.trim()).filter(Boolean);
 
-    const savePost = (imageUrl) => {
+    const savePost = (mediaUrl) => {
       const postData = { userId: Auth.currentUser.id, type, title, content, tags };
-      if (imageUrl) postData.image = imageUrl;
+      if (mediaUrl) {
+        if (this._pendingMedia && this._pendingMedia.type === 'video') {
+          postData.mediaType = 'video';
+          postData.media = mediaUrl;
+        } else {
+          postData.image = mediaUrl;
+        }
+      }
       DB.addCommunityPost(postData);
       Utils.toast('Post published!');
       document.getElementById('postContent').value = '';
       document.getElementById('postTitle').value = '';
       document.getElementById('postTags').value = '';
-      this._pendingImage = null;
-      const preview = document.getElementById('postImagePreview');
+      this._pendingMedia = null;
+      const preview = document.getElementById('postMediaPreview');
       if (preview) preview.style.display = 'none';
       this.renderPosts();
     };
 
-    if (this._pendingImage && typeof SupabaseAuth !== 'undefined' && SupabaseAuth._client) {
-      const dataUrl = this._pendingImage;
+    if (this._pendingMedia && typeof SupabaseAuth !== 'undefined' && SupabaseAuth._client) {
+      const dataUrl = this._pendingMedia.data;
       fetch(dataUrl).then(r => r.blob()).then(blob => {
         const ext = blob.type.split('/')[1] || 'jpg';
-        const path = `community/${Auth.currentUser.id}/${Date.now()}.${ext}`;
+        const prefix = this._pendingMedia.type === 'video' ? 'videos' : 'community';
+        const path = `${prefix}/${Auth.currentUser.id}/${Date.now()}.${ext}`;
         SupabaseAuth._client.storage.from('avatars').upload(path, blob, { contentType: blob.type }).then(({ data, error }) => {
           if (error) { savePost(''); return; }
           const url = SupabaseAuth._client.storage.from('avatars').getPublicUrl(path).data?.publicUrl;
@@ -170,7 +186,7 @@ const Community = {
         }).catch(() => savePost(''));
       }).catch(() => savePost(''));
     } else {
-      savePost(this._pendingImage || '');
+      savePost(this._pendingMedia ? this._pendingMedia.data : '');
     }
   },
 

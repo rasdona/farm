@@ -771,6 +771,8 @@ tr:hover td { background: var(--bg-alt); }
 .weather-day-icon { font-size: 1.4rem; }
 .weather-day-temp { font-size: 0.85rem; font-weight: 700; color: var(--text); }
 .weather-day-rain { font-size: 0.68rem; color: var(--text-tertiary); }
+.weather-alert { margin: 14px 20px 0; padding: 10px 14px; border-radius: var(--radius); background: #fef2f2; border: 1px solid #fecaca; }
+.weather-alert-item { font-size: 0.8rem; color: #b91c1c; font-weight: 600; padding: 2px 0; }
 
 /* ── Availability Badge ────────────────────────────────── */
 .availability-badge { display: inline-flex; align-items: center; gap: 4px; }

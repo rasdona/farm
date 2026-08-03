@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   ward TEXT,
   gender TEXT,
   dob TEXT,
+  bio TEXT,
   citizenship_number TEXT,
   preferred_language TEXT DEFAULT 'ne',
   verified BOOLEAN DEFAULT false,
@@ -68,3 +69,6 @@ CREATE TRIGGER on_auth_user_created
 -- 6. Create index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_mobile ON public.profiles(mobile_number);
+
+-- 7. Idempotent column additions for already-deployed databases
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bio TEXT;

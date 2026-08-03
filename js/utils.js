@@ -97,6 +97,25 @@ const Utils = {
     if (modal) { modal.classList.remove('active'); document.body.style.overflow = ''; }
   },
 
+  modal(title, bodyHtml, id = null) {
+    const mid = id || 'dynamicModal' + Date.now();
+    const existing = document.getElementById(mid);
+    if (existing) existing.remove();
+    const backdrop = document.createElement('div');
+    backdrop.id = mid;
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal" style="max-width:550px">
+        <div class="modal-header"><h3>${title}</h3><span class="modal-close" onclick="Utils.hideModal('${mid}')">×</span></div>
+        <div class="modal-body">${bodyHtml}</div>
+        <div class="modal-footer"></div>
+      </div>`;
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) Utils.hideModal(mid); });
+    document.body.appendChild(backdrop);
+    this.showModal(mid);
+    return mid;
+  },
+
   getParam(name) {
     return new URLSearchParams(window.location.search).get(name);
   },
