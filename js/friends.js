@@ -63,7 +63,7 @@ const Friends = {
     if (action === 'accept') {
       DB.acceptFriendRequest(me.id, userId);
       const u = DB.getUserById(userId);
-      DB.addNotification({ userId, type: 'friend', title: 'Friend request accepted', body: `${me.name} accepted your friend request.`, href: 'friends.html' });
+      DB.addNotification({ userId, type: 'friend', text: `${me.name} accepted your friend request.`, link: 'friends.html' });
       Utils.toast(`You and ${u ? u.name : 'this user'} are now friends!`, 'success');
     } else {
       DB.rejectFriendRequest(me.id, userId);

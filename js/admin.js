@@ -58,6 +58,7 @@ const Admin = {
   renderOverview() {
     const stats = DB.getStats();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Admin Dashboard</h1></div>
       <div class="quick-stats">
@@ -106,6 +107,7 @@ const Admin = {
   renderUsers() {
     const users = DB.getUsers();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>User Management</h1><div class="flex gap-2"><select class="form-select" id="adminUserFilter" onchange="Admin.filterUsers()" style="width:auto"><option value="">All Roles</option><option value="farmer">Farmers</option><option value="worker">Workers</option><option value="admin">Admins</option></select></div></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -132,7 +134,8 @@ const Admin = {
     const role = document.getElementById('adminUserFilter')?.value;
     let users = DB.getUsers();
     if (role) users = users.filter(u => u.role === role);
-    document.getElementById('adminUsersTable').innerHTML = this.renderUserRows(users);
+    const tbody = document.getElementById('adminUsersTable');
+    if (tbody) tbody.innerHTML = this.renderUserRows(users);
   },
 
   viewUser(id) {
@@ -169,6 +172,7 @@ const Admin = {
   renderJobs() {
     const jobs = DB.getJobs();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Job Management</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -200,6 +204,7 @@ const Admin = {
   renderApplications() {
     const apps = DB.getApplications();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Applications</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -222,11 +227,12 @@ const Admin = {
   renderAuditLogs() {
     const logs = DB.getAuditLogs().reverse();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Audit Logs</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
         <div class="admin-log">
-          ${logs.map(l => `<div class="log-entry"><span class="log-time">[${new Date(l.createdAt).toLocaleString()}]</span> <span class="log-level ${l.action.includes('suspend') ? 'error' : l.action.includes('verify') ? 'info' : 'warn'}">[${l.action.toUpperCase()}]</span> ${l.details}</div>`).join('')}
+          ${logs.map(l => `<div class="log-entry"><span class="log-time">[${new Date(l.createdAt).toLocaleString()}]</span> <span class="log-level ${(l.action || '').includes('suspend') ? 'error' : (l.action || '').includes('verify') ? 'info' : 'warn'}">[${(l.action || 'LOG').toUpperCase()}]</span> ${l.details}</div>`).join('')}
         </div>
       </div></div>
     `;
@@ -234,6 +240,7 @@ const Admin = {
 
   renderAnnouncements() {
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Announcements</h1><button class="btn btn-primary" onclick="Admin.showAnnouncementModal()">+ New Announcement</button></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -272,6 +279,7 @@ const Admin = {
   renderCategories() {
     const cats = DB.getCategories();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Categories</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -285,6 +293,7 @@ const Admin = {
   renderFAQs() {
     const faqs = DB.getFaqs();
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>FAQs</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
@@ -300,6 +309,7 @@ const Admin = {
 
   renderReports() {
     const content = document.getElementById('adminContent');
+    if (!content) return;
     content.innerHTML = `
       <div class="dashboard-header"><h1>Reports & Complaints</h1></div>
       <div class="empty-state" style="padding:60px"><div class="icon">📭</div><h3>No Reports Yet</h3><p>User reports and complaints will appear here.</p></div>
@@ -308,24 +318,60 @@ const Admin = {
 
   renderSettings() {
     const content = document.getElementById('adminContent');
+    if (!content) return;
+    const settings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+    const platformName = localStorage.getItem('platformName') || 'Ekrishi Nepal';
     content.innerHTML = `
       <div class="dashboard-header"><h1>System Settings</h1></div>
       <div class="dashboard-card"><div class="dashboard-card-body">
         <div class="settings-group">
           <h4 class="mb-4">Platform Settings</h4>
-          <div class="settings-row"><div><div class="settings-row-label">Platform Name</div><div class="settings-row-desc">Ekrishi Nepal</div></div><button class="btn btn-outline btn-sm">Edit</button></div>
-          <div class="settings-row"><div><div class="settings-row-label">Registration</div><div class="settings-row-desc">Allow new user registration</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-          <div class="settings-row"><div><div class="settings-row-label">Email Verification</div><div class="settings-row-desc">Require email verification for new accounts</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
-          <div class="settings-row"><div><div class="settings-row-label">Job Auto-Approval</div><div class="settings-row-desc">Automatically approve new job postings</div></div><label class="toggle"><input type="checkbox" checked><span class="slider"></span></label></div>
+          <div class="settings-row"><div><div class="settings-row-label">Platform Name</div><div class="settings-row-desc">${platformName}</div></div><button class="btn btn-outline btn-sm" onclick="Admin.editPlatformName()">Edit</button></div>
+          <div class="settings-row"><div><div class="settings-row-label">Registration</div><div class="settings-row-desc">Allow new user registration</div></div><label class="toggle"><input type="checkbox" ${settings.allowRegistration !== false ? 'checked' : ''} onclick="Admin.toggleSetting('allowRegistration',this)"><span class="slider"></span></label></div>
+          <div class="settings-row"><div><div class="settings-row-label">Email Verification</div><div class="settings-row-desc">Require email verification for new accounts</div></div><label class="toggle"><input type="checkbox" ${settings.requireEmailVerification !== false ? 'checked' : ''} onclick="Admin.toggleSetting('requireEmailVerification',this)"><span class="slider"></span></label></div>
+          <div class="settings-row"><div><div class="settings-row-label">Job Auto-Approval</div><div class="settings-row-desc">Automatically approve new job postings</div></div><label class="toggle"><input type="checkbox" ${settings.jobAutoApproval !== false ? 'checked' : ''} onclick="Admin.toggleSetting('jobAutoApproval',this)"><span class="slider"></span></label></div>
         </div>
         <div class="settings-group mt-4">
           <h4 class="mb-4">Database</h4>
           <div class="flex gap-2">
             <button class="btn btn-outline" onclick="if(confirm('Reset all data? This cannot be undone.')){DB.reset();location.reload()}">🔄 Reset Database</button>
-            <button class="btn btn-outline" onclick="Utils.toast('Backup downloaded','success')">📥 Export Data</button>
+            <button class="btn btn-outline" onclick="Admin.exportData()">📥 Export Data</button>
           </div>
         </div>
       </div></div>
     `;
+  },
+
+  toggleSetting(name, el) {
+    const settings = JSON.parse(localStorage.getItem('adminSettings') || '{}');
+    settings[name] = !!el.checked;
+    localStorage.setItem('adminSettings', JSON.stringify(settings));
+    const label = name.replace(/([A-Z])/g, ' $1').toLowerCase();
+    Utils.toast(`${label.charAt(0).toUpperCase() + label.slice(1)} ${el.checked ? 'enabled' : 'disabled'}`, 'success');
+  },
+
+  editPlatformName() {
+    const current = localStorage.getItem('platformName') || 'Ekrishi Nepal';
+    const name = prompt('Platform Name:', current);
+    if (name && name.trim()) {
+      localStorage.setItem('platformName', name.trim());
+      Utils.toast('Platform name updated', 'success');
+      this.renderSettings();
+    }
+  },
+
+  exportData() {
+    const data = {
+      users: DB.getUsers(), jobs: DB.getJobs(), applications: DB.getApplications(),
+      notifications: DB._get('notifications') || [], reviews: DB._get('reviews') || [],
+      createdAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `ekrishi-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    Utils.toast('Backup downloaded', 'success');
   }
 };

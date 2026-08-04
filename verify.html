@@ -104,17 +104,17 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
       <div class="method-tabs" id="methodTabs">
         <button class="method-tab active" onclick="selectMethod('mobile')" id="tabMobile">
           <span class="icon">📱</span>
-          <span data-en="Mobile OTP" data-np="मोबाइल OTP">Mobile OTP</span>
+          <span data-en="Mobile OTP" data-ne="मोबाइल OTP">Mobile OTP</span>
         </button>
         <button class="method-tab" onclick="selectMethod('email')" id="tabEmail">
           <span class="icon">📧</span>
-          <span data-en="Email OTP" data-np="इमेल OTP">Email OTP</span>
+          <span data-en="Email OTP" data-ne="इमेल OTP">Email OTP</span>
         </button>
       </div>
 
       <!-- OTP input -->
       <div id="otpSection">
-        <div class="identifier-label" id="identifierLabel" data-en="Enter the code sent to" data-np="पठाइएको कोड प्रविष्ट गर्नुहोस्">Enter the code sent to</div>
+        <div class="identifier-label" id="identifierLabel" data-en="Enter the code sent to" data-ne="पठाइएको कोड प्रविष्ट गर्नुहोस्">Enter the code sent to</div>
         <div class="identifier-display" id="identifierDisplay">+977 98XX XXXXX</div>
 
         <div class="otp-inputs" id="otpInputs">
@@ -131,12 +131,12 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
             <span id="timerCount">05:00</span>
           </div>
           <button class="resend-btn" id="resendBtn" onclick="resendOTP()" disabled>
-            <span data-en="Resend Code" data-np="कोड पुन: पठाउनुहोस्">Resend Code</span>
+            <span data-en="Resend Code" data-ne="कोड पुन: पठाउनुहोस्">Resend Code</span>
           </button>
         </div>
 
         <button class="verify-btn" id="verifyBtn" onclick="verifyOTP()" disabled>
-          <span class="btn-text" data-en="Verify" data-np="प्रमाणित गर्नुहोस्">Verify</span>
+          <span class="btn-text" data-en="Verify" data-ne="प्रमाणित गर्नुहोस्">Verify</span>
           <span class="spinner"></span>
         </button>
 
@@ -146,23 +146,23 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
       <!-- Registration form (for initial setup) -->
       <div id="registerSection" style="display:none">
         <div class="input-group">
-          <label data-en="Full Name" data-np="पूरा नाम">Full Name</label>
+          <label data-en="Full Name" data-ne="पूरा नाम">Full Name</label>
           <input type="text" id="regName" placeholder="Ram Bahadur Thapa">
         </div>
         <div class="input-group">
-          <label data-en="Mobile Number" data-np="मोबाइल नम्बर">Mobile Number</label>
+          <label data-en="Mobile Number" data-ne="मोबाइल नम्बर">Mobile Number</label>
           <input type="tel" id="regMobile" placeholder="+977 98XXXXXXXX">
         </div>
         <div class="input-group">
-          <label data-en="Email (Optional)" data-np="इमेल (वैकल्पिक)">Email (Optional)</label>
+          <label data-en="Email (Optional)" data-ne="इमेल (वैकल्पिक)">Email (Optional)</label>
           <input type="email" id="regEmail" placeholder="ram@example.com">
         </div>
         <div class="input-group">
-          <label data-en="Password" data-np="पासवर्ड">Password</label>
+          <label data-en="Password" data-ne="पासवर्ड">Password</label>
           <input type="password" id="regPassword" placeholder="Min 8 characters">
         </div>
         <button class="verify-btn" onclick="registerUser()">
-          <span class="btn-text" data-en="Create Account" data-np="खाता बनाउनुहोस्">Create Account</span>
+          <span class="btn-text" data-en="Create Account" data-ne="खाता बनाउनुहोस्">Create Account</span>
           <span class="spinner"></span>
         </button>
         <div class="message" id="regMsgBox"></div>
@@ -181,7 +181,7 @@ body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg)
     <div class="success-icon">✅</div>
     <h2 id="successTitle">Verified!</h2>
     <p id="successMsg">Your account has been verified successfully.</p>
-    <button onclick="goHome()" data-en="Continue" data-np="जारी राख्नुहोस्">Continue</button>
+    <button onclick="goHome()" data-en="Continue" data-ne="जारी राख्नुहोस्">Continue</button>
   </div>
 </div>
 
@@ -202,7 +202,7 @@ let otpTimer = null;
 let timerSeconds = 300;
 let resendCooldown = 60;
 let resendTimer = null;
-let lang = localStorage.getItem('kc_lang') || 'en';
+let lang = localStorage.getItem('agri_lang') || 'en';
 let otpId = null;
 
 // ============================================
@@ -242,9 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // LANGUAGE
 // ============================================
 function toggleLang() {
-  lang = lang === 'en' ? 'np' : 'en';
+  lang = lang === 'en' ? 'ne' : 'en';
   applyLang(lang);
-  localStorage.setItem('kc_lang', lang);
+  localStorage.setItem('agri_lang', lang);
 }
 
 function applyLang(l) {
@@ -532,7 +532,7 @@ function startResendCooldown(seconds) {
     if (resendCooldown <= 0) {
       clearInterval(resendTimer);
       btn.disabled = false;
-      btn.innerHTML = `<span data-en="Resend Code" data-np="कोड पुन: पठाउनुहोस्">Resend Code</span>`;
+      btn.innerHTML = `<span data-en="Resend Code" data-ne="कोड पुन: पठाउनुहोस्">Resend Code</span>`;
     }
   }, 1000);
 }
@@ -604,7 +604,7 @@ function showSuccess(title, msg) {
 }
 
 function goHome() {
-  window.location.href = '/';
+  window.location.href = 'index.html';
 }
 </script>
 </body>

@@ -3,7 +3,7 @@ const Auth = {
 
   init() {
     // Check Supabase session first
-    if (SupabaseAuth && SupabaseAuth.client) {
+    if (typeof SupabaseAuth !== 'undefined' && SupabaseAuth.client) {
       SupabaseAuth.getSession().then(({ data: { session } }) => {
         if (session && session.user) {
           const localUser = DB.getUserByEmail(session.user.email);
@@ -41,7 +41,7 @@ const Auth = {
     if (typeof SupabaseSync !== 'undefined' && SupabaseSync.disconnectRealtime) {
       SupabaseSync.disconnectRealtime();
     }
-    if (SupabaseAuth && SupabaseAuth.client) {
+    if (typeof SupabaseAuth !== 'undefined' && SupabaseAuth.client) {
       SupabaseAuth.signOut().catch(() => {});
     }
     window.location.href = 'index.html';

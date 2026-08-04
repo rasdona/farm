@@ -98,8 +98,8 @@
 
       adminUser = result.user;
       admin2faOtp = String(Math.floor(100000 + Math.random() * 900000));
-      console.log(`[Admin 2FA] 2FA code generated for: ${result.user.phone}`);
-      showAdminSuccess(`2FA कोड ${result.user.phone} मा पठाइयो`);
+      console.log(`[Admin 2FA] 2FA code generated for: ${result.user.phone}: ${admin2faOtp}`);
+      showAdminSuccess(`2FA कोड ${result.user.phone} मा पठाइयो (डेमो कोड: ${admin2faOtp})`);
       document.getElementById('adminStep1').classList.remove('active');
       document.getElementById('adminStep2').classList.add('active');
       document.getElementById('adminTitle').textContent = 'दुई-कारक प्रमाणीकरण';

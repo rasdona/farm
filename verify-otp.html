@@ -33,8 +33,6 @@
             <input type="text" class="auth-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="3">
             <input type="text" class="auth-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="4">
             <input type="text" class="auth-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="5">
-            <input type="text" class="auth-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="6">
-            <input type="text" class="auth-otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" data-otp="7">
           </div>
 
           <button type="submit" class="auth-btn auth-btn-primary auth-btn-lg auth-btn-block auth-mt-4" id="otpVerifyBtn">
@@ -142,7 +140,7 @@
         });
         input.addEventListener('paste', function(e) {
           e.preventDefault();
-          const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 8);
+          const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 6);
           pasted.split('').forEach((char, j) => { if (inputs[j]) inputs[j].value = char; });
           if (pasted.length > 0) inputs[Math.min(pasted.length, inputs.length) - 1].focus();
           if (pasted.length >= 6) setTimeout(verifyOtp, 100);

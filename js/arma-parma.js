@@ -49,7 +49,6 @@ const ArmaParma = {
   renderArmaParmaCard(req) {
     const farmer = DB.getUserById(req.farmerId);
     const isApplied = Auth.currentUser && req.applicants?.includes(Auth.currentUser.id);
-    const creditInfo = farmer ? DB.getLaborCreditsByUser(farmer.id) : { balance: 0 };
     return `
       <div class="job-card arma-parma-card hover-lift" data-animate="fadeUp">
         <div class="job-card-image">
@@ -95,7 +94,6 @@ const ArmaParma = {
     if (!req) return '<div class="empty-state"><h3>Request not found</h3></div>';
     const farmer = DB.getUserById(req.farmerId);
     const isApplied = Auth.currentUser && req.applicants?.includes(Auth.currentUser.id);
-    const creditInfo = farmer ? DB.getLaborCreditsByUser(farmer.id) : { balance: 0 };
     const exchanges = farmer ? DB.getExchangesByUser(farmer.id) : [];
     const completedExchanges = exchanges.filter(e => e.status === 'completed').length;
 
@@ -201,7 +199,7 @@ const ArmaParma = {
             <div class="card">
               <div class="card-body">
                 <h4 class="mb-3">Smart Matches</h4>
-                ${this.getSmartMatches(req).length ? this.getSmartMatches(req).map(m => `
+                ${(() => { const matches = this.getSmartMatches(req); return matches.length ? matches.map(m => `
                   <div class="flex items-center gap-3 p-2 hover-lift" style="border-bottom:1px solid var(--border-light);cursor:pointer" onclick="window.location.href='worker-profile.html?id=${m.id}'">
                     ${Utils.avatarHTML(Utils.getUserPhoto(m), m.name, 'sm')}
                     <div class="flex-1">
@@ -209,7 +207,7 @@ const ArmaParma = {
                       <div class="text-xs text-muted">📍 ${m.district} | ⭐ ${DB.getAvgRating(m.id) || 'New'}</div>
                     </div>
                   </div>
-                `).join('') : '<p class="text-muted text-sm">No smart matches found nearby.</p>'}
+                `).join('') : '<p class="text-muted text-sm">No smart matches found nearby.</p>'; })()}
               </div>
             </div>
           </div>

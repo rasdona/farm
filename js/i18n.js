@@ -2,7 +2,10 @@ const I18N = {
   _lang: localStorage.getItem('agri_lang') || 'ne',
 
   get lang() { return this._lang; },
-  set lang(v) { this._lang = v; },
+  set lang(v) {
+    this._lang = v;
+    try { localStorage.setItem('agri_lang', v); } catch (e) {}
+  },
 
   t(en, ne) {
     return this._lang === 'ne' ? ne : en;

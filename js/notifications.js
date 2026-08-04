@@ -1,10 +1,10 @@
 const Notifications = {
-  render(containerId, userId) {
+  async render(containerId, userId) {
     const el = document.getElementById(containerId);
     if (!el) return;
     const notifs = DB.getNotifications(userId);
     const user = DB.getUserById(userId);
-    const systemNotifs = this._getSystemNotifications(user);
+    const systemNotifs = await this._getSystemNotifications(user);
     const allNotifs = [...systemNotifs, ...notifs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     if (!allNotifs.length) {
@@ -22,20 +22,25 @@ const Notifications = {
     `).join('');
   },
 
-  _getSystemNotifications(user) {
+  async _getSystemNotifications(user) {
     const sys = [];
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
     if (user && typeof Weather !== 'undefined') {
       const district = user.district || 'Kathmandu';
-      const weatherData = Weather.getWeather(district);
-      if (weatherData && weatherData.wmoCode >= 61 && weatherData.wmoCode <= 67) {
-        sys.push({ id: 'SYS-W', type: 'weather', text: `🌧️ Rain alert in ${district}: ${weatherData.condition}. Plan outdoor work accordingly.`, createdAt: today.toISOString(), read: false });
-      } else if (weatherData && weatherData.wmoCode >= 71 && weatherData.wmoCode <= 77) {
-        sys.push({ id: 'SYS-S', type: 'weather', text: `❄️ Snow alert in ${district}: ${weatherData.condition}. Travel may be affected.`, createdAt: today.toISOString(), read: false });
-      } else if (weatherData && weatherData.temperature >= 35) {
-        sys.push({ id: 'SYS-H', type: 'weather', text: `🌡️ Heat alert: ${weatherData.temperature}°C in ${district}. Stay hydrated and take breaks.`, createdAt: today.toISOString(), read: false });
+      try {
+        const weatherData = await Weather.getWeather(district);
+        const c = weatherData && weatherData.current;
+        if (c && c.code >= 61 && c.code <= 67) {
+          sys.push({ id: 'SYS-W', type: 'weather', text: `🌧️ Rain alert in ${district}: ${c.condition}. Plan outdoor work accordingly.`, createdAt: today.toISOString(), read: false });
+        } else if (c && c.code >= 71 && c.code <= 77) {
+          sys.push({ id: 'SYS-S', type: 'weather', text: `❄️ Snow alert in ${district}: ${c.condition}. Travel may be affected.`, createdAt: today.toISOString(), read: false });
+        } else if (c && c.temp >= 35) {
+          sys.push({ id: 'SYS-H', type: 'weather', text: `🌡️ Heat alert: ${c.temp}°C in ${district}. Stay hydrated and take breaks.`, createdAt: today.toISOString(), read: false });
+        }
+      } catch (e) {
+        console.warn('[Notifications] Weather check failed:', e.message);
       }
     }
 

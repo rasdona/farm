@@ -43,6 +43,7 @@ const DB = {
       this._set('workRequests', []);
       this._set('groups', []);
       this._set('friends', []);
+      this._set('products', []);
       this._set('initialized', true);
     }
   },
@@ -84,11 +85,11 @@ const DB = {
   getAvgRating(userId) { const revs = this.getReviews(userId); if (!revs.length) return 0; return (revs.reduce((s, r) => s + r.rating, 0) / revs.length).toFixed(1); },
   getSavedJobs(userId) { return (this._get('savedJobs') || []).filter(s => s.userId === userId); },
   saveJob(userId, jobId) { const s = this._get('savedJobs') || []; if (!s.find(x => x.userId === userId && x.jobId === jobId)) { s.push({ userId, jobId, createdAt: new Date().toISOString() }); this._set('savedJobs', s); } },
-  unsaveJob(userId, jobId) { this._set('savedJobs', this._get('savedJobs').filter(x => !(x.userId === userId && x.jobId === jobId))); },
+  unsaveJob(userId, jobId) { this._set('savedJobs', (this._get('savedJobs') || []).filter(x => !(x.userId === userId && x.jobId === jobId))); },
   isJobSaved(userId, jobId) { return (this._get('savedJobs') || []).some(x => x.userId === userId && x.jobId === jobId); },
   getSavedWorkers(userId) { return (this._get('savedWorkers') || []).filter(s => s.userId === userId); },
   saveWorker(userId, workerId) { const s = this._get('savedWorkers') || []; if (!s.find(x => x.userId === userId && x.workerId === workerId)) { s.push({ userId, workerId, createdAt: new Date().toISOString() }); this._set('savedWorkers', s); } },
-  unsaveWorker(userId, workerId) { this._set('savedWorkers', this._get('savedWorkers').filter(x => !(x.userId === userId && x.workerId === workerId))); },
+  unsaveWorker(userId, workerId) { this._set('savedWorkers', (this._get('savedWorkers') || []).filter(x => !(x.userId === userId && x.workerId === workerId))); },
   isWorkerSaved(userId, workerId) { return (this._get('savedWorkers') || []).some(x => x.userId === userId && x.workerId === workerId); },
 
   // ── Friends / Connections (Facebook-style) ────────────
@@ -536,8 +537,6 @@ const DB = {
   // ── Active Role Management ────────────────────────────
   setActiveRole(userId, role) {
     this.updateUser(userId, { activeRole: role });
-    const u = JSON.parse(localStorage.getItem('agri_currentUser'));
-    if (u && u.id === userId) { u.activeRole = role; localStorage.setItem('agri_currentUser', JSON.stringify(u)); }
   },
   getActiveRole(userId) {
     const user = this.getUserById(userId);
@@ -802,7 +801,7 @@ const DB = {
   },
 
   // ── Groups ────────────────────────────────────────────
-  getGroupByUser(userId) { return this.getGroups().filter(g => g.memberIds && g.memberIds.includes(userId)); },
+  getGroupByUser(userId) { return this.getGroups().filter(g => (g.memberIds || g.members) && (g.memberIds || g.members).includes(userId)); },
 
   // ── Weather (mock) ────────────────────────────────────
   getWeather(district) {

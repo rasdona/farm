@@ -23,7 +23,8 @@ const NearbyFarmers = {
         'Ilam': { 'Jhapa': 30, 'Panchthar': 20, 'Terhathum': 25, 'Sankhuwasabha': 80 }
       };
       const distMap = districtDistances[myDistrict] || {};
-      const distance = distMap[f.district] || Math.floor(Math.random() * 80) + 5;
+      const hash = (s) => { let h = 0; for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; } return Math.abs(h); };
+      const distance = distMap[f.district] || (hash((f.district || '') + f.id) % 75) + 5;
       const creditInfo = DB.getLaborCreditsByUser(f.id);
       const rating = DB.getAvgRating(f.id);
       const armaReqs = DB.getArmaParmaRequests().filter(r => r.farmerId === f.id);

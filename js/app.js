@@ -380,12 +380,12 @@ const App = {
   },
 
   getNotifIcon(type) {
-    const icons = { application: '📋', accepted: '✅', rejected: '❌', message: '💬', review: '⭐', welcome: '👋', completion: '🎉', verification: '🛡️' };
+    const icons = { application: '📋', accepted: '✅', rejected: '❌', message: '💬', review: '⭐', welcome: '👋', completion: '🎉', verification: '🛡️', friend: '👥', weather: '🌦️', pending: '📥', calendar: '📅', system: '🔔' };
     return icons[type] || '🔔';
   },
 
   getNotifIconClass(type) {
-    const cls = { application: 'blue', accepted: 'green', rejected: 'red', message: 'blue', review: 'amber', welcome: 'green', completion: 'green', verification: 'blue' };
+    const cls = { application: 'blue', accepted: 'green', rejected: 'red', message: 'blue', review: 'amber', welcome: 'green', completion: 'green', verification: 'blue', friend: 'blue', weather: 'amber', pending: 'amber', calendar: 'blue', system: 'green' };
     return cls[type] || 'green';
   },
 
@@ -472,9 +472,9 @@ const App = {
         <div class="footer-bottom">
           <span>${t('footer.copyright')}</span>
           <div class="footer-bottom-links">
-            <a href="#">${t('footer.privacy')}</a>
-            <a href="#">${t('footer.terms')}</a>
-            <a href="#">${t('footer.help')}</a>
+            <a href="privacy.html">${t('footer.privacy')}</a>
+            <a href="terms.html">${t('footer.terms')}</a>
+            <a href="contact.html">${t('footer.help')}</a>
           </div>
         </div>
       </div>
@@ -1105,14 +1105,14 @@ const App = {
     const otherName = other ? (other.name || 'User') : 'User';
     if (status === 'none') {
       DB.sendFriendRequest(me.id, otherId);
-      DB.addNotification({ userId: otherId, type: 'friend', title: 'Friend request', body: `${me.name} sent you a friend request.`, href: 'friends.html' });
+      DB.addNotification({ userId: otherId, type: 'friend', text: `${me.name} sent you a friend request.`, link: 'friends.html' });
       Utils.toast('Friend request sent!', 'success');
     } else if (status === 'pending_sent') {
       DB.removeFriend(me.id, otherId);
       Utils.toast('Request cancelled');
     } else if (status === 'pending_received') {
       DB.acceptFriendRequest(me.id, otherId);
-      DB.addNotification({ userId: otherId, type: 'friend', title: 'Friend request accepted', body: `${me.name} accepted your friend request.`, href: 'friends.html' });
+      DB.addNotification({ userId: otherId, type: 'friend', text: `${me.name} accepted your friend request.`, link: 'friends.html' });
       Utils.toast(`You and ${otherName} are now friends!`, 'success');
     } else if (status === 'friends') {
       DB.removeFriend(me.id, otherId);

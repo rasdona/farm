@@ -105,9 +105,9 @@ const Community = {
           </div>
           ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
           ${p.media ? (p.mediaType === 'video'
-            ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><video src="${p.media}" controls style="width:100%;max-height:300px;display:block" alt="Post video"></video></div>`
-            : `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.media}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post media"></div>`)
-            : (p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${p.image}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : '')}
+            ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><video src="${Utils.sanitizeMediaUrl(p.media)}" controls style="width:100%;max-height:300px;display:block" alt="Post video"></video></div>`
+            : `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.media)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post media"></div>`)
+            : (p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.image)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : '')}
           <div class="post-content">${Utils.escapeHtml(p.content)}</div>
           ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
           <div class="post-actions">

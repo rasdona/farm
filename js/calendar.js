@@ -142,15 +142,16 @@ const CalendarView = {
     const user = Auth.currentUser;
     const availability = user ? DB.getAvailabilityInfo(user.id) : null;
     const el = document.getElementById('monthEvents');
-    if (el && availability) {
-      const badge = typeof Weather !== 'undefined' ? Weather.getAvailabilityBadge(availability.status) : null;
-      if (badge) el.innerHTML = `<div class="availability-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:${badge.bg};border-radius:var(--radius);font-size:0.85rem"><span style="font-size:1.1rem">${badge.icon}</span><span style="font-weight:600;color:${badge.color}">${badge.text}</span></div>`;
-    }
     if (el) {
+      let html = '';
+      if (availability) {
+        const badge = typeof Weather !== 'undefined' ? Weather.getAvailabilityBadge(availability.status) : null;
+        if (badge) html += `<div class="availability-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px;background:${badge.bg};border-radius:var(--radius);font-size:0.85rem"><span style="font-size:1.1rem">${badge.icon}</span><span style="font-weight:600;color:${badge.color}">${badge.text}</span></div>`;
+      }
       if (filtered.length === 0) {
-        el.innerHTML = '<p class="text-muted text-center py-4">No events this month</p>';
+        html += '<p class="text-muted text-center py-4">No events this month</p>';
       } else {
-        el.innerHTML = filtered.sort((a, b) => new Date(a.date) - new Date(b.date)).map(e => {
+        html += filtered.sort((a, b) => new Date(a.date) - new Date(b.date)).map(e => {
           const d = new Date(e.date);
           const icon = e.type === 'paid' ? '💰' : e.type === 'arma' ? '🤝' : e.type === 'personal' ? '📝' : '🌱';
           const link = e.jobId ? `job-detail.html?id=${e.jobId}` : '#';
@@ -169,6 +170,7 @@ const CalendarView = {
           </div>`;
         }).join('');
       }
+      el.innerHTML = html;
     }
     const seasons = this.getSeasons(year, month);
     const sg = document.getElementById('seasonGuide');

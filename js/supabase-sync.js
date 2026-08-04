@@ -94,7 +94,7 @@ const SupabaseSync = {
         expectedWage: { daily: wp.daily_wage || 0, monthly: wp.monthly_wage || 0 },
         bio: wp.bio || '',
         availability: wp.is_available ? 'available' : 'unavailable',
-        roles: [u.active_role || 'farmer'],
+        roles: Array.isArray(u.roles) && u.roles.length ? u.roles : [u.active_role || 'farmer'],
       };
     });
 
@@ -859,7 +859,6 @@ SupabaseSync._retryIfDead = function(channel, status, onDead) {
   setTimeout(() => {
     const user = Auth?.currentUser;
     if (user && SupabaseAuth?.client) {
-      if (onDead) onDead();
       channel.subscribe((s2) => this._retryIfDead(channel, s2, onDead));
     }
   }, 5000);

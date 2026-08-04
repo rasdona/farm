@@ -396,6 +396,8 @@ function initDobSelects() {
   const yearSel = document.getElementById('regDobYear');
   if (!daySel || !monthSel || !yearSel) return;
 
+  monthSel.length = 1;
+  yearSel.length = 1;
   for (let m = 1; m <= 12; m++) {
     monthSel.add(new Option(String(m).padStart(2, '0'), String(m).padStart(2, '0')));
   }

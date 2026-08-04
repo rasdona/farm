@@ -52,7 +52,6 @@ const Weather = {
     'Mahottari': { lat: 26.6667, lon: 85.8333 },
     'Sarlahi': { lat: 26.8333, lon: 85.5000 },
     'Parsa': { lat: 27.0833, lon: 84.7500 },
-    'Chitwan': { lat: 27.5291, lon: 84.3542 },
     'Gulmi': { lat: 28.0833, lon: 83.4167 },
     'Arghakhanchi': { lat: 27.9167, lon: 83.2500 },
     'Pyuthan': { lat: 28.0833, lon: 82.9500 },

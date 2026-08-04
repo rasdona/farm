@@ -128,14 +128,14 @@ const Chat = {
 
   markRead() {
     if (!this.currentChat) return;
-    const msgs = DB.getMessages();
+    const msgs = DB.getMessagesByChat(this.currentChat.id);
     let changed = false;
     msgs.forEach(m => {
-      if (m.chatId === this.currentChat.id && m.senderId !== this.currentUserId && !m.read) {
+      if (m.senderId !== this.currentUserId && !m.read) {
         m.read = true; changed = true;
       }
     });
-    if (changed) DB.setMessages(msgs);
+    if (changed) DB.setMessages(DB.getMessages());
   },
 
   renderMessages() {
@@ -157,8 +157,8 @@ const Chat = {
         <div class="chat-message ${isSent ? 'sent' : 'received'}">
           ${!isSent ? Utils.avatarHTML(Utils.getUserPhoto(sender), sender?.name || '', 'sm') : ''}
           <div>
-            ${msg.image ? `<div class="chat-bubble chat-bubble-media"><img src="${msg.image}" alt="Photo" onclick="window.open('${msg.image}','_blank')"></div>` : ''}
-            ${msg.media ? `<div class="chat-bubble chat-bubble-media"><video src="${msg.media}" controls></video></div>` : ''}
+            ${msg.image ? `<div class="chat-bubble chat-bubble-media"><img src="${Utils.sanitizeMediaUrl(msg.image)}" alt="Photo" onclick="window.open('${Utils.sanitizeMediaUrl(msg.image)}','_blank')"></div>` : ''}
+            ${msg.media ? `<div class="chat-bubble chat-bubble-media"><video src="${Utils.sanitizeMediaUrl(msg.media)}" controls></video></div>` : ''}
             ${msg.text ? `<div class="chat-bubble">${Utils.escapeHtml(msg.text)}</div>` : ''}
             <div class="chat-message-time">${new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ${isSent ? '<span class="chat-message-read">' + (msg.read ? '✓✓' : '✓') + '</span>' : ''}</div>
           </div>

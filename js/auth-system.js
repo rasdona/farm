@@ -577,11 +577,6 @@ const AuthSystem = {
       return { success: false, message: 'You do not have this role. Add it first.' };
     }
     DB.updateUser(userId, { activeRole: role });
-    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
-    if (currentUser && currentUser.id === userId) {
-      currentUser.activeRole = role;
-      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
-    }
     return { success: true, activeRole: role };
   },
 
@@ -597,11 +592,6 @@ const AuthSystem = {
     if (user.roles.includes(role)) return { success: false, message: 'You already have this role' };
     user.roles.push(role);
     DB.updateUser(userId, { roles: user.roles });
-    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
-    if (currentUser && currentUser.id === userId) {
-      currentUser.roles = user.roles;
-      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
-    }
     return { success: true, roles: user.roles };
   },
 
@@ -613,12 +603,6 @@ const AuthSystem = {
     user.roles = user.roles.filter(r => r !== role);
     const newActive = (user.activeRole === role) ? user.roles[0] : user.activeRole;
     DB.updateUser(userId, { roles: user.roles, activeRole: newActive });
-    const currentUser = JSON.parse(localStorage.getItem('agri_currentUser'));
-    if (currentUser && currentUser.id === userId) {
-      currentUser.roles = user.roles;
-      currentUser.activeRole = newActive;
-      localStorage.setItem('agri_currentUser', JSON.stringify(currentUser));
-    }
     return { success: true, roles: user.roles, activeRole: newActive };
   },
 

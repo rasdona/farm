@@ -136,6 +136,13 @@ const Utils = {
     return div.innerHTML;
   },
 
+  sanitizeMediaUrl(url) {
+    if (!url) return '';
+    const str = String(url).trim();
+    if (/^(https?:|data:image\/|blob:)/i.test(str)) return this.escapeHtml(str);
+    return '';
+  },
+
   capitalize(str) {
     return str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : '';
   },
