@@ -27,6 +27,7 @@ const ArmaParma = {
     const req = DB.addArmaParmaRequest(data);
     DB.addAuditLog({ action: 'arma_parma_posted', userId: Auth.currentUser.id, details: `Arma Parma request posted: ${req.title}` });
     DB.addNotification({ userId: Auth.currentUser.id, type: 'welcome', text: `Your Arma Parma request "${req.title}" is now live!`, link: 'jobs.html?mode=arma-parma' });
+    DB.notifyMatchingWorkers({ ...req, workMode: 'arma-parma', isArmaParma: true }, `job-detail.html?id=${req.id}&type=arma-parma`);
     DB.addCalendarEvent({ userId: Auth.currentUser.id, type: 'arma-parma', title: req.title, date: req.date, endDate: req.date, color: '#16a34a', armaParmaId: req.id });
     return req;
   },

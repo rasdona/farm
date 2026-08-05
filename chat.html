@@ -13,7 +13,11 @@
         <h3>Messages <span id="chatSidebarBadge" class="badge-count" style="display:none;position:relative;top:-1px"></span></h3>
         <div class="chat-sidebar-search">
           <span class="icon">🔍</span>
-          <input type="text" id="chatSearch" placeholder="Search conversations..." oninput="Chat.renderContacts()">
+          <input type="text" id="chatSearch" placeholder="Search people or conversations..." oninput="Chat.renderContacts()">
+        </div>
+        <div class="chat-sidebar-tabs">
+          <button type="button" class="chat-tab active" data-tab="people" onclick="Chat.switchTab('people')">👥 People</button>
+          <button type="button" class="chat-tab" data-tab="chats" onclick="Chat.switchTab('chats')">💬 Chats</button>
         </div>
       </div>
       <div class="chat-contacts" id="chatContacts"></div>
@@ -22,7 +26,13 @@
       <div class="chat-header" id="chatHeader">
         <div class="empty-state" style="flex:1;padding:20px"><p class="text-muted">Select a conversation to start chatting</p></div>
       </div>
+      <div class="chat-searchbar" id="chatSearchBar">
+        <input type="text" id="chatMsgSearch" placeholder="🔍 Search messages..." oninput="Chat.searchMessages(this.value)">
+        <span class="chat-search-count" id="chatSearchCount"></span>
+      </div>
       <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-reply-preview" id="chatReplyPreview"></div>
+      <div class="chat-emoji-bar" id="chatEmojiBar"></div>
       <div class="chat-media-preview" id="chatMediaPreview" style="display:none">
         <div id="chatMediaHolder"></div>
         <span class="chat-media-name" id="chatMediaName"></span>

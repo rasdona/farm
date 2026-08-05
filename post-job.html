@@ -12,6 +12,14 @@
     .work-mode-btn .mode-icon{font-size:1.8rem}
     .work-mode-btn .mode-label{font-size:0.95rem}
     .work-mode-btn .mode-desc{font-size:0.75rem;opacity:0.7;font-weight:400}
+    .form-mode-toggle{display:flex;gap:12px;margin-bottom:24px}
+    .form-mode-btn{flex:1;padding:14px;text-align:center;cursor:pointer;transition:var(--transition);font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid var(--border);border-radius:var(--radius-md);background:var(--bg-alt)}
+    .form-mode-btn:hover{border-color:var(--primary);background:var(--primary-50)}
+    .form-mode-btn.active{background:var(--primary);color:white;border-color:var(--primary)}
+    .form-mode-btn .mode-icon{font-size:1.5rem}
+    .form-mode-btn .mode-label{font-size:0.9rem}
+    .form-mode-btn .mode-desc{font-size:0.7rem;opacity:0.7;font-weight:400}
+    .quick-tip{display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--text-tertiary);margin:4px 0 16px;padding:10px 14px;background:var(--primary-50);border-radius:var(--radius-md)}
     .arma-fields{display:none;border:2px solid var(--primary);border-radius:var(--radius-md);padding:20px;margin-bottom:24px;background:var(--primary-50)}
     .arma-fields.show{display:block}
     .paid-fields.hidden{display:none}
@@ -45,37 +53,66 @@
           <form id="postJobForm" onsubmit="handlePostJob(event)">
             <input type="hidden" id="workMode" value="paid">
 
-            <div class="form-group"><label class="form-label">Job Title <span class="required">*</span></label><input class="form-input" id="jobTitle" required placeholder="e.g. Rice Planting Workers Needed"></div>
-            <div class="form-group"><label class="form-label">Description <span class="required">*</span></label><textarea class="form-textarea" id="jobDesc" rows="5" required placeholder="Describe the job, requirements, working conditions..."></textarea></div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">Crop Type</label><select class="form-select" id="jobCrop"></select></div>
-              <div class="form-group"><label class="form-label">Farm Type</label><select class="form-select" id="jobFarmType"><option>Organic</option><option>Commercial</option><option>Small Scale</option><option>Specialty</option><option>Subsistence</option></select></div>
+            <div class="form-mode-toggle" id="formModeToggle">
+              <div class="form-mode-btn active" data-formmode="quick" onclick="toggleFormMode('quick')">
+                <span class="mode-icon">⚡</span>
+                <span class="mode-label">Quick Post</span>
+                <span class="mode-desc">Post in 30 seconds</span>
+              </div>
+              <div class="form-mode-btn" data-formmode="full" onclick="toggleFormMode('full')">
+                <span class="mode-icon">📋</span>
+                <span class="mode-label">Full Details</span>
+                <span class="mode-desc">Add everything</span>
+              </div>
             </div>
-            <div class="form-group"><label class="form-label">Required Skills (comma separated)</label><input class="form-input" id="jobSkills" placeholder="e.g. Rice Planting, Weeding, Harvesting"></div>
 
+            <div class="quick-tip">💡 Need more fields? Switch to <strong style="margin-left:4px">Full Details</strong> — everything you fill here is kept.</div>
+
+            <div class="form-group"><label class="form-label">Job Title <span class="required">*</span></label><input class="form-input" id="jobTitle" required placeholder="e.g. Rice Planting Workers Needed"></div>
+            <div class="form-group"><label class="form-label">Description <span class="required">*</span></label><textarea class="form-textarea" id="jobDesc" rows="3" required placeholder="What work needs to be done? e.g. Rice planting on 2 ropani land in Bhaktapur, 3 days"></textarea></div>
             <div class="form-row">
-              <div class="form-group"><label class="form-label">Work Type</label><select class="form-select" id="jobWorkType"><option value="">Select</option><option>Planting</option><option>Transplanting</option><option>Harvesting</option><option>Weeding</option><option>Irrigation</option><option>Plucking</option><option>Processing</option><option>Maintenance</option><option>Milking</option><option>Feeding</option><option>Composting</option><option>Land Preparation</option><option>Other</option></select></div>
+              <div class="form-group"><label class="form-label">District <span class="required">*</span></label><select class="form-select" id="jobDistrict" required></select></div>
               <div class="form-group"><label class="form-label">Workers Needed <span class="required">*</span></label><input type="number" class="form-input" id="jobWorkers" required min="1" value="1"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="jobStart"></div>
-              <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="jobEnd"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">Start Time</label><input type="time" class="form-input" id="jobStartTime" value="06:00"></div>
-              <div class="form-group"><label class="form-label">Expected Duration</label><input class="form-input" id="jobDuration" placeholder="e.g. 3 days, 1 week"></div>
-            </div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-label">Working Hours</label><input class="form-input" id="jobHours" placeholder="e.g. 6 AM - 4 PM"></div>
-              <div class="form-group"><label class="form-label">Working Days</label><input class="form-input" id="jobDays" placeholder="e.g. Mon-Sat"></div>
             </div>
 
             <div class="paid-fields" id="paidFields">
+              <div class="form-group"><label class="form-label">Daily Wage (NPR) <span class="required">*</span></label><input type="number" class="form-input" id="jobDailyWage" min="0" placeholder="e.g. 900"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobFood"><span>🍽️ Food Provided</span></label></div>
+              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobAccom"><span>🏠 Accommodation Provided</span></label></div>
+            </div>
+
+            <div class="full-fields" id="fullFields" style="display:none">
+              <hr class="divider">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Daily Wage (NPR) <span class="required">*</span></label><input type="number" class="form-input" id="jobDailyWage" min="0"></div>
-                <div class="form-group"><label class="form-label">Weekly Wage (NPR)</label><input type="number" class="form-input" id="jobWeeklyWage" min="0"></div>
+                <div class="form-group"><label class="form-label">Crop Type</label><select class="form-select" id="jobCrop"></select></div>
+                <div class="form-group"><label class="form-label">Farm Type</label><select class="form-select" id="jobFarmType"><option>Organic</option><option>Commercial</option><option>Small Scale</option><option>Specialty</option><option>Subsistence</option></select></div>
               </div>
-              <div class="form-group"><label class="form-label">Monthly Wage (NPR)</label><input type="number" class="form-input" id="jobMonthlyWage" min="0"></div>
+              <div class="form-group"><label class="form-label">Required Skills (comma separated)</label><input class="form-input" id="jobSkills" placeholder="e.g. Rice Planting, Weeding, Harvesting"></div>
+              <div class="form-group"><label class="form-label">Work Type</label><select class="form-select" id="jobWorkType"><option value="">Select</option><option>Planting</option><option>Transplanting</option><option>Harvesting</option><option>Weeding</option><option>Irrigation</option><option>Plucking</option><option>Processing</option><option>Maintenance</option><option>Milking</option><option>Feeding</option><option>Composting</option><option>Land Preparation</option><option>Other</option></select></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="jobStart"></div>
+                <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="jobEnd"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Start Time</label><input type="time" class="form-input" id="jobStartTime" value="06:00"></div>
+                <div class="form-group"><label class="form-label">Expected Duration</label><input class="form-input" id="jobDuration" placeholder="e.g. 3 days, 1 week"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Working Hours</label><input class="form-input" id="jobHours" placeholder="e.g. 6 AM - 4 PM"></div>
+                <div class="form-group"><label class="form-label">Working Days</label><input class="form-input" id="jobDays" placeholder="e.g. Mon-Sat"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Weekly Wage (NPR)</label><input type="number" class="form-input" id="jobWeeklyWage" min="0"></div>
+                <div class="form-group"><label class="form-label">Monthly Wage (NPR)</label><input type="number" class="form-input" id="jobMonthlyWage" min="0"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Municipality</label><select class="form-select" id="jobMunicipality"><option value="">Select Municipality</option></select></div>
+                <div class="form-group"><label class="form-label">Ward Number</label><input type="number" class="form-input" id="jobWard" min="1"></div>
+              </div>
+              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobUrgent"><span>🔥 Mark as Urgent Hiring</span></label></div>
+              <div class="form-group"><label class="form-label">Additional Notes</label><textarea class="form-textarea" id="jobNotes" rows="3" placeholder="Any additional information for workers..."></textarea></div>
             </div>
 
             <div class="arma-fields" id="armaFields">
@@ -98,18 +135,6 @@
               </div>
             </div>
 
-            <div class="form-row mt-4">
-              <div class="form-group"><label class="form-label">District <span class="required">*</span></label><select class="form-select" id="jobDistrict" required></select></div>
-              <div class="form-group"><label class="form-label">Municipality</label><select class="form-select" id="jobMunicipality"><option value="">Select Municipality</option></select></div>
-            </div>
-            <div class="form-group"><label class="form-label">Ward Number</label><input type="number" class="form-input" id="jobWard" min="1"></div>
-            <div class="form-row">
-              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobFood"><span>🍽️ Food Provided</span></label></div>
-              <div class="form-group"><label class="form-check"><input type="checkbox" id="jobAccom"><span>🏠 Accommodation Provided</span></label></div>
-            </div>
-            <div class="form-group"><label class="form-check"><input type="checkbox" id="jobUrgent"><span>🔥 Mark as Urgent Hiring</span></label></div>
-            <div class="form-group"><label class="form-label">Additional Notes</label><textarea class="form-textarea" id="jobNotes" rows="3" placeholder="Any additional information for workers..."></textarea></div>
-
             <div class="flex gap-4 mt-6">
               <button type="submit" class="btn btn-primary btn-lg" id="submitJobBtn">Post Job</button>
               <a href="dashboard-farmer.html" class="btn btn-outline btn-lg">Cancel</a>
@@ -128,6 +153,17 @@
     document.getElementById('jobCrop').innerHTML = Jobs.getCropOptions();
     document.getElementById('jobDistrict').innerHTML = Jobs.getDistrictOptions().replace('All Districts', 'Select District');
     document.getElementById('jobDistrict').addEventListener('change', updateJobMunicipalities);
+
+    if (Auth.currentUser && Auth.currentUser.district) {
+      document.getElementById('jobDistrict').value = Auth.currentUser.district;
+      updateJobMunicipalities();
+    }
+
+    function toggleFormMode(mode) {
+      document.querySelectorAll('.form-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.formmode === mode));
+      const full = document.getElementById('fullFields');
+      if (full) full.style.display = mode === 'full' ? 'block' : 'none';
+    }
 
     function updateJobMunicipalities() {
       const district = document.getElementById('jobDistrict').value;
@@ -166,6 +202,7 @@
           document.getElementById('jobEquipment').checked = editingJob.equipmentProvided;
           document.getElementById('jobReturnCommitment').value = editingJob.returnCommitment || '';
           document.getElementById('jobNotes').value = editingJob.additionalNotes || '';
+          toggleFormMode('full');
         }
       } else {
         editingJob = DB.getJobById(editId);
@@ -193,6 +230,7 @@
           document.getElementById('jobFood').checked = editingJob.foodProvided;
           document.getElementById('jobAccom').checked = editingJob.accommodationProvided;
           document.getElementById('jobUrgent').checked = editingJob.urgent;
+          toggleFormMode('full');
         }
       }
     }

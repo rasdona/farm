@@ -173,6 +173,8 @@ const Jobs = {
     if (!Auth.requireRole('farmer')) return null;
     data.farmerId = Auth.currentUser.id;
     const job = DB.addJob(data);
+    DB.addNotification({ userId: Auth.currentUser.id, type: 'welcome', text: `Your job "${job.title}" is now live!`, link: `job-detail.html?id=${job.id}` });
+    DB.notifyMatchingWorkers(job, `job-detail.html?id=${job.id}`);
     DB.addAuditLog({ action: 'job_posted', userId: Auth.currentUser.id, details: `Job posted: ${job.title}` });
     return job;
   },

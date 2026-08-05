@@ -3,10 +3,33 @@ const Chat = {
   currentUserId: null,
   _bound: false,
   _pendingMedia: null,
+  _replyTo: null,
+  _searchTerm: '',
+  EMOJI_QUICK: ['😀', '😂', '🥰', '😍', '🤔', '😢', '😡', '👍', '🙏', '👏', '🎉', '🌾'],
+  REACTION_EMOJIS: ['👍', '❤️', '😂', '😮', '😢', '🙏'],
+
+  _isMobile() {
+    return window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : false;
+  },
+
+  _fillEmojiBar() {
+    const bar = document.getElementById('chatEmojiBar');
+    if (!bar || bar.dataset.filled) return;
+    bar.dataset.filled = '1';
+    bar.innerHTML = this.EMOJI_QUICK.map(e => `<button type="button" onclick="Chat.insertEmoji('${e}')">${e}</button>`).join('');
+  },
+
+  insertEmoji(e) {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+    input.value += e;
+    input.focus();
+  },
 
   init(userId) {
     this.currentUserId = userId;
     this._bindEvents();
+    this._fillEmojiBar();
     this.renderContacts();
     const paramUser = Utils.getParam('user');
     if (paramUser) { this.openChat(paramUser); }
@@ -39,7 +62,16 @@ const Chat = {
     }
   },
 
+  currentTab: 'people',
+
+  switchTab(tab) {
+    this.currentTab = tab;
+    document.querySelectorAll('.chat-sidebar-tabs .chat-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    this.renderContacts();
+  },
+
   renderContacts() {
+    if (this.currentTab === 'people') { this.renderPeople(); return; }
     const list = document.getElementById('chatContacts');
     if (!list) return;
     const term = (document.getElementById('chatSearch')?.value || '').toLowerCase().trim();
@@ -86,6 +118,45 @@ const Chat = {
       if (totalUnread > 0) { sb.style.display = 'inline-block'; sb.textContent = totalUnread > 99 ? '99+' : totalUnread; }
       else sb.style.display = 'none';
     }
+  },
+
+  renderPeople() {
+    const list = document.getElementById('chatContacts');
+    if (!list) return;
+    const term = (document.getElementById('chatSearch')?.value || '').toLowerCase().trim();
+    let users = DB.getUsers().filter(u => u.id !== this.currentUserId && !u.suspended);
+    const connIds = DB.getConnectionIds ? DB.getConnectionIds(this.currentUserId) : [];
+    users.sort((a, b) => {
+      const aConn = connIds.includes(a.id) ? 1 : 0;
+      const bConn = connIds.includes(b.id) ? 1 : 0;
+      if (aConn !== bConn) return bConn - aConn;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    if (term) users = users.filter(u => (u.name || '').toLowerCase().includes(term) || (u.district || '').toLowerCase().includes(term));
+    if (!users.length) { list.innerHTML = '<div class="empty-state-premium" style="padding:40px 20px"><div class="icon">👥</div><h3>No people found</h3><p>Try a different name or district.</p></div>'; return; }
+    list.innerHTML = users.slice(0, 50).map(u => {
+      const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(u.id) : false;
+      const roles = u.roles || [u.role || 'farmer'];
+      const isWorker = roles.includes('worker');
+      const isSeller = roles.includes('seller') || roles.includes('equipment_owner') || roles.includes('transport_provider');
+      const roleLabel = isWorker ? '👷 Worker' : isSeller ? '🛒 Seller' : '👨‍🌾 Farmer';
+      const isConn = connIds.includes(u.id);
+      return `
+        <div class="chat-contact" data-chat-user="${u.id}" onclick="Chat.openChat('${u.id}')">
+          <div class="chat-contact-avatar">
+            ${Utils.avatarHTML(Utils.getUserPhoto(u), u.name, 'md')}
+            ${online ? '<div class="online"></div>' : ''}
+          </div>
+          <div class="chat-contact-info">
+            <div class="chat-contact-name">${Utils.escapeHtml(u.name)} ${isConn ? '<span class="chat-conn-badge" title="Connection">🤝</span>' : ''}</div>
+            <div class="chat-contact-preview">${roleLabel} · ${Utils.escapeHtml(u.district || 'Nepal')}</div>
+          </div>
+          <div class="chat-contact-meta">
+            <span class="chat-contact-time" title="Tap to message">💬</span>
+          </div>
+        </div>
+      `;
+    }).join('');
   },
 
   openChat(otherUserId) {

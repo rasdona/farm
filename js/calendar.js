@@ -84,7 +84,7 @@ const CalendarView = {
     document.getElementById('calendarMonthYear').textContent = `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} – ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
     const events = this._getEventsForRange(startOfWeek, endOfWeek);
     const today = new Date();
-    let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">';
+    let html = '<div class="cal-week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">';
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
@@ -112,10 +112,10 @@ const CalendarView = {
     const dayStart = new Date(d); dayStart.setHours(0,0,0,0);
     const dayEnd = new Date(d); dayEnd.setHours(23,59,59,999);
     const events = this._getEventsForRange(dayStart, dayEnd);
-    let html = '<div style="position:relative">';
+    let html = '<div class="cal-day-view" style="position:relative">';
     for (let h = 6; h < 22; h++) {
       const hourEvents = events.filter(e => { const ed = new Date(e.date); return ed.getHours() === h; });
-      html += `<div style="display:grid;grid-template-columns:60px 1fr;gap:8px;min-height:48px;border-bottom:1px solid var(--border-light);padding:4px 0">
+      html += `<div class="cal-day-row" style="display:grid;grid-template-columns:60px 1fr;gap:8px;min-height:48px;border-bottom:1px solid var(--border-light);padding:4px 0">
         <div style="font-size:0.75rem;color:var(--text-tertiary);text-align:right;padding-top:2px">${String(h).padStart(2,'0')}:00</div>
         <div>${hourEvents.map(e => {
           const icon = e.type === 'paid' ? '💰' : e.type === 'arma' ? '🤝' : e.type === 'personal' ? '📝' : '📋';

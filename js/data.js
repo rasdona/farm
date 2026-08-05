@@ -74,11 +74,45 @@ const DB = {
   setMessages(m) { this._set('messages', m); },
   getMessagesByChat(chatId) { return this.getMessages().filter(m => m.chatId === chatId).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); },
   addMessage(msg) { const m = this.getMessages(); msg.id = 'MSG' + Date.now(); msg.createdAt = new Date().toISOString(); msg.read = false; m.push(msg); this.setMessages(m); return msg; },
+  updateMessage(id, data) { const m = this.getMessages(); const i = m.findIndex(x => x.id === id); if (i >= 0) { m[i] = { ...m[i], ...data }; this.setMessages(m); return m[i]; } return null; },
   getOrCreateChat(userId1, userId2) { let chat = this.getChats().find(c => c.participants.includes(userId1) && c.participants.includes(userId2)); if (!chat) { chat = { id: 'CHT' + Date.now(), participants: [userId1, userId2], createdAt: new Date().toISOString(), lastMessage: '', lastMessageAt: new Date().toISOString() }; const chats = this.getChats(); chats.push(chat); this.setChats(chats); } return chat; },
   getChatsByUser(userId) { return this.getChats().filter(c => c.participants.includes(userId)); },
   getNotifications(userId) { return (this._get('notifications') || []).filter(n => n.userId === userId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); },
   addNotification(notif) { const n = this._get('notifications') || []; notif.id = 'NTF' + Date.now(); notif.createdAt = new Date().toISOString(); notif.read = false; n.push(notif); this._set('notifications', n); return notif; },
   markNotificationsRead(userId) { const n = this._get('notifications') || []; n.forEach(x => { if (x.userId === userId) x.read = true; }); this._set('notifications', n); },
+
+  // Notify matching users the moment a vacancy is posted.
+  // Paid jobs → workers in the same district / matching skills / work type.
+  // Arma Parma → nearby farmers (labor exchange).
+  notifyMatchingWorkers(job, link) {
+    try {
+      const isArma = job.workMode === 'arma-parma' || job.isArmaParma;
+      const targetRole = isArma ? 'farmer' : 'worker';
+      const jobSkills = (job.requiredSkills || []).map(s => String(s).toLowerCase());
+      const jobWorkType = String(job.workType || '').toLowerCase();
+      const users = this.getUsers();
+      const matches = users.filter(u =>
+        u.id !== (job.farmerId || job.sellerId) &&
+        u.role === targetRole &&
+        !u.suspended &&
+        (u.district === job.district ||
+         (u.skills || []).some(s => jobSkills.includes(String(s).toLowerCase())) ||
+         (jobWorkType && String(u.workType || '').toLowerCase() === jobWorkType))
+      );
+      const poster = this.getUserById(job.farmerId || job.sellerId);
+      const typeLabel = isArma ? '🤝 Arma Parma' : '🔔 New job';
+      const wageText = job.wage?.daily
+        ? ` — NPR ${Number(job.wage.daily).toLocaleString()}/day`
+        : (isArma ? ' — labor exchange' : '');
+      const districtText = job.district ? ` in ${job.district}` : '';
+      const fromText = poster ? ` from ${poster.name.split(' ')[0]}` : '';
+      const text = `${typeLabel}${districtText}: "${job.title}"${wageText}${fromText}`;
+      matches.slice(0, 30).forEach(u => {
+        this.addNotification({ userId: u.id, type: 'job', text, link: link || `job-detail.html?id=${job.id}` });
+      });
+      return matches.length;
+    } catch (e) { console.error('[DB] notifyMatchingWorkers:', e); return 0; }
+  },
   getReviews(userId) { return (this._get('reviews') || []).filter(r => r.reviewedId === userId); },
   getReviewsByReviewer(reviewerId) { return (this._get('reviews') || []).filter(r => r.reviewerId === reviewerId); },
   addReview(review) { const r = this._get('reviews') || []; review.id = 'REV' + Date.now(); review.createdAt = new Date().toISOString(); r.push(review); this._set('reviews', r); return review; },

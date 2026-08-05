@@ -895,6 +895,32 @@ a, button { touch-action: manipulation; }
   .calendar-premium .cal-day-num { font-size: 0.72rem; }
 }
 
+/* ── Calendar page — fit on mobile ─────────────────────── */
+@media (max-width: 768px) {
+  .calendar-grid { gap: 2px; }
+  .calendar-day-header { padding: 6px 2px; font-size: 0.65rem; }
+  .calendar-cell { min-height: 52px; padding: 3px 2px; }
+  .calendar-cell.today .calendar-day-num { width: 22px; height: 22px; }
+  .calendar-day-num { font-size: 0.75rem; margin-bottom: 2px; }
+  .calendar-events { gap: 1px; }
+  .calendar-event { font-size: 0.5rem; padding: 1px 2px; }
+  .calendar-more { font-size: 0.5rem; padding: 1px 2px; }
+  .cal-week-grid > div { min-height: 56px !important; padding: 4px !important; }
+  .cal-week-grid > div > div:first-child { font-size: 0.68rem !important; }
+  .cal-day-view .cal-day-row { min-height: 40px !important; }
+  .cal-day-row > div:first-child { font-size: 0.68rem; }
+}
+@media (max-width: 425px) {
+  .calendar-cell { min-height: 44px; padding: 2px; }
+  .calendar-event { font-size: 0.45rem; padding: 1px; }
+  .cal-week-grid > div { min-height: 48px !important; }
+}
+@media (max-width: 360px) {
+  .calendar-cell { min-height: 40px; }
+  .calendar-day-header { font-size: 0.58rem; }
+  .calendar-day-num { font-size: 0.7rem; }
+}
+
 /* ── Dashboard Sidebar — full hide + drawer on mobile ──── */
 @media (max-width: 768px) {
   .dashboard-sidebar {
