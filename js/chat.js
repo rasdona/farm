@@ -163,6 +163,7 @@ const Chat = {
     const other = DB.getUserById(otherUserId);
     if (!other) return;
     this.currentChat = DB.getOrCreateChat(this.currentUserId, otherUserId);
+    this._setChatOpen(true);
     this.renderHeader(other);
     this.markRead();
     this.renderMessages();
@@ -170,11 +171,37 @@ const Chat = {
     this.scrollToBottom();
   },
 
+  _setChatOpen(open) {
+    const layout = document.querySelector('.chat-layout');
+    if (layout) {
+      layout.classList.toggle('mobile-chat-open', open);
+      layout.classList.toggle('chat-open', open);
+    }
+  },
+
+  closeMobileChat() {
+    this.currentChat = null;
+    this._setChatOpen(false);
+    this._searchTerm = '';
+    const countEl = document.getElementById('chatSearchCount');
+    if (countEl) countEl.textContent = '';
+    const search = document.getElementById('chatMsgSearch');
+    if (search) search.value = '';
+    this.renderHeader(null);
+    this.renderContacts();
+    this.renderMessages();
+  },
+
   renderHeader(other) {
     const header = document.getElementById('chatHeader');
     if (!header) return;
+    if (!other) {
+      header.innerHTML = '<div class="empty-state" style="flex:1;padding:20px"><p class="text-muted">Select a conversation to start chatting</p></div>';
+      return;
+    }
     const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
     header.innerHTML = `
+      <button class="chat-back-btn" onclick="Chat.closeMobileChat()" title="Back">←</button>
       <div class="chat-header-info">
         ${Utils.avatarHTML(Utils.getUserPhoto(other), other.name, 'md')}
         <div>
@@ -227,14 +254,26 @@ const Chat = {
     if (changed) DB.setMessages(DB.getMessages());
   },
 
+  searchMessages(term) {
+    this._searchTerm = (term || '').trim().toLowerCase();
+    this.renderMessages();
+  },
+
   renderMessages() {
     const container = document.getElementById('chatMessages');
     if (!container || !this.currentChat) return;
-    const messages = DB.getMessagesByChat(this.currentChat.id);
+    const all = DB.getMessagesByChat(this.currentChat.id);
+    const term = this._searchTerm;
+    const messages = term ? all.filter(m => (m.text || '').toLowerCase().includes(term)) : all;
+    const countEl = document.getElementById('chatSearchCount');
+    if (countEl) countEl.textContent = term ? (messages.length === 1 ? '1 match' : messages.length + ' matches') : '';
     if (!messages.length) {
-      container.innerHTML = '<div class="empty-state-premium" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="icon">👋</div><h3>Start the conversation</h3><p>Say hello and connect!</p></div>';
+      container.innerHTML = term
+        ? '<div class="empty-state-premium" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="icon">🔍</div><h3>No messages found</h3><p>Try a different search term.</p></div>'
+        : '<div class="empty-state-premium" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div class="icon">👋</div><h3>Start the conversation</h3><p>Say hello and connect!</p></div>';
       return;
     }
+    const escapeRe = term ? term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
     let html = '';
     let lastDate = '';
     messages.forEach(msg => {
@@ -242,13 +281,20 @@ const Chat = {
       if (date !== lastDate) { html += `<div class="chat-date-divider"><span>${Utils.formatDate(msg.createdAt)}</span></div>`; lastDate = date; }
       const isSent = msg.senderId === this.currentUserId;
       const sender = DB.getUserById(msg.senderId);
+      let textHtml = '';
+      if (msg.text) {
+        textHtml = Utils.escapeHtml(msg.text);
+        if (term && msg.text.toLowerCase().includes(term)) {
+          textHtml = textHtml.replace(new RegExp('(' + escapeRe + ')', 'gi'), '<mark>$1</mark>');
+        }
+      }
       html += `
         <div class="chat-message ${isSent ? 'sent' : 'received'}">
           ${!isSent ? Utils.avatarHTML(Utils.getUserPhoto(sender), sender?.name || '', 'sm') : ''}
-          <div>
+          <div class="chat-msg-col">
             ${msg.image ? `<div class="chat-bubble chat-bubble-media"><img src="${Utils.sanitizeMediaUrl(msg.image)}" alt="Photo" onclick="window.open('${Utils.sanitizeMediaUrl(msg.image)}','_blank')"></div>` : ''}
             ${msg.media ? `<div class="chat-bubble chat-bubble-media"><video src="${Utils.sanitizeMediaUrl(msg.media)}" controls></video></div>` : ''}
-            ${msg.text ? `<div class="chat-bubble">${Utils.escapeHtml(msg.text)}</div>` : ''}
+            ${msg.text ? `<div class="chat-bubble">${textHtml}</div>` : ''}
             <div class="chat-message-time">${new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} ${isSent ? '<span class="chat-message-read">' + (msg.read ? '✓✓' : '✓') + '</span>' : ''}</div>
           </div>
         </div>

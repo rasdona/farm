@@ -234,6 +234,7 @@ body.fb-right .back-to-top { right: 316px; }
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
+.chat-open .chat-searchbar { display: flex; }
 .chat-searchbar input {
   flex: 1;
   padding: 8px 12px;
@@ -272,6 +273,7 @@ body.fb-right .back-to-top { right: 316px; }
   overflow-x: auto;
   scrollbar-width: none;
 }
+.chat-open .chat-emoji-bar { display: flex; }
 .chat-emoji-bar::-webkit-scrollbar { display: none; }
 .chat-emoji-bar button {
   border: none; background: none; cursor: pointer;
