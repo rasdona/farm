@@ -29,7 +29,7 @@ function handleLogin(e) {
       if (AuthSystem.requiresPhotoUpload(result.user)) {
         setTimeout(() => { window.location.href = 'photo-gate.html' + (redirect ? '?redirect=' + encodeURIComponent(redirect) : ''); }, 800);
       } else {
-        setTimeout(() => { window.location.href = redirect || Auth.getDashboardUrl(); }, 800);
+        setTimeout(() => { window.location.href = 'index.html'; }, 800);
       }
     } else if (result.requiresEmailVerification) {
       Utils.toast('कृपया इमेल OTP सत्यापन गर्नुहोस्।', 'warning');
@@ -87,7 +87,7 @@ function togglePasswordVisibility(inputId, btn) {
 
 document.addEventListener('DOMContentLoaded', function() {
   App.init();
-  if (Auth.isLoggedIn()) { window.location.href = Auth.getDashboardUrl(); return; }
+  if (Auth.isLoggedIn()) { window.location.href = 'index.html'; return; }
 
   const strengthInput = document.getElementById('loginPassword');
   if (strengthInput) {
