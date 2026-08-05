@@ -160,6 +160,21 @@
     </div>
   </section>
 
+  <!-- Community Feed -->
+  <section class="section" id="sectionCommunityFeed" style="background:var(--bg-alt)">
+    <div class="container">
+      <div class="section-header">
+        <h2 data-en="Community Feed" data-ne="सामुदायिक फिड">Community Feed</h2>
+        <p data-en="Photos, videos and updates from farmers across Nepal — like, comment, share and message" data-ne="नेपालभरका किसानहरूका फोटो, भिडियो र अपडेटहरू — लाइक, कमेन्ट, सेयर र सन्देश गर्नुहोस्">Photos, videos and updates from farmers across Nepal — like, comment, share and message</p>
+      </div>
+      <div class="text-center mb-6">
+        <a href="community.html" class="btn btn-primary btn-lg" data-en="＋ Share a Post" data-ne="＋ पोस्ट सेयर गर्नुहोस्">＋ Share a Post</a>
+      </div>
+      <div id="homeFeedPosts" style="max-width:680px;margin:0 auto"></div>
+      <div class="text-center mt-8"><a href="community.html" class="btn btn-outline btn-lg" data-en="Visit Community →" data-ne="समुदाय हेर्नुहोस् →">Visit Community →</a></div>
+    </div>
+  </section>
+
   <footer id="footer" class="footer"></footer>
   <div class="back-to-top">↑</div>
 
@@ -178,7 +193,7 @@
     </div>
   </div>
 
-  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/weather.js"></script><script src="js/app.js"></script>
+  <script src="js/data.js"></script><script src="js/utils.js"></script><script src="https://unpkg.com/@supabase/supabase-js@2"></script><script src="js/supabase-auth.js"></script><script src="js/supabase-sync.js"></script><script src="js/auth-system.js"></script><script src="js/auth.js"></script><script src="js/i18n.js"></script><script src="js/weather.js"></script><script src="js/app.js"></script><script src="js/community.js"></script>
   <script>
     App.init();
     if (Auth.isLoggedIn()) {
@@ -208,6 +223,7 @@
       if (target) Utils.countUp(el, target, 2000);
     });
     Utils.animateOnScroll();
+    if (typeof Community !== 'undefined') Community.renderFeed('homeFeedPosts', 6);
   </script>
   <script src="js/social-layout.js"></script>
 </body>

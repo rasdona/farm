@@ -27,7 +27,7 @@
 }
 .fb-layout-toggle:hover { background: var(--primary-dark); transform: scale(1.06); }
 
-/* Left shortcut sidebar (desktop + mobile drawer) */
+/* Left shortcut sidebar */
 .fb-sidebar {
   position: fixed;
   top: var(--navbar-height);
@@ -164,77 +164,44 @@ body.fb-right .back-to-top { right: 316px; }
   body.fb-on { padding-left: 0; }
 }
 
-/* =====================================================================
-   MOBILE VIEW (≤768px): Facebook-style bottom nav + slide-in drawer
-   ===================================================================== */
+/* Mobile: raise the floating toggle above the site's own bottom nav */
 @media (max-width: 768px) {
-  /* Bottom navigation bar */
-  .fb-mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: stretch;
-    z-index: 310;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
-  }
-  .fb-mobile-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    font-size: 0.6rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border: none;
-    background: none;
-    padding: 4px 0 6px;
-    transition: var(--transition);
-  }
-  .fb-mobile-nav-item .fb-mobile-icon { font-size: 1.35rem; line-height: 1; }
-  .fb-mobile-nav-item.active { color: var(--primary); }
-  .fb-mobile-nav-item.active .fb-mobile-icon { transform: scale(1.12); }
-  .fb-mobile-nav-item:active { background: var(--bg-alt); }
-
-  /* Left sidebar becomes a slide-in drawer */
-  .fb-sidebar {
-    display: block;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 280px;
-    max-width: 85vw;
-    transform: translateX(-105%);
-    transition: transform 0.28s ease;
-    z-index: 400;
-    box-shadow: var(--shadow-xl);
-    border-right: 1px solid var(--border);
-    padding-top: 18px;
-  }
-  body.fb-drawer-open .fb-sidebar { transform: translateX(0); }
-
-  .fb-drawer-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    z-index: 390;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.25s ease, visibility 0.25s ease;
-  }
-  body.fb-drawer-open .fb-drawer-backdrop { opacity: 1; visibility: visible; }
-
   body.fb-on { padding-left: 0; }
   body.fb-on.fb-right { padding-right: 0; }
-  body.fb-mobile { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .fb-layout-toggle { bottom: 84px; left: 14px; }
+}
+
+/* ── Community feed post enhancements ─────────────────────────── */
+#homeFeedPosts .community-post-premium { width: 100%; }
+
+.post-product-embed {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.post-product-embed:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.post-product-embed img, .post-product-img-ph {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg-alt);
+}
+.post-product-info { flex: 1; min-width: 0; }
+.post-product-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-product-price { color: var(--primary); font-weight: 700; font-size: 0.95rem; margin-top: 2px; }
+.post-product-meta { color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px; }
+.post-product-buy { flex-shrink: 0; white-space: nowrap; }
+
+@media (max-width: 520px) {
+  .post-product-embed { flex-wrap: wrap; }
+  .post-product-buy { width: 100%; }
 }

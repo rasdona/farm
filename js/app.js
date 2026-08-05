@@ -698,6 +698,7 @@ const App = {
   // ═══════════════════════════════════════════════════════
 
   renderMobileHome() {
+    if (document.getElementById('dashboardContent')) return;
     let container = document.getElementById('mobileHomeContainer');
     if (!container) {
       container = document.createElement('div');

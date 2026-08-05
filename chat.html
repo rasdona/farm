@@ -10,10 +10,10 @@
   <div class="chat-layout">
     <aside class="chat-sidebar">
       <div class="chat-sidebar-header">
-        <h3>Messages</h3>
+        <h3>Messages <span id="chatSidebarBadge" class="badge-count" style="display:none;position:relative;top:-1px"></span></h3>
         <div class="chat-sidebar-search">
           <span class="icon">🔍</span>
-          <input type="text" placeholder="Search conversations...">
+          <input type="text" id="chatSearch" placeholder="Search conversations..." oninput="Chat.renderContacts()">
         </div>
       </div>
       <div class="chat-contacts" id="chatContacts"></div>

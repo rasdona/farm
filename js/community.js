@@ -32,13 +32,26 @@ const Community = {
           <div id="postMediaHolder"></div>
           <button class="btn btn-ghost btn-sm" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.5);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center" onclick="Community.removeMedia()">✕</button>
         </div>
+        <div id="postProductWrap" style="display:none;margin-bottom:12px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label" style="font-size:0.85rem">Link a product you're selling (from your Marketplace listings)</label>
+            <select class="form-select" id="postProductId">
+              ${(() => {
+                const my = (DB.getProducts ? DB.getProducts() : []).filter(p => p.sellerId === Auth.currentUser.id);
+                if (!my.length) return '<option value="">No listings yet — add one in Marketplace</option>';
+                return '<option value="">— Select product (optional) —</option>' + my.map(p => `<option value="${p.id}">${Utils.escapeHtml(p.name)} — NPR ${Number(p.price || 0).toLocaleString()}/${p.unit}</option>`).join('');
+              })()}
+            </select>
+          </div>
+        </div>
         <div class="flex justify-between items-center flex-wrap gap-2">
           <div class="flex gap-2 items-center flex-wrap">
-            <select class="form-select" id="postType" style="width:auto">
+            <select class="form-select" id="postType" style="width:auto" onchange="Community.toggleSellFields()">
               <option value="tip">💡 Tip</option>
               <option value="question">❓ Question</option>
               <option value="event">📅 Event</option>
               <option value="celebration">🎉 Celebration</option>
+              <option value="sell">🛒 Sell</option>
             </select>
             <input class="form-input" id="postTags" placeholder="Tags (comma separated)" style="width:250px">
             <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0" title="Add photo or video">
@@ -76,72 +89,117 @@ const Community = {
     if (preview) preview.style.display = 'none';
   },
 
+  toggleSellFields() {
+    const el = document.getElementById('postProductWrap');
+    if (!el) return;
+    const type = document.getElementById('postType')?.value;
+    el.style.display = type === 'sell' ? 'block' : 'none';
+  },
+
   renderPosts() {
     const el = document.getElementById('communityPosts');
-    if (!el) return;
+    if (el) this.renderInto(el, this.currentFilter);
+    const home = document.getElementById('homeFeedPosts');
+    if (home) this.renderInto(home, 'all', 6);
+  },
+
+  renderFeed(containerId, max) {
+    const el = document.getElementById(containerId);
+    if (el) this.renderInto(el, 'all', max || 6);
+  },
+
+  renderInto(el, filter, max) {
     let posts = DB.getCommunityPosts();
-    if (this.currentFilter !== 'all') posts = posts.filter(p => p.type === this.currentFilter);
+    if (filter !== 'all') posts = posts.filter(p => p.type === filter);
     posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (max) posts = posts.slice(0, max);
 
     if (!posts.length) {
       el.innerHTML = '<div class="empty-state-premium"><div class="icon">👥</div><h3>No posts yet</h3><p>Be the first to share something with the community!</p></div>';
       return;
     }
 
-    el.innerHTML = posts.map(p => {
-      const author = DB.getUserById(p.userId);
-      const isLiked = Auth.currentUser && p.likes?.includes(Auth.currentUser.id);
-      const typeIcons = { tip: '💡', question: '❓', event: '📅', celebration: '🎉' };
-      const typeColors = { tip: 'var(--primary)', question: 'var(--info)', event: 'var(--accent)', celebration: '#ef4444' };
-      return `
-        <div class="community-post-premium" data-animate="fadeUp">
-          <div class="post-header">
-            ${Utils.avatarHTML(Utils.getUserPhoto(author), author?.name || '?', 'md')}
-            <div class="post-author">
-              <div class="post-author-name"><a href="worker-profile.html?id=${p.userId}">${Utils.escapeHtml(author?.name || 'Unknown')}</a></div>
-              <div class="post-author-meta">${Utils.formatTime(p.createdAt)} · <span style="color:${typeColors[p.type] || 'var(--text-secondary)'}">${typeIcons[p.type] || ''} ${Utils.capitalize(p.type || 'post')}</span></div>
-            </div>
-            ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')" aria-label="Delete post">🗑️</button>` : ''}
+    el.innerHTML = posts.map(p => this.renderPostCard(p)).join('');
+  },
+
+  renderPostCard(p) {
+    const author = DB.getUserById(p.userId);
+    const isLiked = Auth.currentUser && p.likes?.includes(Auth.currentUser.id);
+    const typeIcons = { tip: '💡', question: '❓', event: '📅', celebration: '🎉', sell: '🛒' };
+    const typeColors = { tip: 'var(--primary)', question: 'var(--info)', event: 'var(--accent)', celebration: '#ef4444', sell: '#059669' };
+    const prod = p.productId ? (DB.getProducts().find(pr => pr.id === p.productId) || null) : null;
+    const authorName = author?.name || 'Unknown';
+    const contactBtn = Auth.currentUser
+      ? (Auth.currentUser.id === p.userId
+          ? ''
+          : `<a class="post-action" href="chat.html?user=${encodeURIComponent(p.userId)}" title="Message ${Utils.escapeHtml(authorName)}">📩 <span>Message</span></a>`)
+      : `<a class="post-action" href="login.html" title="Log in to message">📩 <span>Message</span></a>`;
+    return `
+      <div class="community-post-premium" data-animate="fadeUp">
+        <div class="post-header">
+          ${Utils.avatarHTML(Utils.getUserPhoto(author), authorName, 'md')}
+          <div class="post-author">
+            <div class="post-author-name"><a href="worker-profile.html?id=${p.userId}">${Utils.escapeHtml(authorName)}</a></div>
+            <div class="post-author-meta">${Utils.formatTime(p.createdAt)} · <span style="color:${typeColors[p.type] || 'var(--text-secondary)'}">${typeIcons[p.type] || ''} ${Utils.capitalize(p.type || 'post')}</span></div>
           </div>
-          ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
-          ${p.media ? (p.mediaType === 'video'
-            ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><video src="${Utils.sanitizeMediaUrl(p.media)}" controls style="width:100%;max-height:300px;display:block" alt="Post video"></video></div>`
-            : `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.media)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post media"></div>`)
-            : (p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.image)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : '')}
-          <div class="post-content">${Utils.escapeHtml(p.content)}</div>
-          ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
-          <div class="post-actions">
-            <button class="post-action ${isLiked ? 'liked' : ''}" onclick="Community.toggleLike('${p.id}')">
-              ${isLiked ? '❤️' : '🤍'} <span>${p.likes?.length || 0}</span>
-            </button>
-            <button class="post-action" onclick="Community.toggleComments('${p.id}')">
-              💬 <span>${p.comments?.length || 0}</span>
-            </button>
-            <button class="post-action" onclick="Community.sharePost('${p.id}', '${Utils.escapeHtml((p.title || p.content || '').substring(0, 80))}')">
-              📤 <span>Share</span>
-            </button>
-          </div>
-          <div id="comments-${p.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)">
-            ${(p.comments || []).map(c => {
-              const commenter = DB.getUserById(c.userId);
-              return `<div class="flex gap-3 mb-3">
-                ${Utils.avatarHTML(Utils.getUserPhoto(commenter), commenter?.name || '?', 'sm')}
-                <div class="flex-1">
-                  <div class="text-sm"><strong>${commenter?.name || 'Unknown'}</strong> <span class="text-muted text-xs">${Utils.formatTime(c.createdAt)}</span></div>
-                  <div class="text-sm" style="color:var(--text-secondary)">${Utils.escapeHtml(c.text)}</div>
-                </div>
-              </div>`;
-            }).join('')}
-            ${Auth.isLoggedIn() ? `
-              <div class="flex gap-2 mt-3">
-                <input class="form-input" id="commentInput-${p.id}" placeholder="Write a comment..." style="flex:1">
-                <button class="btn btn-primary btn-sm" onclick="Community.addComment('${p.id}')">Post</button>
-              </div>
-            ` : '<p class="text-sm text-muted mt-2">Log in to comment</p>'}
-          </div>
+          ${Auth.currentUser && Auth.currentUser.id === p.userId ? `<button class="btn btn-ghost btn-sm" onclick="Community.deletePost('${p.id}')" aria-label="Delete post">🗑️</button>` : ''}
         </div>
-      `;
-    }).join('');
+        ${p.title ? `<h3 style="margin:0 0 12px;font-size:1.1rem">${Utils.escapeHtml(p.title)}</h3>` : ''}
+        ${p.media ? (p.mediaType === 'video'
+          ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><video src="${Utils.sanitizeMediaUrl(p.media)}" controls style="width:100%;max-height:300px;display:block" alt="Post video"></video></div>`
+          : `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.media)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post media"></div>`)
+          : (p.image ? `<div style="margin-bottom:12px;border-radius:var(--radius);overflow:hidden"><img src="${Utils.sanitizeMediaUrl(p.image)}" style="width:100%;max-height:300px;object-fit:cover;display:block" alt="Post image"></div>` : '')}
+        ${prod ? this.renderProductEmbed(prod) : ''}
+        <div class="post-content">${Utils.escapeHtml(p.content)}</div>
+        ${p.tags?.length ? `<div class="post-tags">${p.tags.map(t => `<span class="badge badge-primary">${Utils.escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        <div class="post-actions">
+          <button class="post-action ${isLiked ? 'liked' : ''}" onclick="Community.toggleLike('${p.id}')">
+            ${isLiked ? '❤️' : '🤍'} <span>${p.likes?.length || 0}</span>
+          </button>
+          <button class="post-action" onclick="Community.toggleComments('${p.id}')">
+            💬 <span>${p.comments?.length || 0}</span>
+          </button>
+          <button class="post-action" onclick="Community.sharePost('${p.id}', '${Utils.escapeHtml((p.title || p.content || '').substring(0, 80))}')">
+            📤 <span>Share</span>
+          </button>
+          ${contactBtn}
+        </div>
+        <div id="comments-${p.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light)">
+          ${(p.comments || []).map(c => {
+            const commenter = DB.getUserById(c.userId);
+            return `<div class="flex gap-3 mb-3">
+              ${Utils.avatarHTML(Utils.getUserPhoto(commenter), commenter?.name || '?', 'sm')}
+              <div class="flex-1">
+                <div class="text-sm"><strong>${commenter?.name || 'Unknown'}</strong> <span class="text-muted text-xs">${Utils.formatTime(c.createdAt)}</span></div>
+                <div class="text-sm" style="color:var(--text-secondary)">${Utils.escapeHtml(c.text)}</div>
+              </div>
+            </div>`;
+          }).join('')}
+          ${Auth.isLoggedIn() ? `
+            <div class="flex gap-2 mt-3">
+              <input class="form-input" id="commentInput-${p.id}" placeholder="Write a comment..." style="flex:1">
+              <button class="btn btn-primary btn-sm" onclick="Community.addComment('${p.id}')">Post</button>
+            </div>
+          ` : '<p class="text-sm text-muted mt-2">Log in to comment</p>'}
+        </div>
+      </div>
+    `;
+  },
+
+  renderProductEmbed(prod) {
+    const img = prod.images && prod.images[0] ? Utils.sanitizeMediaUrl(prod.images[0]) : '';
+    const unitText = prod.unit === 'day' ? '/day' : '/' + prod.unit;
+    const priceText = `NPR ${Number(prod.price || 0).toLocaleString()}${unitText}`;
+    return `
+      <div class="post-product-embed" onclick="window.location.href='product-detail.html?id=${prod.id}'">
+        ${img ? `<img src="${img}" alt="">` : '<div class="post-product-img-ph"></div>'}
+        <div class="post-product-info">
+          <div class="post-product-name">${Utils.escapeHtml(prod.name)}</div>
+          <div class="post-product-price">💰 ${priceText}</div>
+          <div class="post-product-meta">📍 ${Utils.escapeHtml(prod.district || '')} · ${prod.stock || 0} available</div>
+        </div>
+        <a class="btn btn-primary btn-sm post-product-buy" href="chat.html?user=${encodeURIComponent(prod.sellerId)}" onclick="event.stopPropagation()" title="Message seller">💬 Message Seller</a>
+      </div>`;
   },
 
   createPost() {
@@ -151,9 +209,11 @@ const Community = {
     const title = document.getElementById('postTitle')?.value.trim();
     const type = document.getElementById('postType')?.value || 'tip';
     const tags = document.getElementById('postTags')?.value.split(',').map(t => t.trim()).filter(Boolean);
+    const productId = document.getElementById('postProductId')?.value || '';
 
     const savePost = (mediaUrl) => {
       const postData = { userId: Auth.currentUser.id, type, title, content, tags };
+      if (productId) postData.productId = productId;
       if (mediaUrl) {
         if (this._pendingMedia && this._pendingMedia.type === 'video') {
           postData.mediaType = 'video';
@@ -167,6 +227,10 @@ const Community = {
       document.getElementById('postContent').value = '';
       document.getElementById('postTitle').value = '';
       document.getElementById('postTags').value = '';
+      const prodSel = document.getElementById('postProductId');
+      if (prodSel) prodSel.value = '';
+      const pWrap = document.getElementById('postProductWrap');
+      if (pWrap) pWrap.style.display = 'none';
       this._pendingMedia = null;
       const preview = document.getElementById('postMediaPreview');
       if (preview) preview.style.display = 'none';

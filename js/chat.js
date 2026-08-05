@@ -42,8 +42,17 @@ const Chat = {
   renderContacts() {
     const list = document.getElementById('chatContacts');
     if (!list) return;
-    const chats = DB.getChatsByUser(this.currentUserId);
+    const term = (document.getElementById('chatSearch')?.value || '').toLowerCase().trim();
+    let chats = DB.getChatsByUser(this.currentUserId);
     if (!chats.length) { list.innerHTML = '<div class="empty-state-premium" style="padding:40px 20px"><div class="icon">💬</div><h3>No conversations yet</h3><p>Start a conversation by messaging a worker or farmer.</p><a href="workers.html" class="btn btn-primary btn-sm">Find Workers</a></div>'; return; }
+    if (term) {
+      chats = chats.filter(c => {
+        const otherId = c.participants.find(p => p !== this.currentUserId);
+        const other = DB.getUserById(otherId);
+        return other && (other.name || '').toLowerCase().includes(term);
+      });
+      if (!chats.length) { list.innerHTML = '<div class="empty-state-premium" style="padding:40px 20px"><div class="icon">🔍</div><h3>No conversations found</h3><p>Try a different search term.</p></div>'; return; }
+    }
     list.innerHTML = chats.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)).map(chat => {
       const otherId = chat.participants.find(p => p !== this.currentUserId);
       const other = DB.getUserById(otherId);
@@ -51,6 +60,7 @@ const Chat = {
       const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
       const lastMsg = DB.getMessagesByChat(chat.id).slice(-1)[0];
       const lastText = lastMsg?.text || (lastMsg?.image ? '📷 Photo' : lastMsg?.media ? '🎬 Video' : null) || chat.lastMessage || 'Start chatting...';
+      const unread = DB.getMessagesByChat(chat.id).filter(m => m.senderId !== this.currentUserId && !m.read).length;
       const isCurrent = this.currentUserId === otherId || chat.participants.includes(this.currentUserId) && document.querySelector(`[data-chat-user="${otherId}"]`);
       return `
         <div class="chat-contact ${this.currentChat?.id === chat.id ? 'active' : ''}" data-chat-user="${otherId}" onclick="Chat.openChat('${otherId}')">
@@ -64,10 +74,18 @@ const Chat = {
           </div>
           <div class="chat-contact-meta">
             <span class="chat-contact-time">${Utils.formatTime(chat.lastMessageAt)}</span>
+            ${unread > 0 ? `<span class="chat-contact-unread">${unread > 99 ? '99+' : unread}</span>` : ''}
           </div>
         </div>
       `;
     }).join('');
+    const totalUnread = DB.getChatsByUser(this.currentUserId).reduce((acc, c) =>
+      acc + DB.getMessagesByChat(c.id).filter(m => m.senderId !== this.currentUserId && !m.read).length, 0);
+    const sb = document.getElementById('chatSidebarBadge');
+    if (sb) {
+      if (totalUnread > 0) { sb.style.display = 'inline-block'; sb.textContent = totalUnread > 99 ? '99+' : totalUnread; }
+      else sb.style.display = 'none';
+    }
   },
 
   openChat(otherUserId) {

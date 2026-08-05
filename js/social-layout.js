@@ -1,8 +1,7 @@
 /* =====================================================================
    Social (Facebook-style) layout - self-contained enhancer
-   Adds a left shortcut sidebar + right suggestions panel + mobile
-   bottom navigation with slide-in menu drawer. Nothing is removed;
-   all links point to existing pages.
+   Adds a left shortcut sidebar + right suggestions panel to existing
+   pages. Nothing is removed; all links point to existing pages.
    ===================================================================== */
 (function () {
   if (window.__socialLayoutLoaded) return;
@@ -55,17 +54,6 @@
     { key: 'chat', href: 'chat.html', icon: '💬', en: 'Messages', ne: 'सन्देश' },
     { key: 'settings', href: 'settings.html', icon: '⚙️', en: 'Settings', ne: 'सेटिङ्स' }
   ];
-
-  var MOBILE_NAV = [
-    { key: 'index', href: 'index.html', icon: '🏠', en: 'Home', ne: 'गृह' },
-    { key: 'jobs', href: 'jobs.html', icon: '💼', en: 'Jobs', ne: 'रोजगारी' },
-    { key: 'marketplace', href: 'marketplace.html', icon: '🛒', en: 'Market', ne: 'बजार' },
-    { key: 'community', href: 'community.html', icon: '👥', en: 'Community', ne: 'समुदाय' },
-    { key: 'menu', href: null, icon: '☰', en: 'Menu', ne: 'मेनु' }
-  ];
-
-  var mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 768px)') : null;
-  function isMobile() { return mobileQuery ? mobileQuery.matches : false; }
 
   function activeKey() {
     for (var i = 0; i < MENU.length; i++) {
@@ -146,26 +134,6 @@
     }).join('');
   }
 
-  function mobileNavHTML(active) {
-    return MOBILE_NAV.map(function (it) {
-      if (it.href) {
-        return '<a class="fb-mobile-nav-item' + (active === it.key ? ' active' : '') + '" href="' + it.href + '">' +
-          '<span class="fb-mobile-icon">' + it.icon + '</span><span>' + L(it.en, it.ne) + '</span></a>';
-      }
-      return '<button type="button" class="fb-mobile-nav-item" id="fbMenuBtn" aria-label="' + L('Menu', 'मेनु') + '">' +
-        '<span class="fb-mobile-icon">' + it.icon + '</span><span>' + L(it.en, it.ne) + '</span></button>';
-    }).join('');
-  }
-
-  function openDrawer() {
-    document.body.classList.add('fb-drawer-open');
-  }
-  function closeDrawer() {
-    document.body.classList.remove('fb-drawer-open');
-  }
-  window.__fbOpenDrawer = openDrawer;
-  window.__fbCloseDrawer = closeDrawer;
-
   function init() {
     if (!document.body) { window.addEventListener('DOMContentLoaded', init); return; }
 
@@ -188,7 +156,7 @@
 
     if (!layoutOn) return;
 
-    /* Left shortcut sidebar (drawer on mobile) */
+    /* Left shortcut sidebar */
     var sidebar = document.createElement('aside');
     sidebar.className = 'fb-sidebar';
     sidebar.id = 'fbSidebar';
@@ -203,11 +171,8 @@
 
     var collapse = sidebar.querySelector('.fb-collapse');
     collapse.onclick = function () {
-      if (isMobile()) { closeDrawer(); }
-      else {
-        try { localStorage.setItem('fb_layout', '0'); } catch (e) {}
-        location.reload();
-      }
+      try { localStorage.setItem('fb_layout', '0'); } catch (e) {}
+      location.reload();
     };
 
     /* Right suggestions panel */
@@ -217,29 +182,8 @@
     panel.innerHTML = rightPanelHTML();
     document.body.appendChild(panel);
 
-    /* Mobile bottom navigation */
-    var nav = document.createElement('nav');
-    nav.className = 'fb-mobile-nav';
-    nav.id = 'fbMobileNav';
-    nav.innerHTML = mobileNavHTML(active);
-    document.body.appendChild(nav);
-
-    var menuBtn = document.getElementById('fbMenuBtn');
-    if (menuBtn) menuBtn.onclick = openDrawer;
-
-    var backdrop = document.createElement('div');
-    backdrop.className = 'fb-drawer-backdrop';
-    backdrop.id = 'fbDrawerBackdrop';
-    backdrop.onclick = closeDrawer;
-    document.body.appendChild(backdrop);
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeDrawer();
-    });
-
     document.body.classList.add('fb-on');
     document.body.classList.add('fb-right');
-    document.body.classList.add('fb-mobile');
   }
 
   if (document.readyState === 'loading') {

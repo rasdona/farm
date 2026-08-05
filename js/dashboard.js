@@ -29,9 +29,7 @@ const Dashboard = {
         <h1>${t('dash.welcomeBack')}, ${Utils.escapeHtml(user.name.split(' ')[0])}!</h1>
         <p>${activeRoleInfo.icon} ${T ? (T.lang === 'ne' ? (activeRoleInfo.nameNe || activeRoleInfo.name) : activeRoleInfo.name) : activeRoleInfo.name} · ${user.district || 'Nepal'}</p>
         <div class="quick-actions-row">
-          ${activeRole === 'farmer' ? '<a href="post-job.html" class="quick-action-btn">📝 Post Job</a>' : '<a href="jobs.html" class="quick-action-btn">🔍 Find Jobs</a>'}
-          <a href="chat.html" class="quick-action-btn">💬 Messages</a>
-          <a href="calendar.html" class="quick-action-btn">📅 Calendar</a>
+          ${this._quickActionsForRole(activeRole).map(qa => `<a href="${qa.href}" class="quick-action-btn">${qa.icon} ${qa.label}</a>`).join('')}
         </div>
       </div>
       ${Utils.profileCompletionHTML(user)}
@@ -84,14 +82,6 @@ const Dashboard = {
             <div class="dashboard-card-body" id="dashboardWeather"></div>
           </div>` : ''}
           <div class="dashboard-card mb-4">
-            <div class="dashboard-card-header"><h3>⚡ Quick Actions</h3></div>
-            <div class="dashboard-card-body">
-              <div class="quick-actions">
-                ${this._quickActionsForRole(activeRole).map(qa => `<a href="${qa.href}" class="quick-action"><div class="icon">${qa.icon}</div><div class="label">${qa.label}</div></a>`).join('')}
-              </div>
-            </div>
-          </div>
-          <div class="dashboard-card mb-4">
             <div class="dashboard-card-header"><h3>💬 ${t('nav.msgs')}</h3><a href="chat.html" class="btn btn-ghost btn-sm">All</a></div>
             <div class="dashboard-card-body">
               ${recentChats.length ? recentChats.map(c => {
@@ -120,20 +110,6 @@ const Dashboard = {
               `).join('')}
             </div>
           </div>` : ''}
-          <div class="dashboard-card mb-4">
-            <div class="dashboard-card-header"><h3>📊 ${t('eco.trustScore')}</h3></div>
-            <div class="dashboard-card-body">
-              <div style="text-align:center;padding:16px">
-                ${Utils.trustScoreHTML(user)}
-                <div style="margin-top:12px">
-                  ${Utils.verificationBadgeHTML(user)}
-                </div>
-                <div style="margin-top:16px">
-                  <a href="verify-identity.html" class="btn btn-outline btn-sm">🪪 Verify Identity</a>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     `;
