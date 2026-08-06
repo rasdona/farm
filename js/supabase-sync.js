@@ -93,6 +93,7 @@ const SupabaseSync = {
         availableDistricts: distName[wp.district_id] ? [distName[wp.district_id]] : [],
         expectedWage: { daily: wp.daily_wage || 0, monthly: wp.monthly_wage || 0 },
         bio: wp.bio || '',
+        weatherAlertsEnabled: u.weather_alerts_enabled !== false,
         availability: wp.is_available ? 'available' : 'unavailable',
         roles: Array.isArray(u.roles) && u.roles.length ? u.roles : [u.active_role || 'farmer'],
       };
@@ -593,6 +594,7 @@ const SupabaseSync = {
 
   async writeMessage(localMsg) {
     if (!this._sb()) return;
+    if (String(localMsg.chatId).startsWith('SYS-')) return;
     try {
       const sb = this._sb();
       const payload = {
@@ -638,6 +640,16 @@ const SupabaseSync = {
         .eq('user_id', userId)
         .eq('is_read', false);
     } catch (e) { console.error('[Sync] markNotificationsRead failed:', e); }
+  },
+
+  async updateWeatherAlertPreference(userId, enabled) {
+    if (!this._sb()) return;
+    try {
+      await this._sb().from('users')
+        .update({ weather_alerts_enabled: enabled })
+        .eq('id', userId);
+      console.log(`[Sync] weather_alerts_enabled set to ${enabled} for ${userId}`);
+    } catch (e) { console.error('[Sync] updateWeatherAlertPreference failed:', e); }
   },
 
   async togglePostLike(postId, userId, liked) {

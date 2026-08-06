@@ -222,6 +222,11 @@ a, button { touch-action: manipulation; }
   body.index-page #sectionFeaturedWorkers,
   body.index-page #sectionLatestProducts { display: none !important; }
 
+  /* ── Hide the desktop hero on mobile: the mobile home replaces it ──
+     So the mobile home lands FIRST, then quick categories → stats →
+     how it works → community feed last (footer after). */
+  body.index-page .hero { display: none !important; }
+
   /* ── Mobile Drawer ──────────────────────────────────── */
   .mobile-menu { width: 300px; }
   .mobile-menu-user { display: block; }

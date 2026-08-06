@@ -16,7 +16,7 @@ const Dashboard = {
     const calendarEvents = DB.getCalendarEventsByUser(user.id).filter(e => e.date === today);
     const creditInfo = DB.getLaborCreditsByUser(user.id);
     const notifs = DB.getNotifications(user.id).filter(n => !n.read).slice(0, 5);
-    const chats = DB.getChatsByUser(user.id);
+    const chats = DB.getChatsByUser(user.id).filter(c => !c.isWeatherAlert);
     const recentChats = chats.slice(0, 3);
     const roleMeta = (typeof AUTH_ROLES !== 'undefined') ? AUTH_ROLES : (typeof DB !== 'undefined' ? (DB.getRoles() || []) : []);
     const activeRoleInfo = roleMeta.find(r => r.id === activeRole) || { icon: '👤', name: activeRole, nameNe: activeRole };

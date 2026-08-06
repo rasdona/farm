@@ -3,6 +3,9 @@ const App = {
     DB.init();
     if (typeof SupabaseAuth !== 'undefined' && SupabaseAuth.init) SupabaseAuth.init();
     Auth.init();
+    if (typeof Weather !== 'undefined' && Weather.checkAndSendAlert && Auth.currentUser) {
+      Weather.checkAndSendAlert(Auth.currentUser);
+    }
     this.renderNavbar();
     this.renderFooter();
     this.initLanguage();
@@ -37,6 +40,9 @@ const App = {
     this.updateNotificationBadge();
     this.updateChatBadge();
     this._ensureRealtime();
+    if (typeof Weather !== 'undefined' && Weather.checkAndSendAlert && Auth.currentUser) {
+      Weather.checkAndSendAlert(Auth.currentUser);
+    }
     if (window.innerWidth <= 768) {
       this.renderMobileHome();
     }
@@ -699,6 +705,7 @@ const App = {
 
   renderMobileHome() {
     if (document.getElementById('dashboardContent')) return;
+    if (!document.body.classList.contains('index-page')) return;
     let container = document.getElementById('mobileHomeContainer');
     if (!container) {
       container = document.createElement('div');
@@ -1139,6 +1146,10 @@ const App = {
     localStorage.setItem('agri_lang', lang);
     if (typeof I18N !== 'undefined') I18N.lang = lang;
     this.applyLanguage(lang);
+
+    const menuEl = document.getElementById('mobileMenu');
+    const wasMenuOpen = !!(menuEl && menuEl.classList.contains('open'));
+
     this.renderNavbar();
     this.renderFooter();
     this.renderMobileBottomNav();
@@ -1146,6 +1157,19 @@ const App = {
       this.renderFAB();
       this.renderMobileHome();
     }
+
+    if (wasMenuOpen) {
+      const menu = document.getElementById('mobileMenu');
+      const overlay = document.getElementById('mobileMenuOverlay');
+      const hamburger = document.querySelector('.hamburger');
+      if (menu) menu.classList.add('open');
+      if (overlay) overlay.classList.add('active');
+      if (hamburger) hamburger.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    } else if (window.innerWidth <= 768) {
+      document.body.style.overflow = '';
+    }
+
     const dropdown = document.getElementById('langDropdown');
     if (dropdown) dropdown.classList.remove('show');
   },

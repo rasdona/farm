@@ -196,6 +196,54 @@ const Weather = {
       </div>`;
   },
 
+  _weatherConversationId(userId) { return 'SYS-WEATHER-' + userId; },
+
+  _todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  },
+
+  _ensureConversation(userId) {
+    const chatId = this._weatherConversationId(userId);
+    let chat = DB.getChats().find(c => c.id === chatId);
+    if (!chat) {
+      chat = { id: chatId, participants: [userId], createdAt: new Date().toISOString(), lastMessage: '', lastMessageAt: new Date().toISOString(), isWeatherAlert: true, title: 'Weather Alerts' };
+      const chats = DB.getChats();
+      chats.push(chat);
+      DB.setChats(chats);
+    }
+    return chat;
+  },
+
+  // Automatically send a chat message when weather in the user's district is critical.
+  // Respects the weatherAlertsEnabled preference (users table) and sends at most once per day.
+  async checkAndSendAlert(user) {
+    if (!user || !user.id || typeof DB === 'undefined') return false;
+    if (user.weatherAlertsEnabled === false) return false;
+    const district = user.district || 'Kathmandu';
+    try {
+      const weather = await this.getWeather(district);
+      const alerts = this.getAlert(weather);
+      if (!alerts || !alerts.length) return false;
+
+      const today = this._todayKey();
+      if (localStorage.getItem('weather_alert_sent_' + user.id) === today) return false;
+
+      const chat = this._ensureConversation(user.id);
+      const text = '⚠️ Weather Alert — ' + district + ': ' + alerts.join(' · ');
+      DB.addMessage({ chatId: chat.id, senderId: user.id, text, weatherAlert: true });
+      const chats = DB.getChats();
+      const ci = chats.findIndex(c => c.id === chat.id);
+      if (ci >= 0) { chats[ci].lastMessage = text; chats[ci].lastMessageAt = new Date().toISOString(); DB.setChats(chats); }
+      DB.addNotification({ userId: user.id, type: 'weather', text, link: 'chat.html' });
+      localStorage.setItem('weather_alert_sent_' + user.id, today);
+      return true;
+    } catch (e) {
+      console.warn('[Weather] checkAndSendAlert failed:', e.message);
+      return false;
+    }
+  },
+
   renderWidget(containerId, district) {
     const el = document.getElementById(containerId);
     if (!el) return;

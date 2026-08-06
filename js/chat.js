@@ -33,7 +33,7 @@ const Chat = {
     this.renderContacts();
     const paramUser = Utils.getParam('user');
     if (paramUser) { this.openChat(paramUser); }
-    else { const chats = DB.getChatsByUser(userId); if (chats.length) { const other = chats[0].participants.find(p => p !== userId); this.openChat(other); } }
+    else { const chats = DB.getChatsByUser(userId).filter(c => !c.isWeatherAlert); if (chats.length) { const other = chats[0].participants.find(p => p !== userId); this.openChat(other); } }
   },
 
   _bindEvents() {
@@ -88,6 +88,22 @@ const Chat = {
     list.innerHTML = chats.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)).map(chat => {
       const otherId = chat.participants.find(p => p !== this.currentUserId);
       const other = DB.getUserById(otherId);
+      if (chat.isWeatherAlert) {
+        const lastMsg = DB.getMessagesByChat(chat.id).slice(-1)[0];
+        const lastText = lastMsg?.text || chat.lastMessage || 'Weather alerts will appear here.';
+        return `
+          <div class="chat-contact ${this.currentChat?.id === chat.id ? 'active' : ''}" data-chat-user="weather" onclick="Chat.openWeatherAlerts()">
+            <div class="chat-contact-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.3rem">🌦️</div>
+            <div class="chat-contact-info">
+              <div class="chat-contact-name">Weather Alerts</div>
+              <div class="chat-contact-preview">${Utils.truncate(lastText, 40)}</div>
+            </div>
+            <div class="chat-contact-meta">
+              <span class="chat-contact-time">${Utils.formatTime(chat.lastMessageAt)}</span>
+            </div>
+          </div>
+        `;
+      }
       if (!other) return '';
       const online = typeof SupabaseSync !== 'undefined' && SupabaseSync.isOnline ? SupabaseSync.isOnline(other.id) : false;
       const lastMsg = DB.getMessagesByChat(chat.id).slice(-1)[0];
@@ -165,6 +181,18 @@ const Chat = {
     this.currentChat = DB.getOrCreateChat(this.currentUserId, otherUserId);
     this._setChatOpen(true);
     this.renderHeader(other);
+    this.markRead();
+    this.renderMessages();
+    this.renderContacts();
+    this.scrollToBottom();
+  },
+
+  openWeatherAlerts() {
+    if (typeof Weather === 'undefined' || !Weather._ensureConversation) return;
+    const chat = Weather._ensureConversation(this.currentUserId);
+    this.currentChat = chat;
+    this._setChatOpen(true);
+    this.renderHeader({ id: chat.id, name: 'Weather Alerts', avatar: '' });
     this.markRead();
     this.renderMessages();
     this.renderContacts();
@@ -342,7 +370,7 @@ const Chat = {
       const chats = DB.getChats();
       const ci = chats.findIndex(c => c.id === this.currentChat.id);
       if (ci >= 0) { chats[ci].lastMessage = last; chats[ci].lastMessageAt = new Date().toISOString(); DB.setChats(chats); }
-      DB.addNotification({ userId: otherId, type: 'message', text: `New message from ${Auth.currentUser.name}`, link: 'chat.html' });
+      if (otherId) DB.addNotification({ userId: otherId, type: 'message', text: `New message from ${Auth.currentUser.name}`, link: 'chat.html' });
       if (typeof SupabaseSync !== 'undefined' && SupabaseSync.sendTyping) {
         SupabaseSync.sendTyping(this.currentChat.id, false);
       }
